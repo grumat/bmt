@@ -3,7 +3,6 @@
 #include "fifo.h"
 #include "mcu-system.h"
 #include "critical_section.h"
-#include "tasks.h"
 #include "irq.h"
 
 namespace Bmt

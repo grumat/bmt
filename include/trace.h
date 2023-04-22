@@ -152,7 +152,7 @@ public:
 	ALWAYS_INLINE static void Init()
 	{
 		// At least one channel needs to be enabled
-		if(kChannelMask_ != 0);
+		if(kChannelMask_ != 0)
 		{
 			CoreDebug->DEMCR = CoreDebug_DEMCR_TRCENA_Msk;
 

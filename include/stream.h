@@ -124,12 +124,12 @@ void BMT_STATIC_API PutString(PutC_Fn fn, const char *s)
 //! Left or right align of string
 void BMT_STATIC_API FormatString(PutC_Fn fn, const char *s, const int w)
 {
-	size_t len = strlen(s);
+	int len = (int)strlen(s);
 	if (w < 0)
 	{
 		int aw = -w;
 		// '0' padding
-		for (size_t l = len; l < aw; ++l)
+		for (int l = len; l < aw; ++l)
 			(fn)(' ');
 	}
 	// Flush digits
@@ -138,7 +138,7 @@ void BMT_STATIC_API FormatString(PutC_Fn fn, const char *s, const int w)
 	if (w > 0)
 	{
 		// '0' padding
-		for (size_t l = len; l < w; ++l)
+		for (int l = len; l < w; ++l)
 			(fn)(' ');
 	}
 }
@@ -170,7 +170,7 @@ void BMT_STATIC_API FormatNum(PutC_Fn fn, int32_t v, const int w = 1, const int 
 	if (w > 1)
 	{
 		// '0' padding
-		for (size_t l = strlen(buf); l < w; ++l)
+		for (int l = (int)strlen(buf); l < w; ++l)
 			(fn)('0');
 	}
 	// Flush digits
@@ -187,7 +187,7 @@ void BMT_STATIC_API FormatNum(PutC_Fn fn, uint32_t v, const int w = 1, const int
 	if (w > 1)
 	{
 		// '0' padding
-		for (size_t l = strlen(buf); l < w; ++l)
+		for (int l = (int)strlen(buf); l < w; ++l)
 			(fn)('0');
 	}
 	// Flush digits
