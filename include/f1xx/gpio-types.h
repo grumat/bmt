@@ -786,10 +786,22 @@ typedef Floating<Port::PA, 11, AfNoRemap>		USB_DM_PA11;
 typedef Floating<Port::PA, 12, AfNoRemap>		USB_DP_PA12;
 
 //////////////////////////////////////////////////////////////////////
-// SWO
+// RTC
 //////////////////////////////////////////////////////////////////////
+/// A generic configuration to map TAMPER-RTC on PC13 pin
+typedef AnyAltOutPP<Port::PC, 13, AfNoRemap>	TAMPER_RTC_PC13;
+/// A generic configuration to map OSC32_IN on PC14 pin
+typedef Floating<Port::PC, 14, AfNoRemap>	OSC32_IN_PC14;
+/// A generic configuration to map OSC32_OUT on PC15 pin
+typedef AnyAltOutPP<Port::PC, 15, AfNoRemap>	OSC32_OUT_PC15;
+
+//////////////////////////////////////////////////////////////////////
+// SYS
+//////////////////////////////////////////////////////////////////////
+/// A generic configuration to map MCO on PA8 pin
+typedef AnyAltOut<Port::PA, 8, AfNoRemap>	MCO_PA8;
 /// A generic configuration to map TRACESWO on PB3 pin
-typedef AnyAltOut<Port::PB, 3, AfNoRemap>	TRACESWO;
+typedef AnyAltOut<Port::PB, 3, AfNoRemap>	TRACESWO_PB3;
 
 
 }	// namespace Gpio

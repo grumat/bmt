@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mcu-system.h"
+#include "gpio.h"
 
 
 #if defined(STM32L4)

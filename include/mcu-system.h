@@ -5,34 +5,6 @@
 
 namespace Bmt
 {
-namespace Gpio
-{
-
-/// All possible GPIO peripherals
-enum class Port
-{
-	PA = 0,		///< Port A
-	PB = 1,		///< Port B
-	PC = 2,		///< Port C
-#ifdef GPIOD
-	PD = 3,		///< Port D
-#endif
-#ifdef GPIOE
-	PE = 4,		///< Port E
-#endif
-#ifdef GPIOF
-	PF = 5,		///< Port F
-#endif
-#ifdef GPIOG
-	PG = 6,		///< Port G
-#endif
-#ifdef GPIOH
-	PH = 7,		///< Port H
-#endif
-	kUnusedPort = -1
-};
-
-}	// namespace Gpio
 
 
 /// Core operations of the MCU
@@ -40,7 +12,7 @@ class McuCore
 {
 public:
 	/// Enters Sleep mode (Assembler WFI instruction)
-	ALWAYS_INLINE static void Sleep()
+	const static void Sleep()
 	{
 		__WFI();
 	}
@@ -86,6 +58,17 @@ public:
 		SCB->SCR &= ~(1 << SCB_SCR_SLEEPONEXIT_Pos);
 	}
 };
+
+
+#if defined(STM32L4)
+#	include "l4xx/system.h"
+#elif defined(STM32G4)
+#	include "g4xx/system.h"
+#elif defined(STM32F1)
+#	include "f1xx/system.h"
+#else
+#	error Unsupported target MCU
+#endif
 
 
 /// Controls access to the backup domain by the object scope

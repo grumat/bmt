@@ -9,6 +9,31 @@ namespace Gpio
 {
 
 
+/// All possible GPIO peripherals
+enum class Port
+{
+	PA = 0,		///< Port A
+	PB = 1,		///< Port B
+	PC = 2,		///< Port C
+#ifdef GPIOD
+	PD = 3,		///< Port D
+#endif
+#ifdef GPIOE
+	PE = 4,		///< Port E
+#endif
+#ifdef GPIOF
+	PF = 5,		///< Port F
+#endif
+#ifdef GPIOG
+	PG = 6,		///< Port G
+#endif
+#ifdef GPIOH
+	PH = 7,		///< Port H
+#endif
+	kUnusedPort = -1
+};
+
+
 /// GPIO pin mode of operation
 enum class Mode
 {
