@@ -791,7 +791,7 @@ typedef Floating<Port::PA, 12, AfNoRemap>		USB_DP_PA12;
 /// A generic configuration to map TAMPER-RTC on PC13 pin
 typedef AnyAltOutPP<Port::PC, 13, AfNoRemap>	TAMPER_RTC_PC13;
 /// A generic configuration to map OSC32_IN on PC14 pin
-typedef Floating<Port::PC, 14, AfNoRemap>	OSC32_IN_PC14;
+typedef Floating<Port::PC, 14, AfNoRemap>		OSC32_IN_PC14;
 /// A generic configuration to map OSC32_OUT on PC15 pin
 typedef AnyAltOutPP<Port::PC, 15, AfNoRemap>	OSC32_OUT_PC15;
 
@@ -799,9 +799,59 @@ typedef AnyAltOutPP<Port::PC, 15, AfNoRemap>	OSC32_OUT_PC15;
 // SYS
 //////////////////////////////////////////////////////////////////////
 /// A generic configuration to map MCO on PA8 pin
-typedef AnyAltOut<Port::PA, 8, AfNoRemap>	MCO_PA8;
-/// A generic configuration to map TRACESWO on PB3 pin
-typedef AnyAltOut<Port::PB, 3, AfNoRemap>	TRACESWO_PB3;
+typedef AnyAltOutPP<Port::PA, 8, AfNoRemap>	MCO_PA8;
+
+//////////////////////////////////////////////////////////////////////
+// JTAG 5 pins
+// All pins configured as input, since AF register captures all GPIO 
+// functionality
+//////////////////////////////////////////////////////////////////////
+/// A generic configuration to map JTMS on PA13 pin (full JTAG port)
+typedef Floating<Port::PA, 13, AfJtag5>	JTMS_FULL_PA13;
+/// A generic configuration to map JTMS on PA14 pin (full JTAG port)
+typedef Floating<Port::PA, 14, AfJtag5>	JTCK_FULL_PA14;
+/// A generic configuration to map JTMS on PA15 pin (full JTAG port)
+typedef Floating<Port::PA, 15, AfJtag5>	JTDI_FULL_PA15;
+/// A generic configuration to map JTMS on PB3 pin (full JTAG port)
+typedef Floating<Port::PB, 3, AfJtag5>	JTDO_FULL_PB3;
+/// A generic configuration to map JTMS on PB4 pin (full JTAG port)
+typedef Floating<Port::PB, 4, AfJtag5>	JNTRST_FULL_PB4;
+
+//////////////////////////////////////////////////////////////////////
+// JTAG 4 pins
+// All pins configured as input, since AF register captures all GPIO 
+// functionality
+//////////////////////////////////////////////////////////////////////
+/// A generic configuration to map JTMS on PA13 pin (4-pin JTAG port)
+typedef Floating<Port::PA, 13, AfJtag4>	JTMS_PA13;
+/// A generic configuration to map JTCK on PA14 pin (4-pin JTAG port)
+typedef Floating<Port::PA, 14, AfJtag4>	JTCK_PA14;
+/// A generic configuration to map JTCK on PA15 pin (4-pin JTAG port)
+typedef Floating<Port::PA, 15, AfJtag4>	JTDI_PA15;
+/// A generic configuration to map JTCK on PA15 pin (4-pin JTAG port)
+typedef Floating<Port::PB, 3, AfJtag4>	JTDO_PB3;
+
+//////////////////////////////////////////////////////////////////////
+// SWD 3 pins
+// All pins configured as input, since AF register captures all GPIO 
+// functionality
+//////////////////////////////////////////////////////////////////////
+/// A generic configuration to map SWDIO on PA13 pin (full SWD port)
+typedef Floating<Port::PA, 13, AfSwd3>	SWDIO_FULL_PA13;
+/// A generic configuration to map SWCLK on PA14 pin (full SWD port)
+typedef Floating<Port::PA, 14, AfSwd3>	SWCLK_FULL_PA14;
+/// A generic configuration to map TRACESWO on PB3 pin (full SWD port)
+typedef Floating<Port::PB, 3, AfSwd3>	TRACESWO_PB3;
+
+//////////////////////////////////////////////////////////////////////
+// SWD 2 pins
+// All pins configured as input, since AF register captures all GPIO 
+// functionality
+//////////////////////////////////////////////////////////////////////
+/// A generic configuration to map SWDIO on PA13 pin (full SWD port)
+typedef Floating<Port::PA, 13, AfSwd2>	SWDIO_PA13;
+/// A generic configuration to map SWCLK on PA14 pin (full SWD port)
+typedef Floating<Port::PA, 14, AfSwd2>	SWCLK_PA14;
 
 
 }	// namespace Gpio

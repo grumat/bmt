@@ -419,20 +419,26 @@ public:
 			break;
 		}
 		// Microcontroller clock output
-		tmp |= uint32_t(kClockOut);
+		tmp |= uint32_t(kMco_);
 		// Set to lowest USB clock possible
 		tmp |= RCC_CFGR_USBPRE;
 		// Clock source
 		if (ClockSource::kClockSource_ == Id::kHSE)
 			tmp |= RCC_CFGR_SW_HSE;
+		else if(ClockSource::kClockSource_ == Id::kHSI)
+			tmp |= RCC_CFGR_SW_HSI;
 		else if(ClockSource::kClockSource_ == Id::kPLL)
 			tmp |= RCC_CFGR_SW_PLL;
 		// Combine with current contents, preserving PLL bits and apply
-		RCC->CFGR = tmp | (RCC->CFGR & ~(RCC_CFGR_PLLSRC_Msk | RCC_CFGR_PLLXTPRE_Msk | RCC_CFGR_PLLMULL_Msk));
+		RCC->CFGR = tmp | (RCC->CFGR & ~(RCC_CFGR_SW_Msk | RCC_CFGR_HPRE_Msk | RCC_CFGR_PPRE1_Msk | RCC_CFGR_PPRE2_Msk | RCC_CFGR_ADCPRE_Msk | RCC_CFGR_USBPRE_Msk | RCC_CFGR_MCO_Msk));
 		// Wait clock source settle
 		if (ClockSource::kClockSource_ == Id::kHSE)
 		{
 			while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSE) ;
+		}
+		else if(ClockSource::kClockSource_ == Id::kHSI)
+		{
+			while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) ;
 		}
 		else if(ClockSource::kClockSource_ == Id::kPLL)
 		{

@@ -21,7 +21,7 @@ enum class Impl
 /// Private template definition, for internal use only
 template<
 	const Impl kImpl							///< Behavior of this implementation
-	, const Port kPort					///< The GPIO port
+	, const Port kPort							///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, const Mode kMode = Mode::kInput			///< Mode to configure the port
 	, const Speed kSpeed = Speed::kInput		///< Speed for the pin
@@ -50,29 +50,31 @@ public:
 	static constexpr bool kIsInput_ = kMode_ == Mode::kInput || kMode_ == Mode::kAnalog;
 	/// Configuration register combo
 	static constexpr uint8_t kCrBits_ = 
-		kIsInput_					? 0b0000 
-		: kSpeed_ == Speed::kFast	? 0b0011 
-		: kSpeed_ == Speed::kMedium	? 0x0001 
-									: 0b0010
-		|
-		kIsInput_ && kPuPd_ == PuPd::kFloating			? 0b0100
-		: kIsInput_ && kPuPd_ != PuPd::kFloating		? 0b1000
-		: !kIsInput_ && kMode_ == Mode::kOpenDrain		? 0b0100
-		: !kIsInput_ && kMode_ == Mode::kAlternate		? 0b1000
-		: !kIsInput_ && kMode_ == Mode::kOpenDrainAlt	? 0b1100
-														: 0b0000
+		(
+			kIsInput_ ? 0b0000
+			: kSpeed_ >= Speed::kFast ? 0b0011
+			: kSpeed_ == Speed::kMedium ? 0x0001
+			: 0b0010
+		) + (
+			kMode_ == Mode::kOpenDrain								? 0b0100
+			: kMode_ == Mode::kAlternate							? 0b1000
+			: kMode_ == Mode::kOpenDrainAlt							? 0b1100
+			: kMode_ == Mode::kInput && kPuPd_ == PuPd::kFloating	? 0b0100
+			: kMode_ == Mode::kInput								? 0b1000
+																	: 0b0000
+		)
 		;
 	/// Constant value for CRL hardware register
 	static constexpr uint32_t kCRL_ = kPin >= 8 || (kImpl == Impl::kUnchanged) ? 0UL
 		: kCrBits_ << (kPin_ << 2);
 	/// Constant mask value for CRL hardware register
-	static constexpr uint32_t kCRL_Mask_ = (kImpl == Impl::kUnchanged) ? 0UL
+	static constexpr uint32_t kCRL_Mask_ = (kImpl == Impl::kUnchanged) ? ~0UL
 		: ~(kPin < 8 ? 0x0FUL << (kPin << 2) : 0UL);
 	/// Constant value for CRH hardware register
 	static constexpr uint32_t kCRH_ = kPin < 8 || (kImpl == Impl::kUnchanged) ? 0UL
 		: kCrBits_ << ((kPin - 8) << 2);
 	/// Constant mask value for CRH hardware register
-	static constexpr uint32_t kCRH_Mask_ = (kImpl == Impl::kUnchanged) ? 0UL
+	static constexpr uint32_t kCRH_Mask_ = (kImpl == Impl::kUnchanged) ? ~0UL
 		: ~(kPin >= 8 ? 0x0FUL << ((kPin - 8) << 2) : 0UL);
 	/// Effective bit constant value
 	static constexpr uint16_t kBitValue_ = (kImpl != Impl::kNormal) ? 0
@@ -81,7 +83,9 @@ public:
 	static constexpr uint32_t kBsrrValue_ = (kImpl != Impl::kNormal) ? 0
 		: 1 << (kPin + 16);
 	/// Constant for the initial bit level
-	static constexpr uint32_t kODR_ = (kImpl != Impl::kUnchanged) ? 0
+	static constexpr uint32_t kODR_ = (kImpl == Impl::kUnchanged) ? 0
+		: (kImpl == Impl::kUnused) ? uint32_t(kPuPd_ == PuPd::kPullUp) << kPin
+		: (kMode_ == Mode::kInput) ? uint32_t(kPuPd_ == PuPd::kPullUp) << kPin
 		: uint32_t(kLevel) << kPin;
 	/// Alternate Function configuration constant
 	static constexpr uint32_t kAfConf_ = (kImpl == Impl::kNormal)
@@ -118,12 +122,8 @@ public:
 		{
 			SetupPinMode();
 			Map::Enable();
-			if (kIsInput_ && kPuPd_ == PuPd::kPullUp)
-				Set(true);
-			else if (kIsInput_ && kPuPd_ == PuPd::kPullDown)
-				Set(false);
-			else if(!kIsInput_)
-				Set(uint32_t(kLevel) != 0);
+			volatile GPIO_TypeDef* port = Io();
+			port->ODR = (port->ODR & ~kBitValue_) | kODR_;
 		}
 	}
 	/// Apply a custom configuration to the pin
@@ -135,17 +135,19 @@ public:
 			const bool is_input = mode == Mode::kInput || mode == Mode::kAnalog;
 			/// Configuration register combo
 			const uint32_t cr_bits =
-				is_input ? 0b0000
-				: speed == Speed::kFast ? 0b0011
-				: speed == Speed::kMedium ? 0x0001
-				: 0b0010
-				|
-				is_input && pupd == PuPd::kFloating ? 0b0100
-				: is_input && pupd != PuPd::kFloating ? 0b1000
-				: !is_input && mode == Mode::kOpenDrain ? 0b0100
-				: !is_input && mode == Mode::kAlternate ? 0b1000
-				: !is_input && mode == Mode::kOpenDrainAlt ? 0b1100
-				: 0b0000
+				(
+					is_input ? 0b0000
+					: speed == Speed::kFast 	? 0b0011
+					: speed == Speed::kMedium 	? 0x0001
+												: 0b0010
+				) + (
+					mode == Mode::kOpenDrain 			? 0b0100
+					: mode == Mode::kAlternate 			? 0b1000
+					: mode == Mode::kOpenDrainAlt 		? 0b1100
+					: mode == Mode::kInput && pupd == PuPd::kFloating ? 0b0100
+					: mode == Mode::kInput				? 0b1000
+														: 0b0000
+				)
 				;
 			volatile GPIO_TypeDef* port = Io();
 			/// Pin number defines if CRL or CRH is used
@@ -275,12 +277,12 @@ public:
 */
 template<
 	const Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, const Mode kMode = Mode::kInput			///< Mode to configure the port
-	, const Speed kSpeed = Speed::kInput		///< Speed for the pin
-	, const PuPd kPuPd = PuPd::kFloating		///< Additional pin configuration (applies to input pin)
+	, const uint8_t kPin					///< The pin of the port
+	, const Mode kMode = Mode::kInput		///< Mode to configure the port
+	, const Speed kSpeed = Speed::kInput	///< Speed for the pin
+	, const PuPd kPuPd = PuPd::kFloating	///< Additional pin configuration (applies to input pin)
 	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
-	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
 class AnyPin : public Private::Implementation_<
 	Private::Impl::kNormal
@@ -315,7 +317,7 @@ class Unused : public Private::Implementation_
 
 /// A template pin configuration for a pin that should not be affected
 template<
-	const uint8_t kPin		///< Pin number is required
+	const uint8_t kPin						///< Pin number is required
 >
 class Unchanged : public Private::Implementation_
 	<
@@ -330,8 +332,8 @@ class Unchanged : public Private::Implementation_
 //! Template for input pins
 template<
 	const Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+	, const uint8_t kPin					///< The pin of the port
+	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
 class AnyAnalog : public Private::Implementation_<
 	Private::Impl::kNormal
@@ -401,7 +403,7 @@ class AnyInPd : public AnyIn<kPort, kPin, PuPd::kPullDown, Map>
 
 //! Template for output pins
 template<
-	const Port kPort						///< The GPIO port
+	const Port kPort							///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
@@ -424,6 +426,42 @@ private:
 	{
 		static_assert(kMode >= Mode::kOutput, "template requires an output pin configuration");
 	}
+};
+
+
+//! Template for fast output pins at logic level low
+template<
+	const Port kPort							///< The GPIO port
+	, const uint8_t kPin						///< The pin of the port
+	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+>
+class AnyFastOut0 : public AnyOut<
+	kPort
+	, kPin
+	, Speed::kFast
+	, Level::kLow
+	, Mode::kOutput
+	, Map
+>
+{
+};
+
+
+//! Template for fast output pins at logic level hi
+template<
+	const Port kPort							///< The GPIO port
+	, const uint8_t kPin						///< The pin of the port
+	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+>
+class AnyFastOut1 : public AnyOut<
+	kPort
+	, kPin
+	, Speed::kFast
+	, Level::kHigh
+	, Mode::kOutput
+	, Map
+>
+{
 };
 
 
