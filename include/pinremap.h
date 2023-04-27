@@ -20,9 +20,9 @@ template<
 struct AnyAFR
 {
 	/// A constant defining the bits that are set for the specific configuration
-	static constexpr uint32_t kConf = CONF;
+	static constexpr uint32_t kConf_ = CONF;
 	/// A constant defining the mask to clear the specific configuration
-	static constexpr uint32_t kMask = MASK;
+	static constexpr uint32_t kMask_ = MASK;
 	/// A constant indicating a bogus configuration used as conditional compilation
 	static constexpr bool kNoRemap = (CONF == 0x00000000UL) && (MASK == 0xFFFFFFFFUL);
 
@@ -30,13 +30,13 @@ struct AnyAFR
 	ALWAYS_INLINE static void Enable(void)
 	{
 		if (kNoRemap == false)
-			AFIO->MAPR = (AFIO->MAPR & MASK) | CONF;
+			AFIO->MAPR = (AFIO->MAPR & kMask_) | kConf_;
 	}
 	/// Disables the alternate function
 	ALWAYS_INLINE static void Disable(void)
 	{
 		if (kNoRemap == false)
-			AFIO->MAPR = AFIO->MAPR & MASK;
+			AFIO->MAPR = AFIO->MAPR & kMask_;
 	}
 };
 

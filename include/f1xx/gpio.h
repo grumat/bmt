@@ -89,13 +89,10 @@ public:
 		: uint32_t(kLevel) << kPin;
 	/// Alternate Function configuration constant
 	static constexpr uint32_t kAfConf_ = (kImpl == Impl::kNormal)
-		? Map::kConf : 0x00000000U;
+		? Map::kConf_ : 0x00000000U;
 	/// Alternate Function configuration mask constant (inverted)
 	static constexpr uint32_t kAfMask_ = (kImpl == Impl::kNormal)
-		? Map::kMask : 0xFFFFFFFFU;
-	/// Constant Flag indicating that no Alternate Function is required
-	static constexpr bool kAfDisabled_ = (kImpl == Impl::kNormal) 
-		? Map::kNoRemap : true;
+		? Map::kMask_ : 0xFFFFFFFFU;
 	/// Constant flag to indicate that a bit is not used for a particular configuration
 	static constexpr bool kIsUnused_ = (kImpl != Impl::kNormal);
 
@@ -624,7 +621,7 @@ public:
 	/// The base address for the GPIO peripheral registers
 	static constexpr uint32_t kPortBase_ = (GPIOA_BASE + uint32_t(kPort_) * 0x400);
 	/// Combined constant value for CRL hardware register
-	static constexpr uint32_t kCrl_ =
+	static constexpr uint32_t kCRL_ =
 		Pin0::kCRL_ | Pin1::kCRL_
 		| Pin2::kCRL_ | Pin3::kCRL_
 		| Pin4::kCRL_ | Pin5::kCRL_
@@ -635,7 +632,7 @@ public:
 		| Pin14::kCRL_ | Pin15::kCRL_
 		;
 	/// Combined constant mask value for CRL hardware register
-	static constexpr uint32_t kCrlMask_ =
+	static constexpr uint32_t kCRL_Mask_ =
 		Pin0::kCRL_Mask_ & Pin1::kCRL_Mask_
 		& Pin2::kCRL_Mask_ & Pin3::kCRL_Mask_
 		& Pin4::kCRL_Mask_ & Pin5::kCRL_Mask_
@@ -646,7 +643,7 @@ public:
 		& Pin14::kCRL_Mask_ & Pin15::kCRL_Mask_
 		;
 	/// Combined constant value for CRH hardware register (negative logic)
-	static constexpr uint32_t kCrh_ =
+	static constexpr uint32_t kCRH_ =
 		Pin0::kCRH_ | Pin1::kCRH_
 		| Pin2::kCRH_ | Pin3::kCRH_
 		| Pin4::kCRH_ | Pin5::kCRH_
@@ -657,7 +654,7 @@ public:
 		| Pin14::kCRH_ | Pin15::kCRH_
 		;
 	/// Combined constant mask value for CRH hardware register
-	static constexpr uint32_t kCrhMask_ =
+	static constexpr uint32_t kCRH_Mask_ =
 		Pin0::kCRH_Mask_ & Pin1::kCRH_Mask_
 		& Pin2::kCRH_Mask_ & Pin3::kCRH_Mask_
 		& Pin4::kCRH_Mask_ & Pin5::kCRH_Mask_
@@ -668,7 +665,7 @@ public:
 		& Pin14::kCRH_Mask_ & Pin15::kCRH_Mask_
 		;
 	/// Constant for the initial bit level
-	static constexpr uint32_t kOdr_ =
+	static constexpr uint32_t kODR_ =
 		Pin0::kODR_ | Pin1::kODR_
 		| Pin2::kODR_ | Pin3::kODR_
 		| Pin4::kODR_ | Pin5::kODR_
@@ -702,25 +699,14 @@ public:
 		;
 	/// Combined Alternate Function configuration mask constant (inverted)
 	static constexpr uint32_t kAfMask_ =
-		Pin0::kAfMask_ | Pin1::kAfMask_
-		| Pin2::kAfMask_ | Pin3::kAfMask_
-		| Pin4::kAfMask_ | Pin5::kAfMask_
-		| Pin6::kAfMask_ | Pin7::kAfMask_
-		| Pin8::kAfMask_ | Pin9::kAfMask_
-		| Pin10::kAfMask_ | Pin11::kAfMask_
-		| Pin12::kAfMask_ | Pin13::kAfMask_
-		| Pin14::kAfMask_ | Pin15::kAfMask_
-		;
-	/// Combined constant Flag indicating that no Alternate Function is required
-	static constexpr bool kAfDisabled_ =
-		Pin0::kAfDisabled_ & Pin1::kAfDisabled_
-		& Pin2::kAfDisabled_ & Pin3::kAfDisabled_
-		& Pin4::kAfDisabled_ & Pin5::kAfDisabled_
-		& Pin6::kAfDisabled_ & Pin7::kAfDisabled_
-		& Pin8::kAfDisabled_ & Pin9::kAfDisabled_
-		& Pin10::kAfDisabled_ & Pin11::kAfDisabled_
-		& Pin12::kAfDisabled_ & Pin13::kAfDisabled_
-		& Pin14::kAfDisabled_ & Pin15::kAfDisabled_
+		Pin0::kAfMask_ & Pin1::kAfMask_
+		& Pin2::kAfMask_ & Pin3::kAfMask_
+		& Pin4::kAfMask_ & Pin5::kAfMask_
+		& Pin6::kAfMask_ & Pin7::kAfMask_
+		& Pin8::kAfMask_ & Pin9::kAfMask_
+		& Pin10::kAfMask_ & Pin11::kAfMask_
+		& Pin12::kAfMask_ & Pin13::kAfMask_
+		& Pin14::kAfMask_ & Pin15::kAfMask_
 		;
 
 	/// Access to the hardware IO data structure
@@ -765,18 +751,16 @@ public:
 			, "Inconsistent pin position"
 			);
 
-		// Apply Alternate Function configuration
-		AnyAFR<kAfConf_, kAfMask_>::Enable();
 		// Base address of the peripheral registers
-		volatile GPIO_TypeDef &port = Io();
 		// Don't turn alternate function clock on if not required
-		if(kAfDisabled_)
+		if (~kAfMask_ == 0)
 			RCC->APB2ENR |= (1 << (uint32_t(kPort_) + RCC_APB2ENR_IOPAEN_Pos));
 		else
 			RCC->APB2ENR |= (1 << (uint32_t(kPort_) + RCC_APB2ENR_IOPAEN_Pos)) | RCC_APB2ENR_AFIOEN;
-		port.CRL = kCrl_;
-		port.CRH = kCrh_;
-		port.ODR = kOdr_;
+		// Apply Alternate Function configuration
+		AnyAFR<kAfConf_, kAfMask_>::Enable();
+		// Apply
+		Enable();
 	}
 	//! Apply state of pin group merging with previous GPI contents
 	constexpr static void Enable(void)
@@ -785,9 +769,18 @@ public:
 		AnyAFR<kAfConf_, kAfMask_>::Enable();
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
-		port.CRL = (port.CRL & kCrlMask_) | kCrl_;
-		port.CRH = (port.CRH & kCrhMask_) | kCrh_;
-		port.ODR = (port.ODR & ~kBitValue_) | kOdr_;
+		if (kCRL_Mask_ == 0)
+			port.CRL = kCRL_;
+		else
+			port.CRL = (port.CRL & kCRL_Mask_) | kCRL_;
+		if (kCRH_Mask_ == 0)
+			port.CRH = kCRH_;
+		else
+			port.CRH = (port.CRH & kCRH_Mask_) | kCRH_;
+		if (~kBitValue_ == 0)
+			port.ODR = kODR_;
+		else
+			port.ODR = (port.ODR & ~kBitValue_) | kODR_;
 	}
 	//! Not an ideal approach, but float everything
 	constexpr static void Disable(void)
