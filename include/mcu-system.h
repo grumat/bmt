@@ -60,17 +60,6 @@ public:
 };
 
 
-#if defined(STM32L4)
-#	include "l4xx/system.h"
-#elif defined(STM32G4)
-#	include "g4xx/system.h"
-#elif defined(STM32F1)
-#	include "f1xx/system.h"
-#else
-#	error Unsupported target MCU
-#endif
-
-
 /// Controls access to the backup domain by the object scope
 /*!
 Backup domain register is protected. This class disables this protection
@@ -113,5 +102,15 @@ ALWAYS_INLINE void ASSERT(bool expr) { if (expr == false) McuCore::Abort(); }
 ALWAYS_INLINE void ASSERT(bool expr) {}
 #endif
 
-
 }	// namespace Bmt
+
+
+#if defined(STM32L4)
+#	include "l4xx/system.h"
+#elif defined(STM32G4)
+#	include "g4xx/system.h"
+#elif defined(STM32F1)
+#	include "f1xx/system.h"
+#else
+#	error Unsupported target MCU
+#endif

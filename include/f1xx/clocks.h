@@ -183,18 +183,35 @@ enum class AdcPrscl : uint8_t
 	k8 = 8,			///< Divide clock by 8
 };
 
+enum class SysClkOpts : uint32_t
+{
+	kDefault 	= 0,		//! Default options
+	kNoHsiOff 	= 0b0001,	//!< HSI clock is not turned off after setting up new clock
+	kFreqDown 	= 0b0010,	//!< Indicates that the final frequency will be reduced, to
+							//!< accomodate wait state calculation accordingly
+	kUsbClock 	= 0b0100,	//!< Setup USB clock flag
+};
+static constexpr SysClkOpts operator | (SysClkOpts o1, SysClkOpts o2)
+{
+	return SysClkOpts((uint32_t)o1 | (uint32_t)o2);
+}
+static constexpr SysClkOpts operator & (SysClkOpts o1, SysClkOpts o2)
+{
+	return SysClkOpts((uint32_t)o1 & (uint32_t)o2);
+}
+
 /*!
 A class to setup System Clock. Please check the clock tree @RM0008 (r21-Fig.8).
 STM32F10x allows System Clocks sourced from HSI, HSE or PLL only.
 */
 template<
-	typename ClockSource = AnyHsi<>				///< New clock source for System
-	, const AhbPrscl kAhbPrs = AhbPrscl::k1		///< AHB bus prescaler
-	, const ApbPrscl kApb1Prs = ApbPrscl::k2	///< APB1 bus prescaler
-	, const ApbPrscl kApb2Prs = ApbPrscl::k1	///< APB2 bus prescaler
-	, const AdcPrscl kAdcPrs = AdcPrscl::k8		///< ADC prescaler factor
-	, const bool kHsiRcOff = true				///< Init() disables HSI, if not current clock source
-	, const Mco kClockOut = Mco::kOff			///< Turn MCU clock output on (it does not enable external pin)
+	typename ClockSource = AnyHsi<>					///< New clock source for System
+	, const AhbPrscl kAhbPrs = AhbPrscl::k1			///< AHB bus prescaler
+	, const ApbPrscl kApb1Prs = ApbPrscl::k2		///< APB1 bus prescaler
+	, const ApbPrscl kApb2Prs = ApbPrscl::k1		///< APB2 bus prescaler
+	, const AdcPrscl kAdcPrs = AdcPrscl::k8			///< ADC prescaler factor
+	, const SysClkOpts kOpts = SysClkOpts::kDefault	///< See enum above
+	, const Mco kClockOut = Mco::kOff				///< Turn MCU clock output on (it does not enable external pin)
 	>
 class AnySycClk
 {
@@ -215,6 +232,11 @@ public:
 	static constexpr uint32_t kAdc_ = kAhbClock_ / uint32_t(kAdcPrs);
 	/// Clock output mode
 	static constexpr Mco kMco_ = kClockOut;
+	/// Options used for the setup
+	static constexpr SysClkOpts kOpts_ = kOpts;
+	/// Clock required by the USB peripheral
+	static constexpr uint32_t kUsbClock_ = (kOpts_ & SysClkOpts::kUsbClock) == SysClkOpts::kUsbClock
+		? 48000000UL : 0UL;
 
 	/// Starts associated oscillator, initializes clock tree prescalers and use oscillator for system clock
 	constexpr static void Init(void)
@@ -225,7 +247,7 @@ public:
 		Enable();
 		// Disabling HSI if setting up a System clock source
 		if (
-			kHsiRcOff 
+			(kOpts_ & SysClkOpts::kNoHsiOff) == SysClkOpts::kDefault
 			&& (ClockSource::kClockSource_ == Id::kHSE
 				|| (ClockSource::kClockSource_ == Id::kPLL
 					&& ClockSource::kClockInput_ != Id::kHSI)
@@ -306,23 +328,19 @@ public:
 			kApb2Clock_ <= 72000000UL
 			, "APB2 divisor is overclocked"
 			);
+		// USB mode restricts PLL configuration severily
+		static_assert(
+			(kOpts_ & SysClkOpts::kUsbClock) == SysClkOpts::kDefault
+			|| kFrequency_ == 3 * kUsbClock_ / 2
+			|| kFrequency_ == kUsbClock_
+			, "USB clock imposes PLL clock of 48 or 72 MHz."
+			);
 
-		uint32_t tmp;	// reset value
-		// Flash memory
-		if (kFrequency_ > 48000000UL)
-			tmp = FLASH_ACR_LATENCY_2 | FLASH_ACR_PRFTBE;
-		else if (kFrequency_ > 24000000UL)
-			tmp = FLASH_ACR_LATENCY_1 | FLASH_ACR_PRFTBE;
-		else
-			tmp = FLASH_ACR_PRFTBE;
-		// Is Flash half cycle access possible?
-		if (kFrequency_ <= 8000000UL
-			&& ClockSource::kClockSource_ != Id::kPLL )
-		{
-			tmp |= FLASH_ACR_HLFCYA;
-		}
-		// Apply
-		FLASH->ACR = tmp;
+		// When increasing frequency apply wait state before setting clock, to avoid crash
+		if ((kOpts_ & SysClkOpts::kFreqDown) == SysClkOpts::kDefault)
+			System::WaitState < kFrequency_, ClockSource::kClockSource_ == Id::kPLL>::Setup();
+
+		uint32_t tmp;
 		// Load state to register and clear all bits handled here
 		// AHB
 		switch (kAhbPrs)
@@ -420,8 +438,6 @@ public:
 		}
 		// Microcontroller clock output
 		tmp |= uint32_t(kMco_);
-		// Set to lowest USB clock possible
-		tmp |= RCC_CFGR_USBPRE;
 		// Clock source
 		if (ClockSource::kClockSource_ == Id::kHSE)
 			tmp |= RCC_CFGR_SW_HSE;
@@ -429,6 +445,9 @@ public:
 			tmp |= RCC_CFGR_SW_HSI;
 		else if(ClockSource::kClockSource_ == Id::kPLL)
 			tmp |= RCC_CFGR_SW_PLL;
+		// Select prescaler to obtain 48 Mhz for USB device when PLL is 48 MHz
+		if (kFrequency_ == kUsbClock_)
+			tmp |= RCC_CFGR_USBPRE;
 		// Combine with current contents, preserving PLL bits and apply
 		RCC->CFGR = tmp | (RCC->CFGR & ~(RCC_CFGR_SW_Msk | RCC_CFGR_HPRE_Msk | RCC_CFGR_PPRE1_Msk | RCC_CFGR_PPRE2_Msk | RCC_CFGR_ADCPRE_Msk | RCC_CFGR_USBPRE_Msk | RCC_CFGR_MCO_Msk));
 		// Wait clock source settle
@@ -444,53 +463,10 @@ public:
 		{
 			while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) ;
 		}
-	}
-};
 
-
-template<
-	typename ClockSource = AnyHsi<>				//!< New clock source for System
-	, const AhbPrscl kAhbPrs = AhbPrscl::k1		//!< AHB bus prescaler
-	, const ApbPrscl kApb1Prs = ApbPrscl::k2	//!< APB1 bus prescaler
-	, const ApbPrscl kApb2Prs = ApbPrscl::k1	//!< APB2 bus prescaler
-	, const AdcPrscl kAdcPrs = AdcPrscl::k8		//!< ADC prescaler factor
-	, const bool kHsiRcOff = true				//!< Init() disables HSI, if not current clock source
-	, const Mco kClockOut = Mco::kOff			//!< Turn MCU clock output on (it does not enable external pin)
-	>
-class AnyUsbSycClk : public AnySycClk<ClockSource, kAhbPrs, kApb1Prs, kApb2Prs, kAdcPrs, kHsiRcOff, kClockOut>
-{
-public:
-	/// Alias for the Base class
-	typedef AnySycClk<ClockSource, kAhbPrs, kApb1Prs, kApb2Prs, kAdcPrs, kHsiRcOff, kClockOut> super;
-	/// Clock required by the USB peripheral
-	static constexpr uint32_t kUsbClock = 48000000UL;
-	/// Starts associated oscillator, initializes system clock prescalers and use oscillator for system clock
-	constexpr static void Init(void)
-	{
-		super::Init();
-		SetUsbClock();
-	}
-	/// Initializes clock tree prescalers, assuming associated source was already started
-	constexpr static void Enable(void)
-	{
-		super::Enable();
-		SetUsbClock();
-	}
-protected:
-	/// Computes the USB clock
-	constexpr static void SetUsbClock(void)
-	{
-		static_assert
-		(
-			super::kFrequency_ == 3*kUsbClock/2
-			|| super::kFrequency_ == kUsbClock
-			, "USB clock imposes PLL clock of 48 or 72 MHz."
-		);
-		// Select prescaler to obtain 48 Mhz for USB device
-		if (super::kFrequency_ == 3*kUsbClock/2)
-			RCC->CFGR &= ~RCC_CFGR_USBPRE;
-		else if (super::kFrequency_ == kUsbClock)
-			RCC->CFGR |= RCC_CFGR_USBPRE;
+		// When decreasing frequency apply wait state after setting clock
+		if ((kOpts_ & SysClkOpts::kFreqDown) == SysClkOpts::kFreqDown)
+			System::WaitState < kFrequency_, ClockSource::kClockSource_ == Id::kPLL>::Setup();
 	}
 };
 
