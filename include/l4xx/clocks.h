@@ -143,7 +143,7 @@ A class to setup System Clock. Please check the clock tree @RM0008 (r21-Fig.8).
 STM32F10x allows System Clocks sourced from HSI, HSE or PLL only.
 */
 template<
-	typename ClockSource = AnyHsi16<>				///< New clock source for System
+	typename ClockSource = AnyHsi16<>			///< New clock source for System
 	, const Power::Mode	kMode = Power::Mode::kRange1	///< Power mode to use the configuration
 	, const AhbPrscl kAhbPrs = AhbPrscl::k1		///< AHB bus prescaler
 	, const ApbPrscl kApb1Prs = ApbPrscl::k2	///< APB1 bus prescaler
@@ -286,31 +286,31 @@ public:
 		// AHB
 		switch (kAhbPrs)
 		{
-		case 2:
+		case AhbPrscl::k2:
 			tmp = RCC_CFGR_HPRE_DIV2;
 			break;
-		case 4:
+		case AhbPrscl::k4:
 			tmp = RCC_CFGR_HPRE_DIV4;
 			break;
-		case 8:
+		case AhbPrscl::k8:
 			tmp = RCC_CFGR_HPRE_DIV8;
 			break;
-		case 16:
+		case AhbPrscl::k16:
 			tmp = RCC_CFGR_HPRE_DIV16;
 			break;
-		case 64:
+		case AhbPrscl::k64:
 			tmp = RCC_CFGR_HPRE_DIV64;
 			break;
-		case 128:
+		case AhbPrscl::k128:
 			tmp = RCC_CFGR_HPRE_DIV128;
 			break;
-		case 256:
+		case AhbPrscl::k256:
 			tmp = RCC_CFGR_HPRE_DIV256;
 			break;
-		case 512:
+		case AhbPrscl::k512:
 			tmp = RCC_CFGR_HPRE_DIV512;
 			break;
-		case 1:
+		case AhbPrscl::k1:
 		default:
 			tmp = RCC_CFGR_HPRE_DIV1;
 			break;
@@ -318,19 +318,19 @@ public:
 		// APB1
 		switch (kApb1Prs)
 		{
-		case 1:
+		case ApbPrscl::k1:
 			tmp |= RCC_CFGR_PPRE1_DIV1;
 			break;
-		case 2:
+		case ApbPrscl::k2:
 			tmp |= RCC_CFGR_PPRE1_DIV2;
 			break;
-		case 4:
+		case ApbPrscl::k4:
 			tmp |= RCC_CFGR_PPRE1_DIV4;
 			break;
-		case 8:
+		case ApbPrscl::k8:
 			tmp |= RCC_CFGR_PPRE1_DIV8;
 			break;
-		case 16:
+		case ApbPrscl::k16:
 			tmp |= RCC_CFGR_PPRE1_DIV16;
 			break;
 		default:
@@ -339,19 +339,19 @@ public:
 		// APB2
 		switch (kApb2Prs)
 		{
-		case 1:
+		case ApbPrscl::k1:
 			tmp |= RCC_CFGR_PPRE2_DIV1;
 			break;
-		case 2:
+		case ApbPrscl::k2:
 			tmp |= RCC_CFGR_PPRE2_DIV2;
 			break;
-		case 4:
+		case ApbPrscl::k4:
 			tmp |= RCC_CFGR_PPRE2_DIV4;
 			break;
-		case 8:
+		case ApbPrscl::k8:
 			tmp |= RCC_CFGR_PPRE2_DIV8;
 			break;
-		case 16:
+		case ApbPrscl::k16:
 			tmp |= RCC_CFGR_PPRE2_DIV16;
 			break;
 		default:

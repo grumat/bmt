@@ -1,8 +1,5 @@
 #pragma once
 
-#include "mcu-system.h"
-#include "pinremap.h"
-
 namespace Bmt
 {
 namespace Gpio
@@ -77,6 +74,9 @@ enum class Level
 }	// namespace Gpio
 }	// namespace Bmt
 
+
+#	include "mcu-system.h"
+#	include "pinremap.h"
 
 #if defined(STM32L4)
 #	include "l4xx/gpio.h"

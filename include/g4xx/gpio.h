@@ -1,7 +1,5 @@
 #pragma once
 
-#include "mcu-system.h"
-#include "pinremap.h"
 
 namespace Bmt
 {
@@ -17,10 +15,16 @@ enum class Impl
 {
 	kNormal,	///< Normal Pin functionality
 	kUnused,	///< Pin that can be initialized to a passive state, only.
-	kUnchanged,	///< No change allowed (use it to setup a partial group of pins)
+				///< Explicit methods will work.
+	kUnchanged,	///< No change allowed (use it to setup a partial group of pins).
+				///< Any explicit method will be void.
 };
 
 
+/*!
+This implements the "Table 56. Port bit configuration table" for the device.
+Note that "reserved" or "x" states are honored as possible.
+*/
 template<
 	const Impl kImpl							///< Behavior of this implementation
 	, const Gpio::Port kPort					///< The GPIO port
@@ -50,86 +54,109 @@ public:
 	static constexpr bool kIsInput_ = kMode_ == Mode::kInput || kMode_ == Mode::kAnalog;
 	/// Value for MODER without offset
 	static constexpr uint8_t kMODER_Bits_ =
-		kMode_ == Mode::kInput
-			? 0b00
-		: kMode_ == Mode::kOutput || kMode_ == Mode::kOpenDrain
-			? 0b01
-		: kMode_ == Mode::kAlternate || kMode_ == Mode::kOpenDrainAlt
-			? 0b10
-		// Mode::kAnalog
-			: 0b11
+		kMode_ == Mode::kInput				? 0b00
+		: kMode_ == Mode::kOutput			? 0b01
+		: kMode_ == Mode::kOpenDrain		? 0b01
+		: kMode_ == Mode::kAlternate		? 0b10
+		: kMode_ == Mode::kOpenDrainAlt		? 0b10
+		/*kMode_ == Mode::kAnalog*/			: 0b11
 		;
 	/// Constant value for MODER hardware register
-	static constexpr uint32_t kMODER_ = (kImpl == Impl::kUnchanged) ? 0UL
-		: (uint32_t)kMODER_Bits_ << (kPin << 1);
+	static constexpr uint32_t kMODER_ = 
+		(kImpl == Impl::kUnchanged)		? 0UL
+		/*default*/						: (uint32_t)kMODER_Bits_ << (kPin << 1);
 	/// Constant mask value for MODER hardware register
-	static constexpr uint32_t kMODER_Mask_ = (kImpl == Impl::kUnchanged) ? 0UL
-		: ~(0b11UL << (kPin << 1));
+	static constexpr uint32_t kMODER_Mask_ = 
+		(kImpl == Impl::kUnchanged)		? ~0UL
+		/*default*/						: ~(0b11UL << (kPin << 1));
 	/// Constant value for OTYPER hardware register
 	static constexpr uint32_t kOTYPER_ =
-		(kMode_ != Mode::kOpenDrain && kMode_ != Mode::kOpenDrainAlt) || (kImpl == Impl::kUnchanged)
-		? 0UL
-		: (1UL << kPin)
+		kImpl == Impl::kUnchanged		? 0UL
+		: kImpl == Impl::kUnused 		? 0UL
+		: kMode_ == Mode::kInput		? 0UL
+		: kMode_ == Mode::kAnalog		? 0UL
+		: kMode_ == Mode::kOutput		? 0UL
+		: kMode_ == Mode::kAlternate	? 0UL
+		/*all OD outputs*/				: (1UL << kPin)
 		;
 	/// Constant mask for OTYPER hardware register
 	static constexpr uint32_t kOTYPER_Mask_ =
-		kIsInput_ || (kImpl == Impl::kUnchanged)
-		? 0UL
-		: ~(1UL << kPin)
+		kImpl == Impl::kUnchanged	? ~0UL
+		: kImpl == Impl::kUnused 	? ~0UL
+		: kMode_ == Mode::kInput	? ~0UL
+		: kMode_ == Mode::kAnalog	? ~0UL
+		/*all outputs*/				: ~(1UL << kPin)
 		;
 	/// Constant value for OSPEEDR hardware register (no offset)
 	static constexpr uint32_t kOSPEEDR_Bits_ =
-		kSpeed_ == Speed::kFastest ? 0b11UL
-		: kSpeed_ == Speed::kFast ? 0b10UL
-		: kSpeed_ == Speed::kMedium ? 0b01UL
-		: 0b00UL
+		kSpeed_ == Speed::kFastest 		? 0b11UL
+		: kSpeed_ == Speed::kFast 		? 0b10UL
+		: kSpeed_ == Speed::kMedium 	? 0b01UL
+		/*kSpeed_ == Speed::kSlow*/		: 0b00UL
 		;
 	/// Constant value for OSPEEDR hardware register
 	static constexpr uint32_t kOSPEEDR_ = 
-		kIsInput_ || (kImpl == Impl::kUnchanged) 
-		? 0UL
-		: kOSPEEDR_Bits_ << (kPin << 1);
+		kImpl == Impl::kUnchanged	? 0UL
+		: kImpl == Impl::kUnused 	? 0UL
+		: kMode_ == Mode::kInput	? 0UL
+		: kMode_ == Mode::kAnalog	? 0UL
+		/*all outputs*/				: (kOSPEEDR_Bits_ << (kPin << 1))
+		;
 	/// Constant mask value for OSPEEDR hardware register
 	static constexpr uint32_t kOSPEEDR_Mask_ =
-		kIsInput_ || (kImpl == Impl::kUnchanged)
-		? 0UL
-		: ~(0b11UL << (kPin << 1));
+		kImpl == Impl::kUnchanged	? ~0UL
+		: kImpl == Impl::kUnused 	? ~0UL
+		: kMode_ == Mode::kInput	? ~0UL
+		: kMode_ == Mode::kAnalog	? ~0UL
+		/*all outputs*/				: ~(0b11UL << (kPin << 1))
+		;
 	/// Constant value for PUPD hardware register (no offset)
 	static constexpr uint32_t kPUPDR_Bits_ =
-		kMode_ == Mode::kAnalog ? 0UL
-		: kPuPd_ == PuPd::kPullDown ? 0b10UL
-		: kPuPd_ == PuPd::kPullUp ? 0b01UL
-		: 0UL
+		kPuPd_ == PuPd::kPullUp 		? 0b01UL
+		: kPuPd_ == PuPd::kPullDown 	? 0b10UL
+		/*kPuPd_ == PuPd::kFloating*/	: 0b00UL
 		;
 	/// Constant value for PUPD hardware register
 	static constexpr uint32_t kPUPDR_ = 
-		(kImpl != Impl::kUnchanged)
-		? kPUPDR_Bits_ << (kPin << 1)
-		: 0UL;
+		kImpl == Impl::kUnchanged		? 0UL
+		: kMode_ == Mode::kAnalog 		? 0UL
+		/*default*/ 					: kPUPDR_Bits_ << (kPin << 1)
+		;
 	/// Constant mask for PUPD hardware register
 	static constexpr uint32_t kPUPDR_Mask_ = 
-		(kImpl != Impl::kUnchanged)
-		? ~(0b11UL << (kPin << 1))
-		: 0UL;
-	/// Effective bit constant value
-	static constexpr uint16_t kBitValue_ = (kImpl != Impl::kNormal) ? 0
-		: 1 << kPin;
+		kImpl == Impl::kUnchanged	 	? ~0UL
+		/*default*/ 					: ~(0b11UL << (kPin << 1))
+		;
+	/// Effective bit constant value (primarily used as bit-mask)
+	static constexpr uint16_t kBitValue_ = 
+		kImpl == Impl::kUnchanged	 	? 0
+		/*default*/						: 1 << kPin
+		;
 	/// Value that clears the bit on the GPIOx_BSRR register
-	static constexpr uint32_t kBsrrValue_ = (kImpl != Impl::kNormal) ? 0
-		: 1 << (kPin + 16);
+	static constexpr uint32_t kBsrrValue_ = 
+		kImpl == Impl::kUnchanged		? 0UL
+		/*default*/						: 1 << (kPin + 16)
+		;
 	/// Constant for the initial bit level
-	static constexpr uint32_t kODR_ = (kImpl != Impl::kUnchanged) ? 0
-		: uint32_t(kLevel) << kPin;
+	static constexpr uint32_t kODR_ = 
+		(kImpl != Impl::kNormal) 		? 0UL
+		/*normal*/						: uint32_t(kLevel) << kPin
+		;
+	/// Constant to setup ODR
+	static constexpr uint32_t kODR_Mask_ = 
+		(kImpl != Impl::kNormal) 		? ~0UL
+		/*normal*/						: ~(uint32_t(kLevel) << kPin)
+		;
 	/// Alternate Function configuration constant
 	static constexpr uint32_t kAFRL_ = Map::kAFRL_;
 	/// Alternate Function configuration mask constant (inverted)
-	static constexpr uint32_t kAFRL_Mask_ = Map::kAFRL_Mask;
+	static constexpr uint32_t kAFRL_Mask_ = Map::kAFRL_Mask_;
 	/// Alternate Function configuration constant
 	static constexpr uint32_t kAFRH_ = Map::kAFRH_;
 	/// Alternate Function configuration mask constant (inverted)
-	static constexpr uint32_t kAFRH_Mask_ = Map::kAFRH_Mask;
+	static constexpr uint32_t kAFRH_Mask_ = Map::kAFRH_Mask_;
 	/// Constant Flag indicating that no Alternate Function is required
-	static constexpr bool kAfDisabled_ = Map::kNoRemap;
+	static constexpr bool kAfDisabled_ = Map::kNoRemap_;
 	/// Constant flag to indicate that a bit is not used for a particular configuration
 	static constexpr bool kIsUnused_ = (kImpl != Impl::kNormal);
 
@@ -140,24 +167,32 @@ public:
 	constexpr static void SetupPinMode(void)
 	{
 		volatile GPIO_TypeDef *port = Io();
-		if (kMODER_Mask_ != 0UL)
+		if (kMODER_Mask_ != ~0UL)
 			port->MODER = (port->MODER & kMODER_Mask_) | kMODER_;
-		if (kOTYPER_Mask_ != 0UL)
+		if (kOTYPER_Mask_ != ~0UL)
 			port->OTYPER = (port->OTYPER & kOTYPER_Mask_) | kOTYPER_;
-		if (kOSPEEDR_Mask_ != 0UL)
+		if (kOSPEEDR_Mask_ != ~0UL)
 			port->OSPEEDR = (port->OSPEEDR & kOSPEEDR_Mask_) | kOSPEEDR_;
-		if (kPUPDR_Mask_ != 0UL)
+		if (kPUPDR_Mask_ != ~0UL)
 			port->PUPDR = (port->PUPDR & kPUPDR_Mask_) | kPUPDR_;
 	}
+	// Selected alternate function does not match pin. Functionality will break!
+	static_assert(Map::kNoRemap_ || (Map::kPort_ == kPort_ && Map::kPin_ == kPin_), "pin remapping applies to a different pin");
+	// Input pin cannot set a pin speed
+	static_assert(!kIsInput_ || kSpeed_ == Speed::kInput, "Cannot select a speed for input pin");
+	// Pull resistors are not allowed
+	static_assert(kMode_ != Mode::kAnalog || kPuPd_ == PuPd::kFloating, "Pull-up/down not allowed in Analog mode");
+
 	/// Apply default configuration for the pin.
 	constexpr static void Setup(void)
 	{
-		// Selected alternate function does not match pin. Functionality will break!
-		static_assert(Map::kNoRemap || (Map::kPort_ == kPort_ && Map::kBit_ == kPin_));
-
 		SetupPinMode();
-		//Map::Enable();
-		Set(uint32_t(kLevel) != 0);
+		Map::Enable();
+		if (kODR_Mask_ != ~0UL)
+		{
+			volatile GPIO_TypeDef* port = Io();
+			port->ODR = (port->PUPDR & kODR_Mask_) | kODR_;
+		}
 	}
 	/// Apply a custom configuration to the pin
 	constexpr static void Setup(Mode mode, Speed speed, PuPd pupd)
@@ -475,11 +510,7 @@ class AnyOut : public Private::Implementation_<
 	, Map
 >
 {
-private:
-	constexpr void Validate_()
-	{
-		static_assert(kMode >= Mode::kOutput, "template requires an output pin configuration");
-	}
+	static_assert(kMode >= Mode::kOutput, "template requires an output pin configuration");
 };
 
 
@@ -525,11 +556,7 @@ class AnyAltOut : public Private::Implementation_<
 	, Map
 >
 {
-private:
-	constexpr void Validate_()
-	{
-		static_assert(kMode >= Mode::kAlternate, "template requires an alternate output pin configuration");
-	}
+	static_assert(kMode >= Mode::kAlternate, "template requires an alternate output pin configuration");
 };
 
 

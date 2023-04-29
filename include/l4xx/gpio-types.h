@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pinremap.h"
+
 namespace Bmt
 {
 namespace Gpio
