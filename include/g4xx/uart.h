@@ -64,8 +64,8 @@ public:
 	/// Clock register for the particular hardware
 	static constexpr uint32_t kRccUsartFlag_ =
 		(kUsartInstance_ == Usart::k1) ? RCC_APB2ENR_USART1EN
-		: (kUsartInstance_ == Usart::k2) ? RCC_APB1ENR_USART2EN
-		: (kUsartInstance_ == Usart::k3) ? RCC_APB1ENR_USART3EN
+		: (kUsartInstance_ == Usart::k2) ? RCC_APB1ENR1_USART2EN
+		: (kUsartInstance_ == Usart::k3) ? RCC_APB1ENR1_USART3EN
 #ifdef USART4_BASE
 		: (kUsartInstance_ == Usart::k4) ? RCC_APB1ENR_USART4EN
 		: (kUsartInstance_ == Usart::k5) ? RCC_APB1ENR_USART5EN
@@ -126,10 +126,10 @@ public:
 		else
 		{
 			// Enable device
-			RCC->APB1ENR |= kRccUsartFlag_;
+			RCC->APB1ENR1 |= kRccUsartFlag_;
 			// Reset device
-			RCC->APB1RSTR |= kRccUsartFlag_;
-			RCC->APB1RSTR &= ~kRccUsartFlag_;
+			RCC->APB1RSTR1 |= kRccUsartFlag_;
+			RCC->APB1RSTR1 &= ~kRccUsartFlag_;
 			// Baud rate depends on peripheral clock
 			uart.BRR = Clock::kApb1Clock_ / kBaud_;
 		}
@@ -162,14 +162,14 @@ public:
 	/// Enable the peripheral by activating clock
 	ALWAYS_INLINE static void Enable(void)
 	{
-		(kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR) |= kRccUsartFlag_;
-		volatile uint32_t delay = (kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR) & kRccUsartFlag_;
+		(kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR1) |= kRccUsartFlag_;
+		volatile uint32_t delay = (kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR1) & kRccUsartFlag_;
 	}
 
 	/// Turns clock off, disabling the peripheral
 	ALWAYS_INLINE static void Disable(void)
 	{
-		(kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR) &= ~kRccUsartFlag_;
+		(kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR1) &= ~kRccUsartFlag_;
 	}
 
 	/// Enables the TX interrupt
@@ -187,7 +187,7 @@ public:
 	/// Returns the transmit complete flag
 	ALWAYS_INLINE static bool TxComplete(void)
 	{
-		return Io().SR & USART_SR_TC;
+		return Io().ISR & USART_ISR_TC;
 	}
 
 	/// Enables the RX interrupt
@@ -205,13 +205,13 @@ public:
 	/// Clear RX interrupt flag, reenabling the input
 	ALWAYS_INLINE static void ClearRxIrq(void)
 	{
-		Io().SR &= ~USART_SR_RXNE;
+		Io().ISR &= ~USART_ISR_RXNE;
 	}
 	
 	/// Returs error flags
 	ALWAYS_INLINE static uint32_t GetCommStatus()
 	{
-		return Io().SR;
+		return Io().ISR;
 	}
 	
 	ALWAYS_INLINE static uint16_t GetByte(void)
@@ -220,13 +220,13 @@ public:
 		{
 		case 7:
 			// 7-bit frames needs emulation
-			return ((uint8_t &)Io().DR & 0x7f);
+			return ((uint8_t&)Io().RDR & 0x7f);
 		case 8:
 			// Read register as 8 bit
-			return (uint8_t &)Io().DR;
+			return (uint8_t &)Io().RDR;
 		case 9:
 			// Read a 16-bit register
-			return Io().DR;
+			return Io().RDR;
 		}
 	}
 
@@ -237,13 +237,13 @@ public:
 		{
 		case 7:
 			// 7-bit frames needs emulation
-			Io().DR = (uint8_t)(ch | 0x80);
+			Io().RDR = (uint8_t)(ch | 0x80);
 			break;
 		case 8:
-			Io().DR = (uint8_t)ch;
+			Io().RDR = (uint8_t)ch;
 			break;
 		case 9:
-			Io().DR = ch;
+			Io().RDR = ch;
 			break;
 		}
 	}
@@ -440,25 +440,25 @@ public:
 		uint32_t status = HwInstance::GetCommStatus();
 		bool xmit = true;
 		// Handle events (unused events are optimized out by the compiler)
-		if((status & USART_SR_PE))
+		if((status & USART_ISR_PE))
 			xmit &= events_.OnParityError();
-		if ((status & USART_SR_FE))
+		if ((status & USART_ISR_FE))
 			xmit &= events_.OnFramingError();
-		if ((status & USART_SR_NE))
+		if ((status & USART_ISR_NE))
 			xmit &= events_.OnNoise();
-		if ((status & USART_SR_ORE))
+		if ((status & USART_ISR_ORE))
 			xmit &= events_.OnOverrun();
-		if ((status & USART_SR_IDLE))
+		if ((status & USART_ISR_IDLE))
 			xmit &= events_.OnIdle();
-		if ((status & USART_SR_LBD))
+		if ((status & USART_ISR_SBKF))
 			xmit &= events_.OnBreak();
-		if ((status & USART_SR_CTS))
+		if ((status & USART_ISR_CTS))
 			xmit &= events_.OnCts();
 		// Receive chars
-		if(status & USART_SR_RXNE)
+		if(status & USART_ISR_RXNE)
 			xmit &= events_.OnCharReceived();
 		// Transmit bytes (if allowed by upper logic)
-		if(xmit && (status & USART_SR_TXE))
+		if(xmit && (status & USART_ISR_TXE))
 			events_.OnXmitChar();
 	}
 };

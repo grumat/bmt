@@ -517,19 +517,19 @@ public:
 			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
 			break;
 		case Tim::k2:
-			RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-			RCC->APB1RSTR |= RCC_APB1RSTR_TIM2RST;
-			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM2RST;
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+			RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM2RST;
+			RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM2RST;
 			break;
 		case Tim::k3:
-			RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
-			RCC->APB1RSTR |= RCC_APB1RSTR_TIM3RST;
-			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM3RST;
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;
+			RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM3RST;
+			RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM3RST;
 			break;
 		case Tim::k4:
-			RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
-			RCC->APB1RSTR |= RCC_APB1RSTR_TIM4RST;
-			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM4RST;
+			RCC->APB1ENR1 |= RCC_APB1ENR1_TIM4EN;
+			RCC->APB1RSTR1 |= RCC_APB1RSTR1_TIM4RST;
+			RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_TIM4RST;
 			break;
 		}
 		TimeBase::Setup();
@@ -577,9 +577,9 @@ public:
 		switch (BASE::kTimerNum_)
 		{
 		case Tim::k1: RCC->APB2ENR &= ~RCC_APB2ENR_TIM1EN; break;
-		case Tim::k2: RCC->APB1ENR &= ~RCC_APB1ENR_TIM2EN; break;
-		case Tim::k3: RCC->APB1ENR &= ~RCC_APB1ENR_TIM3EN; break;
-		case Tim::k4: RCC->APB1ENR &= ~RCC_APB1ENR_TIM4EN; break;
+		case Tim::k2: RCC->APB1ENR1 &= ~RCC_APB1ENR1_TIM2EN; break;
+		case Tim::k3: RCC->APB1ENR1 &= ~RCC_APB1ENR1_TIM3EN; break;
+		case Tim::k4: RCC->APB1ENR1 &= ~RCC_APB1ENR1_TIM4EN; break;
 		}
 	}
 
@@ -589,7 +589,7 @@ public:
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
 		{
-		case Tim::k1: NVIC_ClearPendingIRQ(TIM1_BRK_IRQn); NVIC_EnableIRQ(TIM1_BRK_IRQn);
+		case Tim::k1: NVIC_ClearPendingIRQ(TIM1_BRK_TIM15_IRQn); NVIC_EnableIRQ(TIM1_BRK_TIM15_IRQn);
 			NVIC_ClearPendingIRQ(TIM1_CC_IRQn); NVIC_EnableIRQ(TIM1_CC_IRQn); break;
 		case Tim::k2: NVIC_ClearPendingIRQ(TIM2_IRQn); NVIC_EnableIRQ(TIM2_IRQn); break;
 		case Tim::k3: NVIC_ClearPendingIRQ(TIM3_IRQn); NVIC_EnableIRQ(TIM3_IRQn); break;
@@ -603,7 +603,7 @@ public:
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
 		{
-		case Tim::k1: NVIC_DisableIRQ(TIM1_BRK_IRQn);
+		case Tim::k1: NVIC_DisableIRQ(TIM1_BRK_TIM15_IRQn);
 			NVIC_DisableIRQ(TIM1_CC_IRQn); break;
 		case Tim::k2: NVIC_DisableIRQ(TIM2_IRQn); break;
 		case Tim::k3:NVIC_DisableIRQ(TIM3_IRQn); break;
