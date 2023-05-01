@@ -135,12 +135,12 @@ public:
 		kImpl == Impl::kUnchanged		? 0UL
 		/*default*/						: 1 << (kPin + 16)
 		;
-	/// Constant for the initial bit level
+	/// Constant to setup ODR
 	static constexpr uint32_t kODR_ = 
 		(kImpl != Impl::kNormal) 		? 0UL
 		/*normal*/						: uint32_t(kLevel) << kPin
 		;
-	/// Constant to setup ODR
+	/// Constant to setup ODR mask
 	static constexpr uint32_t kODR_Mask_ = 
 		(kImpl != Impl::kNormal) 		? ~0UL
 		/*normal*/						: ~(1UL << kPin)
@@ -766,7 +766,7 @@ public:
 		| Pin12::kODR_ | Pin13::kODR_
 		| Pin14::kODR_ | Pin15::kODR_
 		;
-	/// Combined constant mask value for PUPD hardware register
+	/// Combined constant mask value for ODR hardware register
 	static constexpr uint32_t kODR_Mask_ =
 		Pin0::kODR_Mask_ & Pin1::kODR_Mask_
 		& Pin2::kODR_Mask_ & Pin3::kODR_Mask_

@@ -48,6 +48,8 @@ public:
 	static constexpr PuPd kPuPd_ = kPuPd;
 	/// Input function flag
 	static constexpr bool kIsInput_ = kMode_ == Mode::kInput || kMode_ == Mode::kAnalog;
+	/// Input function flag
+	static constexpr bool kIsPuPd_ = kPuPd_ != PuPd::kFloating && (kMode_ == Mode::kInput || kImpl == Impl::kUnused);
 	/// Configuration register combo
 	static constexpr uint8_t kCrBits_ = 
 		(
@@ -56,7 +58,8 @@ public:
 			: kSpeed_ == Speed::kMedium ? 0x0001
 			: 0b0010
 		) + (
-			kMode_ == Mode::kOpenDrain								? 0b0100
+			kImpl == Impl::kUnused 									? 0b1000
+			: kMode_ == Mode::kOpenDrain							? 0b0100
 			: kMode_ == Mode::kAlternate							? 0b1000
 			: kMode_ == Mode::kOpenDrainAlt							? 0b1100
 			: kMode_ == Mode::kInput && kPuPd_ == PuPd::kFloating	? 0b0100
@@ -65,40 +68,69 @@ public:
 		)
 		;
 	/// Constant value for CRL hardware register
-	static constexpr uint32_t kCRL_ = kPin >= 8 || (kImpl == Impl::kUnchanged) ? 0UL
-		: kCrBits_ << (kPin_ << 2);
+	static constexpr uint32_t kCRL_ = 
+		(kImpl == Impl::kUnchanged)	? 0UL
+		: (kPin >= 8)				? 0UL
+		/*default*/					: kCrBits_ << (kPin_ << 2)
+		;
 	/// Constant mask value for CRL hardware register
-	static constexpr uint32_t kCRL_Mask_ = (kImpl == Impl::kUnchanged) ? ~0UL
-		: ~(kPin < 8 ? 0x0FUL << (kPin << 2) : 0UL);
+	static constexpr uint32_t kCRL_Mask_ = 
+		(kImpl == Impl::kUnchanged) ? ~0UL
+		: (kPin >= 8)				? ~0UL
+		/*default*/					: ~(0x0FUL << (kPin << 2))
+		;
 	/// Constant value for CRH hardware register
-	static constexpr uint32_t kCRH_ = kPin < 8 || (kImpl == Impl::kUnchanged) ? 0UL
-		: kCrBits_ << ((kPin - 8) << 2);
+	static constexpr uint32_t kCRH_ = 
+		(kImpl == Impl::kUnchanged)	? 0UL
+		: (kPin < 8)				? 0UL
+		/*default*/					: kCrBits_ << ((kPin - 8) << 2)
+		;
 	/// Constant mask value for CRH hardware register
-	static constexpr uint32_t kCRH_Mask_ = (kImpl == Impl::kUnchanged) ? ~0UL
-		: ~(kPin >= 8 ? 0x0FUL << ((kPin - 8) << 2) : 0UL);
+	static constexpr uint32_t kCRH_Mask_ = 
+		(kImpl == Impl::kUnchanged)	? ~0UL
+		: (kPin < 8)				? ~0UL
+		/*default*/					: ~(0x0FUL << ((kPin - 8) << 2))
+		;
 	/// Effective bit constant value
-	static constexpr uint16_t kBitValue_ = (kImpl != Impl::kNormal) ? 0
-		: 1 << kPin;
+	static constexpr uint16_t kBitValue_ = 
+		(kImpl == Impl::kUnchanged)	? 0UL
+		/*default*/					: 1UL << kPin
+		;
 	/// Value that clears the bit on the GPIOx_BSRR register
-	static constexpr uint32_t kBsrrValue_ = (kImpl != Impl::kNormal) ? 0
-		: 1 << (kPin + 16);
+	static constexpr uint32_t kBsrrValue_ = 
+		(kImpl == Impl::kUnchanged) ? 0UL
+		/*default*/					: 1 << (kPin + 16)
+		;
 	/// Constant for the initial bit level
-	static constexpr uint32_t kODR_ = (kImpl == Impl::kUnchanged) ? 0
-		: (kImpl == Impl::kUnused) ? uint32_t(kPuPd_ == PuPd::kPullUp) << kPin
-		: (kMode_ == Mode::kInput) ? uint32_t(kPuPd_ == PuPd::kPullUp) << kPin
-		: uint32_t(kLevel) << kPin;
+	static constexpr uint16_t kODR_ = 
+		(kImpl == Impl::kUnchanged)	? 0UL
+		: kIsPuPd_					? uint16_t(kPuPd_ == PuPd::kPullUp) << kPin
+		/*output*/					: uint16_t(kLevel) << kPin
+		;
+	/// Constant to setup ODR mask
+	static constexpr uint16_t kODR_Mask_ = 
+		(kImpl == Impl::kUnchanged) ? (uint16_t)0xffff
+		/*normal*/					: (uint16_t)~(1 << kPin)
+		;
 	/// Alternate Function configuration constant
-	static constexpr uint32_t kAfConf_ = (kImpl == Impl::kNormal)
-		? Map::kConf_ : 0x00000000U;
+	static constexpr uint32_t kAfConf_ = 
+		(kImpl == Impl::kNormal)	? Map::kConf_ 
+		/*no bits*/					: 0x00000000U
+		;
 	/// Alternate Function configuration mask constant (inverted)
-	static constexpr uint32_t kAfMask_ = (kImpl == Impl::kNormal)
-		? Map::kMask_ : 0xFFFFFFFFU;
+	static constexpr uint32_t kAfMask_ = 
+		(kImpl == Impl::kNormal)	? Map::kMask_ 
+		/*no change*/				: 0xFFFFFFFFU
+		;
 	/// Constant flag to indicate that a bit is not used for a particular configuration
 	static constexpr bool kIsUnused_ = (kImpl != Impl::kNormal);
 
-
 	/// Access to the peripheral memory space
 	constexpr static volatile GPIO_TypeDef* Io() { return (volatile GPIO_TypeDef*)kPortBase_; }
+
+	// Pull resistors are not allowed
+	static_assert(kMode_ != Mode::kAnalog || kPuPd_ == PuPd::kFloating, "Pull-up/down not allowed in Analog mode");
+	static_assert(kImpl != Impl::kUnused || kPuPd_ != PuPd::kFloating, "Unused pins should specify PU/PD");
 
 	/// Apply default configuration for the pin.
 	constexpr static void SetupPinMode()
@@ -106,9 +138,9 @@ public:
 		if (kImpl != Impl::kUnchanged)
 		{
 			volatile GPIO_TypeDef* port = Io();
-			if (kPin < 8)
+			if (kCRL_Mask_ != ~0UL)
 				port->CRL = (port->CRL & kCRL_Mask_) | kCRL_;
-			else
+			if (kCRH_Mask_ != ~0UL)
 				port->CRH = (port->CRH & kCRH_Mask_) | kCRH_;
 		}
 	}
@@ -119,8 +151,11 @@ public:
 		{
 			SetupPinMode();
 			Map::Enable();
-			volatile GPIO_TypeDef* port = Io();
-			port->ODR = (port->ODR & ~kBitValue_) | kODR_;
+			if (kODR_Mask_ != (uint16_t)~0U)
+			{
+				volatile GPIO_TypeDef* port = Io();
+				port->ODR = (port->ODR & kODR_Mask_) | kODR_;
+			}
 		}
 	}
 	/// Apply a custom configuration to the pin
@@ -168,7 +203,7 @@ public:
 	/// Sets pin up. The pin will be high as long as it is configured as GPIO output
 	constexpr static void SetHigh(void)
 	{
-		if (kImpl == Impl::kNormal)
+		if (kODR_Mask_ != (uint16_t)~0U)
 		{
 			volatile GPIO_TypeDef* port = Io();
 			port->BSRR = kBitValue_;
@@ -178,7 +213,7 @@ public:
 	/// Sets pin down. The pin will be low as long as it is configured as GPIO output
 	constexpr static void SetLow(void)
 	{
-		if (kImpl == Impl::kNormal)
+		if (kODR_Mask_ != (uint16_t)~0U)
 		{
 			volatile GPIO_TypeDef* port = Io();
 			port->BRR = kBitValue_;
@@ -197,7 +232,7 @@ public:
 	/// Reads current Pin electrical state
 	constexpr static bool Get(void)
 	{
-		if (kImpl == Impl::kNormal)
+		if (kODR_Mask_ != (uint16_t)~0U)
 		{
 			volatile GPIO_TypeDef* port = Io();
 			return (port->IDR & kBitValue_) != 0;
@@ -209,7 +244,7 @@ public:
 	/// Checks if current pin electrical state is high
 	constexpr static bool IsHigh(void)
 	{
-		if (kImpl == Impl::kNormal)
+		if (kODR_Mask_ != (uint16_t)~0U)
 		{
 			volatile GPIO_TypeDef *port = Io();
 			return (port->IDR & kBitValue_) != 0;
@@ -221,7 +256,7 @@ public:
 	/// Checks if current pin electrical state is low
 	constexpr static bool IsLow(void)
 	{
-		if (kImpl == Impl::kNormal)
+		if (kODR_Mask_ != (uint16_t)~0U)
 		{
 			volatile GPIO_TypeDef *port = Io();
 			return (port->IDR & kBitValue_) == 0;
@@ -233,7 +268,7 @@ public:
 	/// Toggles pin state
 	constexpr static void Toggle(void)
 	{
-		if (kImpl == Impl::kNormal)
+		if (kODR_Mask_ != (uint16_t)~0U)
 		{
 			volatile GPIO_TypeDef *port = Io();
 			port->ODR ^= kBitValue_;
@@ -675,6 +710,17 @@ public:
 		| Pin12::kODR_ | Pin13::kODR_
 		| Pin14::kODR_ | Pin15::kODR_
 		;
+	/// Combined constant mask value for ODR hardware register
+	static constexpr uint16_t kODR_Mask_ =
+		Pin0::kODR_Mask_ & Pin1::kODR_Mask_
+		& Pin2::kODR_Mask_ & Pin3::kODR_Mask_
+		& Pin4::kODR_Mask_ & Pin5::kODR_Mask_
+		& Pin6::kODR_Mask_ & Pin7::kODR_Mask_
+		& Pin8::kODR_Mask_ & Pin9::kODR_Mask_
+		& Pin10::kODR_Mask_ & Pin11::kODR_Mask_
+		& Pin12::kODR_Mask_ & Pin13::kODR_Mask_
+		& Pin14::kODR_Mask_ & Pin15::kODR_Mask_
+		;
 	/// Effective combined bit constant value
 	static constexpr uint32_t kBitValue_ =
 		Pin0::kBitValue_ | Pin1::kBitValue_
@@ -712,6 +758,36 @@ public:
 	/// Access to the hardware IO data structure
 	constexpr static volatile GPIO_TypeDef& Io() { return *(volatile GPIO_TypeDef*)kPortBase_; }
 
+		// Compilation will fail here if GPIO port number of pin does not match that of the peripheral!!!
+	static_assert(
+		(Pin0::kPort_ == Port::kUnusedPort || Pin0::kPort_ == kPort_)
+		&& (Pin1::kPort_ == Port::kUnusedPort || Pin1::kPort_ == kPort_)
+		&& (Pin2::kPort_ == Port::kUnusedPort || Pin2::kPort_ == kPort_)
+		&& (Pin3::kPort_ == Port::kUnusedPort || Pin3::kPort_ == kPort_)
+		&& (Pin4::kPort_ == Port::kUnusedPort || Pin4::kPort_ == kPort_)
+		&& (Pin5::kPort_ == Port::kUnusedPort || Pin5::kPort_ == kPort_)
+		&& (Pin6::kPort_ == Port::kUnusedPort || Pin6::kPort_ == kPort_)
+		&& (Pin7::kPort_ == Port::kUnusedPort || Pin7::kPort_ == kPort_)
+		&& (Pin8::kPort_ == Port::kUnusedPort || Pin8::kPort_ == kPort_)
+		&& (Pin9::kPort_ == Port::kUnusedPort || Pin9::kPort_ == kPort_)
+		&& (Pin10::kPort_ == Port::kUnusedPort || Pin10::kPort_ == kPort_)
+		&& (Pin11::kPort_ == Port::kUnusedPort || Pin11::kPort_ == kPort_)
+		&& (Pin12::kPort_ == Port::kUnusedPort || Pin12::kPort_ == kPort_)
+		&& (Pin13::kPort_ == Port::kUnusedPort || Pin13::kPort_ == kPort_)
+		&& (Pin14::kPort_ == Port::kUnusedPort || Pin14::kPort_ == kPort_)
+		&& (Pin15::kPort_ == Port::kUnusedPort || Pin15::kPort_ == kPort_)
+		, "Inconsistent port number"
+		);
+
+	// Compilation will fail here if one GPIO pin number does not match its **position**
+	static_assert(
+		Pin0::kPin_ == 0 && Pin1::kPin_ == 1 && Pin2::kPin_ == 2 && Pin3::kPin_ == 3
+		&& Pin4::kPin_ == 4 && Pin5::kPin_ == 5 && Pin6::kPin_ == 6 && Pin7::kPin_ == 7
+		&& Pin8::kPin_ == 8 && Pin9::kPin_ == 9 && Pin10::kPin_ == 10 && Pin11::kPin_ == 11
+		&& Pin12::kPin_ == 12 && Pin13::kPin_ == 13 && Pin14::kPin_ == 14 && Pin15::kPin_ == 15
+		, "Inconsistent pin position"
+		);
+
 	/// Initialize to GPIO overwriting all previous configuration of the port
 	/// This means that Unchanged<> pins have the same behavior as Unused<>.
 	constexpr static void Init(void)
@@ -720,36 +796,6 @@ public:
 		** Note all constants (i.e. constexpr) are resolved at compile time and unused code is stripped 
 		** out by compiler, even for an unoptimized build.
 		*/
-
-		// Compilation will fail here if GPIO port number of pin does not match that of the peripheral!!!
-		static_assert(
-			(Pin0::kPort_ == Port::kUnusedPort || Pin0::kPort_ == kPort_)
-			&& (Pin1::kPort_ == Port::kUnusedPort || Pin1::kPort_ == kPort_)
-			&& (Pin2::kPort_ == Port::kUnusedPort || Pin2::kPort_ == kPort_)
-			&& (Pin3::kPort_ == Port::kUnusedPort || Pin3::kPort_ == kPort_)
-			&& (Pin4::kPort_ == Port::kUnusedPort || Pin4::kPort_ == kPort_)
-			&& (Pin5::kPort_ == Port::kUnusedPort || Pin5::kPort_ == kPort_)
-			&& (Pin6::kPort_ == Port::kUnusedPort || Pin6::kPort_ == kPort_)
-			&& (Pin7::kPort_ == Port::kUnusedPort || Pin7::kPort_ == kPort_)
-			&& (Pin8::kPort_ == Port::kUnusedPort || Pin8::kPort_ == kPort_)
-			&& (Pin9::kPort_ == Port::kUnusedPort || Pin9::kPort_ == kPort_)
-			&& (Pin10::kPort_ == Port::kUnusedPort || Pin10::kPort_ == kPort_)
-			&& (Pin11::kPort_ == Port::kUnusedPort || Pin11::kPort_ == kPort_)
-			&& (Pin12::kPort_ == Port::kUnusedPort || Pin12::kPort_ == kPort_)
-			&& (Pin13::kPort_ == Port::kUnusedPort || Pin13::kPort_ == kPort_)
-			&& (Pin14::kPort_ == Port::kUnusedPort || Pin14::kPort_ == kPort_)
-			&& (Pin15::kPort_ == Port::kUnusedPort || Pin15::kPort_ == kPort_)
-			, "Inconsistent port number"
-			);
-
-		// Compilation will fail here if one GPIO pin number does not match its **position**
-		static_assert(
-			Pin0::kPin_ == 0 && Pin1::kPin_ == 1 && Pin2::kPin_ == 2 && Pin3::kPin_ == 3
-			&& Pin4::kPin_ == 4 && Pin5::kPin_ == 5 && Pin6::kPin_ == 6 && Pin7::kPin_ == 7
-			&& Pin8::kPin_ == 8 && Pin9::kPin_ == 9 && Pin10::kPin_ == 10 && Pin11::kPin_ == 11
-			&& Pin12::kPin_ == 12 && Pin13::kPin_ == 13 && Pin14::kPin_ == 14 && Pin15::kPin_ == 15
-			, "Inconsistent pin position"
-			);
 
 		// Base address of the peripheral registers
 		// Don't turn alternate function clock on if not required
@@ -769,18 +815,18 @@ public:
 		AnyAFR<kAfConf_, kAfMask_>::Enable();
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
-		if (kCRL_Mask_ == 0)
+		if (kCRL_Mask_ == 0UL)
 			port.CRL = kCRL_;
-		else
+		else if (kCRL_Mask_ != ~0UL)
 			port.CRL = (port.CRL & kCRL_Mask_) | kCRL_;
-		if (kCRH_Mask_ == 0)
+		if (kCRH_Mask_ == 0UL)
 			port.CRH = kCRH_;
-		else
+		else if (kCRH_Mask_ != ~0UL)
 			port.CRH = (port.CRH & kCRH_Mask_) | kCRH_;
-		if (~kBitValue_ == 0)
+		if (kODR_Mask_ == (uint16_t)0U)
 			port.ODR = kODR_;
-		else
-			port.ODR = (port.ODR & ~kBitValue_) | kODR_;
+		else if (kODR_Mask_ != (uint16_t)~0U)
+			port.ODR = (port.ODR & kODR_Mask_) | kODR_;
 	}
 	//! Not an ideal approach, but float everything
 	constexpr static void Disable(void)
