@@ -15,9 +15,7 @@ enum class Impl
 {
 	kNormal,	///< Normal Pin functionality
 	kUnused,	///< Pin that can be initialized to a passive state, only.
-				///< Explicit methods will work.
 	kUnchanged,	///< No change allowed (use it to setup a partial group of pins).
-				///< Any explicit method will be void.
 };
 
 
@@ -145,7 +143,7 @@ public:
 	/// Constant to setup ODR
 	static constexpr uint32_t kODR_Mask_ = 
 		(kImpl != Impl::kNormal) 		? ~0UL
-		/*normal*/						: ~(uint32_t(kLevel) << kPin)
+		/*normal*/						: ~(1UL << kPin)
 		;
 	/// Alternate Function configuration constant
 	static constexpr uint32_t kAFRL_ = Map::kAFRL_;
@@ -201,14 +199,12 @@ public:
 		const bool is_input = mode == Mode::kInput || mode == Mode::kAnalog;
 		/// Value for MODER without offset
 		const uint8_t moder_bits =
-			mode == Mode::kInput
-			? 0b00
-			: mode == Mode::kOutput || mode == Mode::kOpenDrain
-			? 0b01
-			: mode == Mode::kAlternate || mode == Mode::kOpenDrainAlt
-			? 0b10
-			// Mode::kAnalog
-			: 0b11
+			mode == Mode::kInput 			? 0b00
+			: mode == Mode::kOutput 		? 0b01
+			: mode == Mode::kOpenDrain 		? 0b01
+			: mode == Mode::kAlternate		? 0b10
+			: mode == Mode::kOpenDrainAlt	? 0b10
+			/*mode == Mode::kAnalog*/ 		: 0b11
 			;
 		/// Value for MODER hardware register
 		const uint32_t moder = (uint32_t)moder_bits << (kPin << 1);
@@ -220,9 +216,11 @@ public:
 		{
 			/// Value for OTYPER hardware register
 			const uint32_t otyper =
-				(mode != Mode::kOpenDrain && mode != Mode::kOpenDrainAlt)
-				? 0UL
-				: (1UL << kPin)
+				mode == Mode::kInput 		? 0UL
+				: mode == Mode::kAnalog 	? 0UL
+				: mode == Mode::kOutput 	? 0UL
+				: mode == Mode::kAlternate	? 0UL
+				/*all OD outputs*/ 			: (1UL << kPin)
 				;
 			/// Mask for OTYPER hardware register
 			const uint32_t otyper_mask = ~(1UL << kPin);
@@ -230,10 +228,10 @@ public:
 			//
 			/// Value for OSPEEDR hardware register (no offset)
 			const uint32_t ospeedr_bits =
-				speed == Speed::kFastest ? 0b11UL
-				: speed == Speed::kFast ? 0b10UL
-				: speed == Speed::kMedium ? 0b01UL
-				: 0b00UL
+				speed == Speed::kFastest	? 0b11UL
+				: speed == Speed::kFast		? 0b10UL
+				: speed == Speed::kMedium	? 0b01UL
+				/*speed == Speed::kSlow*/ 	: 0b00UL
 				;
 			/// Value for OSPEEDR hardware register
 			const uint32_t ospeedr = ospeedr_bits << (kPin << 1);
@@ -243,15 +241,15 @@ public:
 		}
 		/// Constant value for PUPD hardware register (no offset)
 		const uint32_t pupdr_bits =
-			mode == Mode::kAnalog ? 0UL
-			: pupd == PuPd::kPullDown ? 0b10UL
-			: pupd == PuPd::kPullUp ? 0b01UL
-			: 0UL
+			mode == Mode::kAnalog		? 0b00UL
+			: pupd == PuPd::kPullDown	? 0b10UL
+			: pupd == PuPd::kPullUp		? 0b01UL
+			/*pupd == PuPd::kFloating*/	: 0b00UL
 			;
 		/// Constant value for MODER hardware register
 		const uint32_t pupdr = pupdr_bits << (kPin << 1);
 		/// Constant mask for MODER hardware register
-		const uint32_t pupdr_mask = 0b11UL << (kPin << 1);
+		const uint32_t pupdr_mask = ~(0b11UL << (kPin << 1));
 		port->PUPDR = (port->PUPDR & pupdr_mask) | pupdr;
 	}
 
@@ -518,7 +516,7 @@ class AnyOut : public Private::Implementation_<
 template<
 	const Gpio::Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
+	, const Speed kSpeed = Speed::kFastest		///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
 >
@@ -540,7 +538,7 @@ template<
 	const Gpio::Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
+	, const Speed kSpeed = Speed::kFastest		///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 	, const PuPd kPuPd = PuPd::kFloating		///< Additional pin configuration
 	, const Mode kMode = Mode::kAlternate		///< Mode to configure the port
@@ -565,7 +563,7 @@ template<
 	const Gpio::Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
+	, const Speed kSpeed = Speed::kFastest		///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 >
 class AnyAltOutPP : public AnyAltOut <
@@ -586,7 +584,7 @@ template<
 	const Gpio::Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
+	, const Speed kSpeed = Speed::kFastest		///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 >
 class AnyAltOutOD : public AnyAltOut <
@@ -768,6 +766,17 @@ public:
 		| Pin12::kODR_ | Pin13::kODR_
 		| Pin14::kODR_ | Pin15::kODR_
 		;
+	/// Combined constant mask value for PUPD hardware register
+	static constexpr uint32_t kODR_Mask_ =
+		Pin0::kODR_Mask_ & Pin1::kODR_Mask_
+		& Pin2::kODR_Mask_ & Pin3::kODR_Mask_
+		& Pin4::kODR_Mask_ & Pin5::kODR_Mask_
+		& Pin6::kODR_Mask_ & Pin7::kODR_Mask_
+		& Pin8::kODR_Mask_ & Pin9::kODR_Mask_
+		& Pin10::kODR_Mask_ & Pin11::kODR_Mask_
+		& Pin12::kODR_Mask_ & Pin13::kODR_Mask_
+		& Pin14::kODR_Mask_ & Pin15::kODR_Mask_
+		;
 	/// Constant for the AFRL register
 	static constexpr uint32_t kAFRL_ =
 		Pin0::kAFRL_ | Pin1::kAFRL_
@@ -827,6 +836,36 @@ public:
 	/// Access to the hardware IO data structure
 	constexpr static volatile GPIO_TypeDef& Io() { return *(volatile GPIO_TypeDef*)kPortBase_; }
 
+	// Compilation will fail here if GPIO port number of pin does not match that of the peripheral!!!
+	static_assert(
+		(Pin0::kPort_ == Port::kUnusedPort || Pin0::kPort_ == kPort_)
+		&& (Pin1::kPort_ == Port::kUnusedPort || Pin1::kPort_ == kPort_)
+		&& (Pin2::kPort_ == Port::kUnusedPort || Pin2::kPort_ == kPort_)
+		&& (Pin3::kPort_ == Port::kUnusedPort || Pin3::kPort_ == kPort_)
+		&& (Pin4::kPort_ == Port::kUnusedPort || Pin4::kPort_ == kPort_)
+		&& (Pin5::kPort_ == Port::kUnusedPort || Pin5::kPort_ == kPort_)
+		&& (Pin6::kPort_ == Port::kUnusedPort || Pin6::kPort_ == kPort_)
+		&& (Pin7::kPort_ == Port::kUnusedPort || Pin7::kPort_ == kPort_)
+		&& (Pin8::kPort_ == Port::kUnusedPort || Pin8::kPort_ == kPort_)
+		&& (Pin9::kPort_ == Port::kUnusedPort || Pin9::kPort_ == kPort_)
+		&& (Pin10::kPort_ == Port::kUnusedPort || Pin10::kPort_ == kPort_)
+		&& (Pin11::kPort_ == Port::kUnusedPort || Pin11::kPort_ == kPort_)
+		&& (Pin12::kPort_ == Port::kUnusedPort || Pin12::kPort_ == kPort_)
+		&& (Pin13::kPort_ == Port::kUnusedPort || Pin13::kPort_ == kPort_)
+		&& (Pin14::kPort_ == Port::kUnusedPort || Pin14::kPort_ == kPort_)
+		&& (Pin15::kPort_ == Port::kUnusedPort || Pin15::kPort_ == kPort_)
+		, "Inconsistent port number"
+		);
+
+	// Compilation will fail here if one GPIO pin number does not match its **position**
+	static_assert(
+		Pin0::kPin_ == 0 && Pin1::kPin_ == 1 && Pin2::kPin_ == 2 && Pin3::kPin_ == 3
+		&& Pin4::kPin_ == 4 && Pin5::kPin_ == 5 && Pin6::kPin_ == 6 && Pin7::kPin_ == 7
+		&& Pin8::kPin_ == 8 && Pin9::kPin_ == 9 && Pin10::kPin_ == 10 && Pin11::kPin_ == 11
+		&& Pin12::kPin_ == 12 && Pin13::kPin_ == 13 && Pin14::kPin_ == 14 && Pin15::kPin_ == 15
+		, "Inconsistent pin position"
+		);
+
 	/// Initialize to Port assuming the first use of all GPIO pins
 	constexpr static void Init(void)
 	{
@@ -835,57 +874,42 @@ public:
 		** out by compiler, even for an unoptimized build.
 		*/
 
-		// Compilation will fail here if GPIO port number of pin does not match that of the peripheral!!!
-		static_assert(
-			(Pin0::kPort_ == Port::kUnusedPort || Pin0::kPort_ == kPort_)
-			&& (Pin1::kPort_ == Port::kUnusedPort || Pin1::kPort_ == kPort_)
-			&& (Pin2::kPort_ == Port::kUnusedPort || Pin2::kPort_ == kPort_)
-			&& (Pin3::kPort_ == Port::kUnusedPort || Pin3::kPort_ == kPort_)
-			&& (Pin4::kPort_ == Port::kUnusedPort || Pin4::kPort_ == kPort_)
-			&& (Pin5::kPort_ == Port::kUnusedPort || Pin5::kPort_ == kPort_)
-			&& (Pin6::kPort_ == Port::kUnusedPort || Pin6::kPort_ == kPort_)
-			&& (Pin7::kPort_ == Port::kUnusedPort || Pin7::kPort_ == kPort_)
-			&& (Pin8::kPort_ == Port::kUnusedPort || Pin8::kPort_ == kPort_)
-			&& (Pin9::kPort_ == Port::kUnusedPort || Pin9::kPort_ == kPort_)
-			&& (Pin10::kPort_ == Port::kUnusedPort || Pin10::kPort_ == kPort_)
-			&& (Pin11::kPort_ == Port::kUnusedPort || Pin11::kPort_ == kPort_)
-			&& (Pin12::kPort_ == Port::kUnusedPort || Pin12::kPort_ == kPort_)
-			&& (Pin13::kPort_ == Port::kUnusedPort || Pin13::kPort_ == kPort_)
-			&& (Pin14::kPort_ == Port::kUnusedPort || Pin14::kPort_ == kPort_)
-			&& (Pin15::kPort_ == Port::kUnusedPort || Pin15::kPort_ == kPort_)
-			, "Inconsistent port number"
-			);
-
-		// Compilation will fail here if one GPIO pin number does not match its **position**
-		static_assert(
-			Pin0::kPin_ == 0 && Pin1::kPin_ == 1 && Pin2::kPin_ == 2 && Pin3::kPin_ == 3
-			&& Pin4::kPin_ == 4 && Pin5::kPin_ == 5 && Pin6::kPin_ == 6 && Pin7::kPin_ == 7
-			&& Pin8::kPin_ == 8 && Pin9::kPin_ == 9 && Pin10::kPin_ == 10 && Pin11::kPin_ == 11
-			&& Pin12::kPin_ == 12 && Pin13::kPin_ == 13 && Pin14::kPin_ == 14 && Pin15::kPin_ == 15
-			, "Inconsistent pin position"
-			);
-
 		RCC->AHB2ENR |= (1 << (uint32_t(kPort_) + RCC_AHB2ENR_GPIOAEN_Pos));
-		// Base address of the peripheral registers
-		volatile GPIO_TypeDef &port = Io();
-		port.MODER = kMODER_;
-		port.OTYPER = kOTYPER_;
-		port.OSPEEDR = kOSPEEDR_;
-		port.PUPDR = kPUPDR_;
-		port.AFR[0] = kAFRL_;
-		port.AFR[1] = kAFRH_;
+		Enable();
 	}
 	//! Apply state of pin group merging with previous GPI contents
 	constexpr static void Enable(void)
 	{
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
-		port.MODER = (port.MODER & kMODER_Mask_) | kMODER_;
-		port.OTYPER = (port.OTYPER & kOTYPER_Mask_) | kOTYPER_;
-		port.OSPEEDR = (port.OSPEEDR & kOSPEEDR_Mask_) | kOSPEEDR_;
-		port.PUPDR = (port.PUPDR & kPUPDR_Mask_) | kPUPDR_;
-		port.AFR[0] = (port.AFR[0] & kAFRL_Mask_) | kAFRL_;
-		port.AFR[1] = (port.AFR[1] & kAFRH_Mask_) | kAFRH_;
+		if (kMODER_Mask_ == 0UL)
+			port.MODER = kMODER_;
+		else if (kMODER_Mask_ != ~0UL)
+			port.MODER = (port.MODER & kMODER_Mask_) | kMODER_;
+		if (kOTYPER_Mask_ == 0UL)
+			port.OTYPER = kOTYPER_;
+		else if (kOTYPER_Mask_ != ~0UL)
+			port.OTYPER = (port.OTYPER & kOTYPER_Mask_) | kOTYPER_;
+		if (kOSPEEDR_Mask_ == 0UL)
+			port.OSPEEDR = kOSPEEDR_;
+		else if (kOSPEEDR_Mask_ != ~0UL)
+			port.OSPEEDR = (port.OSPEEDR & kOSPEEDR_Mask_) | kOSPEEDR_;
+		if (kPUPDR_Mask_ == 0UL)
+			port.PUPDR = kPUPDR_;
+		else if (kPUPDR_Mask_ != ~0UL)
+			port.PUPDR = (port.PUPDR & kPUPDR_Mask_) | kPUPDR_;
+		if (kAFRL_Mask_ == 0UL)
+			port.AFR[0] = kAFRL_;
+		else if (kAFRL_Mask_ != ~0UL)
+			port.AFR[0] = (port.AFR[0] & kAFRL_Mask_) | kAFRL_;
+		if (kAFRH_Mask_ == 0UL)
+			port.AFR[1] = kAFRH_;
+		else if (kAFRH_Mask_ != ~0UL)
+			port.AFR[1] = (port.AFR[1] & kAFRH_Mask_) | kAFRH_;
+		if (kODR_Mask_ == 0UL)
+			port.ODR = kODR_;
+		else if (kODR_Mask_ != ~0UL)
+			port.ODR = (port.ODR & kODR_Mask_) | kODR_;
 	}
 	//! Sets the reset values (according to data-sheet)
 	constexpr static void Disable(void)

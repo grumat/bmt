@@ -78,8 +78,10 @@ public:
 	BkpDomainXact()
 	{
 #ifdef PWR_CR1_DBP
+		RCC->APB1ENR1 |= RCC_APB1ENR1_PWREN;
 		PWR->CR1 |= PWR_CR1_DBP;
 #else
+		RCC->APB1ENR |= RCC_APB1ENR_PWREN;
 		PWR->CR |= PWR_CR_DBP;
 #endif
 	}

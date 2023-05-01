@@ -139,7 +139,7 @@ public:
 #endif
 		if (kClockInput_ == Id::kHSI16)
 			tmp |= RCC_PLLCFGR_PLLSRC_HSI;
-		else
+		if (kClockInput_ == Id::kHSE)
 			tmp |= RCC_PLLCFGR_PLLSRC_HSE;
 		// Computes the register value
 		// PLLM
@@ -197,10 +197,11 @@ public:
 #if defined(RCC_PLLCFGR_PLLSRC_MSI)
 		if (kClockInput_ == Id::kMSI)
 			tmp |= RCC_PLLCFGR_PLLSRC_MSI;
+		else
 #endif
 		if (kClockInput_ == Id::kHSI16)
 			tmp |= RCC_PLLCFGR_PLLSRC_HSI;
-		else
+		if (kClockInput_ == Id::kHSE)
 			tmp |= RCC_PLLCFGR_PLLSRC_HSE;
 		// Merge into HW register
 		RCC->PLLCFGR = (RCC->PLLCFGR &

@@ -20,7 +20,7 @@ public:
 	static constexpr void Setup()
 	{
 		uint32_t tmp = 0;
-				// Flash memory
+		// Flash memory
 		if (kFrequency_ > 48000000UL)
 			tmp = FLASH_ACR_LATENCY_2 | FLASH_ACR_PRFTBE;
 		else if (kFrequency_ > 24000000UL)

@@ -66,26 +66,34 @@ public:
 	/// Special Configuration for MsiPll class
 	static constexpr bool kUsePllMode_ = kPllMode;
 
+	static_assert(kFrequency_ > 1, "Hardware does not supports specified frequency");
+	
 	/// Starts MSI oscillator
 	constexpr static void Init(void)
 	{
-		static_assert(kFrequency_ > 1, "Hardware does not supports specified frequency");
-		Init();
+		Enable();
 	}
 	/// Enables the MSI oscillator
 	constexpr static void Enable(void)
 	{
+		// MSIRANGE can be modified when MSI is OFF or when MSI is ready
+		if (RCC->CR & RCC_CR_MSION)
+		{
+			while (!(RCC->CR & RCC_CR_MSIRDY));
+		}
 		if (kUsePllMode_)
 		{
 			RCC->CR = (RCC->CR & ~RCC_CR_MSIRANGE_Msk)
 				| RCC_CR_MSION
 				| RCC_CR_MSIPLLEN
+				| RCC_CR_MSIRGSEL
 				| (uint32_t(kCrEnum_) << RCC_CR_MSIRANGE_Pos);
 		}
 		else
 		{
 			RCC->CR = (RCC->CR & ~(RCC_CR_MSIRANGE_Msk | RCC_CR_MSIPLLEN_Msk))
 				| RCC_CR_MSION
+				| RCC_CR_MSIRGSEL
 				| (uint32_t(kCrEnum_) << RCC_CR_MSIRANGE_Pos);
 		}
 		while (!(RCC->CR & RCC_CR_MSIRDY));
