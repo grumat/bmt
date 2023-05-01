@@ -105,15 +105,15 @@ typedef AnyPllVcoAuto<PllRange2> AutoRange2;
 /// These are the possible values to source the MCO output with clock
 enum class Mco : uint32_t
 {
-	kOff	= 0b0000,			///< No Clock
-	kSysClk = 0b0001,			///< System clock (SYSCLK) selected
-	kMsi	= 0b0010,			///< HSI clock selected
-	kHsi16	= 0b0011,			///< HSI16 clock selected
-	kHse	= 0b0100,			///< HSE clock selected
-	kPllClk = 0b0101,			///< Main PLL clock selected
-	kLsi	= 0b0110,			///< LSI clock selected
-	kLse	= 0b0111,			///< LSE clock selected
-	kHsi48	= 0b1000,			///< HSI48 clock selected
+	kOff		= 0b0000,		///< No Clock
+	kSysClk 	= 0b0001,		///< System clock (SYSCLK) selected
+	kReserved_	= 0b0010,		///< Reserved
+	kHsi16		= 0b0011,		///< HSI16 clock selected
+	kHse		= 0b0100,		///< HSE clock selected
+	kPllClk 	= 0b0101,		///< Main PLL clock selected
+	kLsi		= 0b0110,		///< LSI clock selected
+	kLse		= 0b0111,		///< LSE clock selected
+	kHsi48		= 0b1000,		///< HSI48 clock selected
 };
 
 
@@ -127,6 +127,22 @@ enum  class McoPrscl : uint32_t
 	k16,						//!< MCO is divided by 16
 };
 
+enum class SysClkOpts : uint32_t
+{
+	kDefault = 0,			//! Default options
+	kNoHsiOff = 0b0001,		//!< HSI16 clock is not turned off after setting up new clock
+	kFreqDown = 0b0010,		//!< Indicates that the final frequency will be reduced, to
+							//!< accomodate wait state calculation accordingly
+};
+static constexpr SysClkOpts operator | (SysClkOpts o1, SysClkOpts o2)
+{
+	return SysClkOpts((uint32_t)o1 | (uint32_t)o2);
+}
+static constexpr SysClkOpts operator & (SysClkOpts o1, SysClkOpts o2)
+{
+	return SysClkOpts((uint32_t)o1 & (uint32_t)o2);
+}
+
 
 /*!
 A class to setup System Clock. Please check the clock tree @RM0008 (r21-Fig.8).
@@ -135,12 +151,12 @@ STM32F10x allows System Clocks sourced from HSI, HSE or PLL only.
 template<
 	typename ClockSource = AnyHsi16<>				///< New clock source for System
 	, const Power::Mode	kMode = Power::Mode::kRange1	///< Power mode to use the configuration
-	, const AhbPrscl kAhbPrs = AhbPrscl::k1		///< AHB bus prescaler
-	, const ApbPrscl kApb1Prs = ApbPrscl::k2	///< APB1 bus prescaler
-	, const ApbPrscl kApb2Prs = ApbPrscl::k1	///< APB2 bus prescaler
-	, const bool kMsiRcOff = true				///< Init() disables MSI, if not current clock source
-	, const Mco kClockOut = Mco::kOff			///< Turn MCU clock output on (it does not enable external pin)
-	, const McoPrscl kMcoPrscl = McoPrscl::k1	///< If MCO is active, the factor to divide output frequency
+	, const AhbPrscl kAhbPrs = AhbPrscl::k1			///< AHB bus prescaler
+	, const ApbPrscl kApb1Prs = ApbPrscl::k2		///< APB1 bus prescaler
+	, const ApbPrscl kApb2Prs = ApbPrscl::k1		///< APB2 bus prescaler
+	, const SysClkOpts kOpts = SysClkOpts::kDefault	///< See enum above
+	, const Mco kClockOut = Mco::kOff				///< Turn MCU clock output on (it does not enable external pin)
+	, const McoPrscl kMcoPrscl = McoPrscl::k1		///< If MCO is active, the factor to divide output frequency
 >
 class AnySycClk
 {
@@ -157,10 +173,71 @@ public:
 	static constexpr uint32_t kApb2Clock_ = kAhbClock_ / uint32_t(kApb2Prs);
 	/// Effective clock for timer connected to APB2
 	static constexpr uint32_t kApb2TimerClock_ = (kApb1Prs == ApbPrscl::k1) ? kApb2Clock_ : 2 * kApb2Clock_;
+	/// Flag indicating that clock used during boot has to be turned off
+	static const bool kHsiRcOff_ = (kOpts & SysClkOpts::kNoHsiOff) == SysClkOpts::kDefault;
 	/// Clock output mode
 	static constexpr Mco kMco_ = kClockOut;
 	/// Clock output mode
 	static constexpr McoPrscl kMcoPrscl_ = kMcoPrscl;
+
+	// System clock restricts sources
+	static_assert(
+		ClockSource::kClockSource_ == Id::kHSI16
+		|| ClockSource::kClockSource_ == Id::kHSE
+		|| ClockSource::kClockSource_ == Id::kPLL
+		, "Allowed System Clock source are MSI, HSI16, HSE or PLL."
+		);
+	// Invalid AHB prescaler
+	static_assert(
+		kAhbPrs == AhbPrscl::k1
+		|| kAhbPrs == AhbPrscl::k2
+		|| kAhbPrs == AhbPrscl::k4
+		|| kAhbPrs == AhbPrscl::k8
+		|| kAhbPrs == AhbPrscl::k16
+		|| kAhbPrs == AhbPrscl::k64
+		|| kAhbPrs == AhbPrscl::k128
+		|| kAhbPrs == AhbPrscl::k256
+		|| kAhbPrs == AhbPrscl::k512
+		, "AHB prescaler parameter is invalid."
+		);
+	// Invalid APB1 prescaler
+	static_assert(
+		kApb1Prs == ApbPrscl::k1
+		|| kApb1Prs == ApbPrscl::k2
+		|| kApb1Prs == ApbPrscl::k4
+		|| kApb1Prs == ApbPrscl::k8
+		|| kApb1Prs == ApbPrscl::k16
+		, "APB1 prescaler parameter is invalid."
+		);
+	// Invalid APB2 prescaler
+	static_assert(
+		kApb2Prs == ApbPrscl::k1
+		|| kApb2Prs == ApbPrscl::k2
+		|| kApb2Prs == ApbPrscl::k4
+		|| kApb2Prs == ApbPrscl::k8
+		|| kApb2Prs == ApbPrscl::k16
+		, "APB2 prescaler parameter is invalid."
+		);
+	// Invalid Clock setting
+	static_assert(
+		kFrequency_ <= 80000000UL
+		, "Clock setting is overclocking MCU"
+		);
+	// Invalid AHB Clock setting
+	static_assert(
+		kAhbClock_ <= 80000000UL
+		, "AHB divisor is overclocked"
+		);
+	// Invalid APB1 Clock setting
+	static_assert(
+		kApb1Clock_ <= 80000000UL
+		, "APB1 divisor is overclocked"
+		);
+	// Invalid APB2 Clock setting
+	static_assert(
+		kApb2Clock_ <= 80000000UL
+		, "APB2 divisor is overclocked"
+		);
 
 	/// Starts associated oscillator, initializes clock tree prescalers and use oscillator for system clock
 	constexpr static void Init(void)
@@ -170,7 +247,7 @@ public:
 		// Enables itself
 		Enable();
 		// Disabling HSI if setting up a System clock source
-		if (kMsiRcOff
+		if (kHsiRcOff_
 			&& ClockSource::kClockSource_ != Id::kHSI16 )
 		{
 			// Note that flash controller needs this clock for programming!!!
@@ -181,96 +258,11 @@ public:
 	/// Initializes clock tree prescalers, assuming associated source was already started
 	constexpr static void Enable(void)
 	{
-		// System clock restricts sources
-		static_assert(
-			ClockSource::kClockSource_ == Id::kHSI16
-			|| ClockSource::kClockSource_ == Id::kHSE
-			|| ClockSource::kClockSource_ == Id::kPLL
-			, "Allowed System Clock source are MSI, HSI16, HSE or PLL."
-			);
-		// Invalid AHB prescaler
-		static_assert(
-			kAhbPrs == AhbPrscl::k1
-			|| kAhbPrs == AhbPrscl::k2
-			|| kAhbPrs == AhbPrscl::k4
-			|| kAhbPrs == AhbPrscl::k8
-			|| kAhbPrs == AhbPrscl::k16
-			|| kAhbPrs == AhbPrscl::k64
-			|| kAhbPrs == AhbPrscl::k128
-			|| kAhbPrs == AhbPrscl::k256
-			|| kAhbPrs == AhbPrscl::k512
-			, "AHB prescaler parameter is invalid."
-			);
-		// Invalid APB1 prescaler
-		static_assert(
-			kApb1Prs == ApbPrscl::k1
-			|| kApb1Prs == ApbPrscl::k2
-			|| kApb1Prs == ApbPrscl::k4
-			|| kApb1Prs == ApbPrscl::k8
-			|| kApb1Prs == ApbPrscl::k16
-			, "APB1 prescaler parameter is invalid."
-			);
-		// Invalid APB2 prescaler
-		static_assert(
-			kApb2Prs == ApbPrscl::k1
-			|| kApb2Prs == ApbPrscl::k2
-			|| kApb2Prs == ApbPrscl::k4
-			|| kApb2Prs == ApbPrscl::k8
-			|| kApb2Prs == ApbPrscl::k16
-			, "APB2 prescaler parameter is invalid."
-			);
-		// Invalid Clock setting
-		static_assert(
-			kFrequency_ <= 80000000UL
-			, "Clock setting is overclocking MCU"
-			);
-		// Invalid AHB Clock setting
-		static_assert(
-			kAhbClock_ <= 80000000UL
-			, "AHB divisor is overclocked"
-			);
-		// Invalid APB1 Clock setting
-		static_assert(
-			kApb1Clock_ <= 80000000UL
-			, "APB1 divisor is overclocked"
-			);
-		// Invalid APB2 Clock setting
-		static_assert(
-			kApb2Clock_ <= 80000000UL
-			, "APB2 divisor is overclocked"
-			);
+		// Before switching to a faster clock, impose compatible wait state to avoid crash
+		if ((kOpts & SysClkOpts::kFreqDown) == SysClkOpts::kDefault)
+			System::WaitState<kFrequency_, kMode>::Setup();
 
 		uint32_t tmp;	// reset value
-		// Flash memory
-		if (kMode == Power::Mode::kRange1)
-		{
-			if (kFrequency_ > 64000000UL)
-				tmp = FLASH_ACR_LATENCY_4WS;
-			else if (kFrequency_ > 48000000UL)
-				tmp = FLASH_ACR_LATENCY_3WS;
-			else if (kFrequency_ > 32000000UL)
-				tmp = FLASH_ACR_LATENCY_2WS;
-			else if (kFrequency_ > 16000000UL)
-				tmp = FLASH_ACR_LATENCY_1WS;
-			else
-				tmp = FLASH_ACR_LATENCY_0WS;
-		}
-		else
-		{
-			if (kFrequency_ > 16000000UL)
-				tmp = FLASH_ACR_LATENCY_3WS;
-			else if (kFrequency_ > 12000000UL)
-				tmp = FLASH_ACR_LATENCY_2WS;
-			else if (kFrequency_ > 6000000UL)
-				tmp = FLASH_ACR_LATENCY_1WS;
-			else
-				tmp = FLASH_ACR_LATENCY_0WS;
-		}
-		tmp |= FLASH_ACR_DCEN;		// data cache enable
-		tmp |= FLASH_ACR_ICEN;		// instruction cache enable
-		tmp |= FLASH_ACR_PRFTEN;	// prefetch enable
-		// Apply
-		FLASH->ACR = tmp;
 		// Load state to register and clear all bits handled here
 		// AHB
 		switch (kAhbPrs)
@@ -378,6 +370,9 @@ public:
 		{
 			while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_HSI);
 		}
+		// When reducing frequency, wait states have to come after the clock is set
+		if ((kOpts & SysClkOpts::kFreqDown) != SysClkOpts::kDefault)
+			System::WaitState<kFrequency_, kMode>::Setup();
 	}
 };
 
