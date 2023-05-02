@@ -109,7 +109,7 @@ public:
 		;
 	/// Constant to setup ODR mask
 	static constexpr uint16_t kODR_Mask_ = 
-		(kImpl == Impl::kUnchanged) ? (uint16_t)0xffff
+		(kImpl == Impl::kUnchanged) ? (uint16_t)~0U
 		/*normal*/					: (uint16_t)~(1 << kPin)
 		;
 	/// Alternate Function configuration constant
@@ -122,8 +122,6 @@ public:
 		(kImpl == Impl::kNormal)	? Map::kMask_ 
 		/*no change*/				: 0xFFFFFFFFU
 		;
-	/// Constant flag to indicate that a bit is not used for a particular configuration
-	static constexpr bool kIsUnused_ = (kImpl != Impl::kNormal);
 
 	/// Access to the peripheral memory space
 	constexpr static volatile GPIO_TypeDef* Io() { return (volatile GPIO_TypeDef*)kPortBase_; }
@@ -700,7 +698,7 @@ public:
 		& Pin14::kCRH_Mask_ & Pin15::kCRH_Mask_
 		;
 	/// Constant for the initial bit level
-	static constexpr uint32_t kODR_ =
+	static constexpr uint16_t kODR_ =
 		Pin0::kODR_ | Pin1::kODR_
 		| Pin2::kODR_ | Pin3::kODR_
 		| Pin4::kODR_ | Pin5::kODR_
@@ -720,17 +718,6 @@ public:
 		& Pin10::kODR_Mask_ & Pin11::kODR_Mask_
 		& Pin12::kODR_Mask_ & Pin13::kODR_Mask_
 		& Pin14::kODR_Mask_ & Pin15::kODR_Mask_
-		;
-	/// Effective combined bit constant value
-	static constexpr uint32_t kBitValue_ =
-		Pin0::kBitValue_ | Pin1::kBitValue_
-		| Pin2::kBitValue_ | Pin3::kBitValue_
-		| Pin4::kBitValue_ | Pin5::kBitValue_
-		| Pin6::kBitValue_ | Pin7::kBitValue_
-		| Pin8::kBitValue_ | Pin9::kBitValue_
-		| Pin10::kBitValue_ | Pin11::kBitValue_
-		| Pin12::kBitValue_ | Pin13::kBitValue_
-		| Pin14::kBitValue_ | Pin15::kBitValue_
 		;
 	/// Combined Alternate Function configuration constant
 	static constexpr uint32_t kAfConf_ =
@@ -823,7 +810,7 @@ public:
 			port.CRH = kCRH_;
 		else if (kCRH_Mask_ != ~0UL)
 			port.CRH = (port.CRH & kCRH_Mask_) | kCRH_;
-		if (kODR_Mask_ == (uint16_t)0U)
+		if (kODR_Mask_ == 0U)
 			port.ODR = kODR_;
 		else if (kODR_Mask_ != (uint16_t)~0U)
 			port.ODR = (port.ODR & kODR_Mask_) | kODR_;

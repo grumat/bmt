@@ -68,7 +68,7 @@ public:
 		(kImpl == Impl::kUnchanged)		? ~0UL
 		/*default*/						: ~(0b11UL << (kPin << 1));
 	/// Constant value for OTYPER hardware register
-	static constexpr uint32_t kOTYPER_ =
+	static constexpr uint16_t kOTYPER_ =
 		kImpl == Impl::kUnchanged		? 0UL
 		: kImpl == Impl::kUnused 		? 0UL
 		: kMode_ == Mode::kInput		? 0UL
@@ -78,7 +78,7 @@ public:
 		/*all OD outputs*/				: (1UL << kPin)
 		;
 	/// Constant mask for OTYPER hardware register
-	static constexpr uint32_t kOTYPER_Mask_ =
+	static constexpr uint16_t kOTYPER_Mask_ =
 		kImpl == Impl::kUnchanged	? ~0UL
 		: kImpl == Impl::kUnused 	? ~0UL
 		: kMode_ == Mode::kInput	? ~0UL
@@ -135,13 +135,13 @@ public:
 		kImpl == Impl::kUnchanged		? 0UL
 		/*default*/						: 1 << (kPin + 16)
 		;
-	/// Constant for the initial bit level
-	static constexpr uint32_t kODR_ = 
+	/// Constant to setup ODR
+	static constexpr uint16_t kODR_ = 
 		(kImpl != Impl::kNormal) 		? 0UL
 		/*normal*/						: uint32_t(kLevel) << kPin
 		;
-	/// Constant to setup ODR
-	static constexpr uint32_t kODR_Mask_ = 
+	/// Constant to setup ODR mask
+	static constexpr uint16_t kODR_Mask_ = 
 		(kImpl != Impl::kNormal) 		? ~0UL
 		/*normal*/						: ~(1UL << kPin)
 		;
@@ -153,10 +153,6 @@ public:
 	static constexpr uint32_t kAFRH_ = Map::kAFRH_;
 	/// Alternate Function configuration mask constant (inverted)
 	static constexpr uint32_t kAFRH_Mask_ = Map::kAFRH_Mask_;
-	/// Constant Flag indicating that no Alternate Function is required
-	static constexpr bool kAfDisabled_ = Map::kNoRemap_;
-	/// Constant flag to indicate that a bit is not used for a particular configuration
-	static constexpr bool kIsUnused_ = (kImpl != Impl::kNormal);
 
 	/// Access to the peripheral memory space
 	constexpr static volatile GPIO_TypeDef *Io() { return (volatile GPIO_TypeDef *)kPortBase_; }
@@ -167,7 +163,7 @@ public:
 		volatile GPIO_TypeDef *port = Io();
 		if (kMODER_Mask_ != ~0UL)
 			port->MODER = (port->MODER & kMODER_Mask_) | kMODER_;
-		if (kOTYPER_Mask_ != ~0UL)
+		if (kOTYPER_Mask_ != (uint16_t)~0UL)
 			port->OTYPER = (port->OTYPER & kOTYPER_Mask_) | kOTYPER_;
 		if (kOSPEEDR_Mask_ != ~0UL)
 			port->OSPEEDR = (port->OSPEEDR & kOSPEEDR_Mask_) | kOSPEEDR_;
@@ -186,7 +182,7 @@ public:
 	{
 		SetupPinMode();
 		Map::Enable();
-		if (kODR_Mask_ != ~0UL)
+		if (kODR_Mask_ != (uint16_t)~0UL)
 		{
 			volatile GPIO_TypeDef* port = Io();
 			port->ODR = (port->PUPDR & kODR_Mask_) | kODR_;
@@ -690,7 +686,7 @@ public:
 		& Pin14::kMODER_Mask_ & Pin15::kMODER_Mask_
 		;
 	/// Combined constant value for OTYPER hardware register
-	static constexpr uint32_t kOTYPER_ =
+	static constexpr uint16_t kOTYPER_ =
 		Pin0::kOTYPER_ | Pin1::kOTYPER_
 		| Pin2::kOTYPER_ | Pin3::kOTYPER_
 		| Pin4::kOTYPER_ | Pin5::kOTYPER_
@@ -701,7 +697,7 @@ public:
 		| Pin14::kOTYPER_ | Pin15::kOTYPER_
 		;
 	/// Combined constant mask value for OTYPER hardware register
-	static constexpr uint32_t kOTYPER_Mask_ =
+	static constexpr uint16_t kOTYPER_Mask_ =
 		Pin0::kOTYPER_Mask_ & Pin1::kOTYPER_Mask_
 		& Pin2::kOTYPER_Mask_ & Pin3::kOTYPER_Mask_
 		& Pin4::kOTYPER_Mask_ & Pin5::kOTYPER_Mask_
@@ -756,7 +752,7 @@ public:
 		& Pin14::kPUPDR_Mask_ & Pin15::kPUPDR_Mask_
 		;
 	/// Constant for the initial bit level
-	static constexpr uint32_t kODR_ =
+	static constexpr uint16_t kODR_ =
 		Pin0::kODR_ | Pin1::kODR_
 		| Pin2::kODR_ | Pin3::kODR_
 		| Pin4::kODR_ | Pin5::kODR_
@@ -766,8 +762,8 @@ public:
 		| Pin12::kODR_ | Pin13::kODR_
 		| Pin14::kODR_ | Pin15::kODR_
 		;
-	/// Combined constant mask value for PUPD hardware register
-	static constexpr uint32_t kODR_Mask_ =
+	/// Combined constant mask value for ODR hardware register
+	static constexpr uint16_t kODR_Mask_ =
 		Pin0::kODR_Mask_ & Pin1::kODR_Mask_
 		& Pin2::kODR_Mask_ & Pin3::kODR_Mask_
 		& Pin4::kODR_Mask_ & Pin5::kODR_Mask_
@@ -888,7 +884,7 @@ public:
 			port.MODER = (port.MODER & kMODER_Mask_) | kMODER_;
 		if (kOTYPER_Mask_ == 0UL)
 			port.OTYPER = kOTYPER_;
-		else if (kOTYPER_Mask_ != ~0UL)
+		else if (kOTYPER_Mask_ != (uint16_t)~0UL)
 			port.OTYPER = (port.OTYPER & kOTYPER_Mask_) | kOTYPER_;
 		if (kOSPEEDR_Mask_ == 0UL)
 			port.OSPEEDR = kOSPEEDR_;
@@ -908,7 +904,7 @@ public:
 			port.AFR[1] = (port.AFR[1] & kAFRH_Mask_) | kAFRH_;
 		if (kODR_Mask_ == 0UL)
 			port.ODR = kODR_;
-		else if (kODR_Mask_ != ~0UL)
+		else if (kODR_Mask_ != (uint16_t)~0UL)
 			port.ODR = (port.ODR & kODR_Mask_) | kODR_;
 	}
 	//! Sets the reset values (according to data-sheet)

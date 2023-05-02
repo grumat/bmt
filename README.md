@@ -35,8 +35,9 @@ use a brute force algorithm to detect the PLL configuration that best
 approximates a desired output frequency.
 
 > This brute-force method seems to be an overkill in a simple PLL like 
-> the one featured in the STM32F103, but if you look into the STM32L432 
-> data-sheet you will surely need a complex solution to configure it.
+> the one featured in the STM32F103, but if you look into the data-sheet 
+> of more modern parts you will surely need a complex solution to 
+> configure it.
 
 The compiler produces a single static record of the `PllFraction` 
 structure, which is bound to a *weak symbol* which means all instances 
@@ -51,7 +52,7 @@ instances that are created, will probably be discarded by the linker.
 
 ## Compatibility
 
-Currently the library supports only STM32F103 chip and an initial 
+Currently the library supports only STM32F103 chip and an very basic 
 STM32L432 compatibility is also provided.
 
 On the next topics, a brief usage guide for the library will be 
@@ -63,22 +64,41 @@ presented.
 To use the **bmt** library you need to provide paths to the STM32 driver 
 files and a define with the MCU model you are using.
 
-The path depends highly on your installation, but for VisualGDB STM32 MCU 
-drivers are installed in:
+The `CMakeFile.txt` was developed with two scenarios in mind:
+- Standard VisualGDB installation
+- STM32 CubeMX installation
+
+To chose between one of these options you will have to open the 
+`CMakeFile.txt` of the root directory and edit the 
+**`OPT_USE_VISUALGDB`** flag properly.
+
+For VisualGDB, you have to install the STM32 BSP packages, for the
+STM32F1, STM32L4 and STM32G4 families. The installation of the
+BSP packages for this toolkit is:
 
 ```
 %USERPROFILE%\AppData\Local\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32
 ```
 
-As already mentioned this is just a base path I mentioned for your 
-convenience. For the compiler you will have to provide a complete path 
-for your driver files and I will detail this below.
+Note that these are licensed packages so you have to own a valid 
+license of VisualGDB to install them. Otherwise you should use the 
+CubeMX option, described next.
 
-The drivers provided by ST also requires a define with the model of the MCU 
-you are using.
+On CubeMX the path depends on the target type and are:
 
-Another important setting is a define value for the exact MCU 
-model you are willing to use.
+```
+%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_F1_V1.8.4\Drivers
+%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_L4_V1.17.2\Drivers
+%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_G4_V1.5.1\Drivers
+```
+
+> **Hint for CubeMX users:** As new versions of these packages are 
+> released you may need to tune this paths for the exact installed 
+> version. You can set this on the `cmake-variants.yaml` file. In these 
+> case restart VSCode so that changes are properly updated.
+
+The BSP packages contains important include files describing the hardware 
+register map and boot code for each target.
 
 So once you have both information you have to configure your build system 
 accordingly.
