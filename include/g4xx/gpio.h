@@ -79,11 +79,11 @@ public:
 		;
 	/// Constant mask for OTYPER hardware register
 	static constexpr uint16_t kOTYPER_Mask_ =
-		kImpl == Impl::kUnchanged	? ~0UL
-		: kImpl == Impl::kUnused 	? ~0UL
-		: kMode_ == Mode::kInput	? ~0UL
-		: kMode_ == Mode::kAnalog	? ~0UL
-		/*all outputs*/				: ~(1UL << kPin)
+		kImpl == Impl::kUnchanged	? (uint16_t)~0UL
+		: kImpl == Impl::kUnused 	? (uint16_t)~0UL
+		: kMode_ == Mode::kInput	? (uint16_t)~0UL
+		: kMode_ == Mode::kAnalog	? (uint16_t)~0UL
+		/*all outputs*/				: (uint16_t)~(1UL << kPin)
 		;
 	/// Constant value for OSPEEDR hardware register (no offset)
 	static constexpr uint32_t kOSPEEDR_Bits_ =
@@ -142,8 +142,8 @@ public:
 		;
 	/// Constant to setup ODR mask
 	static constexpr uint16_t kODR_Mask_ = 
-		(kImpl != Impl::kNormal) 		? ~0UL
-		/*normal*/						: ~(1UL << kPin)
+		(kImpl != Impl::kNormal) 		? (uint16_t)~0UL
+		/*normal*/						: (uint16_t)~(1UL << kPin)
 		;
 	/// Alternate Function configuration constant
 	static constexpr uint32_t kAFRL_ = Map::kAFRL_;
@@ -174,8 +174,8 @@ public:
 	static_assert(Map::kNoRemap_ || (Map::kPort_ == kPort_ && Map::kPin_ == kPin_), "pin remapping applies to a different pin");
 	// Input pin cannot set a pin speed
 	static_assert(!kIsInput_ || kSpeed_ == Speed::kInput, "Cannot select a speed for input pin");
-	// Pull resistors are not allowed
-	static_assert(kMode_ != Mode::kAnalog || kPuPd_ == PuPd::kFloating, "Pull-up/down not allowed in Analog mode");
+	// Pull-up resitor not allowed in Analog mode
+	static_assert(kMode_ != Mode::kAnalog || kPuPd_ != PuPd::kPullUp, "Pull-up not allowed in Analog mode");
 
 	/// Apply default configuration for the pin.
 	constexpr static void Setup(void)
@@ -512,7 +512,7 @@ class AnyOut : public Private::Implementation_<
 template<
 	const Gpio::Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
-	, const Speed kSpeed = Speed::kFastest		///< Speed for the pin
+	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
 >
@@ -534,7 +534,7 @@ template<
 	const Gpio::Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFastest		///< Speed for the pin
+	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 	, const PuPd kPuPd = PuPd::kFloating		///< Additional pin configuration
 	, const Mode kMode = Mode::kAlternate		///< Mode to configure the port
@@ -559,7 +559,7 @@ template<
 	const Gpio::Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFastest		///< Speed for the pin
+	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 >
 class AnyAltOutPP : public AnyAltOut <
@@ -580,7 +580,7 @@ template<
 	const Gpio::Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFastest		///< Speed for the pin
+	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 >
 class AnyAltOutOD : public AnyAltOut <

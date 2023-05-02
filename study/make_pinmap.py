@@ -11,7 +11,7 @@ import sys
 import re
 import csv
 
-if 1:
+if 0:
 	FILE = "stm32g474_af.csv"
 	OUTF = "pinremap.g4.h"
 	OUTF2 = "gpio-types.g4.h"
@@ -64,10 +64,10 @@ DATABASE = \
 	["^I2S(\d)_WS$", "af,od"],
 	["^I2SCKIN$", "af"],
 	["^IR_OUT$", "af"],
-	["^JTCK$", "af"],
-	["^JTDI$", "af"],
-	["^JTDO$", "af"],
-	["^JTMS$", "af"],
+	["^JTCK$", "af,pd,s2"],
+	["^JTDI$", "af,pu,s2"],
+	["^JTDO$", "af,s2"],
+	["^JTMS$", "af,pu,s3"],
 	["^LCD_COM(\d+)$", "af"],
 	["^LCD_SEG(\d+)$", "af"],
 	["^LCD_VLCD$", "af"],
@@ -81,7 +81,7 @@ DATABASE = \
 	["^LPUART(\d)_RTS$", "af"],
 	["^LPUART(\d)_RTS_DE$", "af"],
 	["^MCO$", "af"],
-	["^N?JTRST$", "af"],
+	["^N?JTRST$", "af,pu"],
 	["^OPAMP(\d)_VIN[PM]$", "an"],
 	["^OPAMP(\d)_VOUT$", "an"],
 	["^OTG_FS_CRS_SYNC$", "af"],
@@ -106,8 +106,8 @@ DATABASE = \
 	["^SDMMC(\d+)_D(\d+)$", "af"],
 	["^SDMMC(\d+)_CK$", "af"],
 	["^SDMMC(\d+)_CMD$", "af"],
-	["^SWDIO$", "af"],
-	["^SWCLK$", "af"],
+	["^SWDIO$", "af,pu,s3"],
+	["^SWCLK$", "af,pd,s2"],
 	["^SWPMI(\d)_IO$", "af"],
 	["^SWPMI(\d)_RX$", "af"],
 	["^SWPMI(\d)_SUSPEND$", "af"],
@@ -120,9 +120,9 @@ DATABASE = \
 	["^TIM(\d+)_CH(\d)$", "af"],
 	["^TIM(\d+)_CH(\d)N$", "af"],
 	["^TIM(\d+)_ETR$", "af"],
-	["^TRACECL?K$", "af"],
-	["^TRACED(\d)$", "af"],
-	["^TRACESWO$", "af"],
+	["^TRACECL?K$", "af,s2"],
+	["^TRACED(\d)$", "af,s2"],
+	["^TRACESWO$", "af,s2"],
 	["^TSC_G(\d)_IO(\d)$", "af"],
 	["^TSC_SYNC$", "af"],
 	["^UCPD(\d)_FRSTX$", "af"],
@@ -272,7 +272,30 @@ class AfPinName:
 			s1 = "typedef AnyAltOutOD<Port::{0}, {1}, {2}>".format(self.port, self.pin, self.get_af_name())
 			s1 = align_to_col(s1, 60)
 		else:
-			s1 = "typedef AnyAltOut<Port::{0}, {1}, {2}>".format(self.port, self.pin, self.get_af_name())
+			s1 = "typedef AnyAltOut<Port::{0}, {1}, {2}".format(self.port, self.pin, self.get_af_name())
+			s1b = ""
+			s1c = ""
+			s1d = ""
+			# Speed
+			if 's0' in self.impl:
+				s1b = ", Speed::kSlow"
+			elif 's1' in self.impl:
+				s1b = ", Speed::kMedium"
+			elif 's2' in self.impl:
+				s1b = ", Speed::kFast"
+			elif 's3' in self.impl:
+				s1b = ", Speed::kFastest"
+			# PU/PD
+			if 'pu' in self.impl:
+				s1d = ", PuPd::kPullUp"
+			elif 'pd' in self.impl:
+				s1d = ", PuPd::kPullDown"
+			# Consolidation
+			if (not s1b) and (s1c or s1d):
+				s1b = ", Speed::kSlow"
+			if (not s1c) and s1d:
+				s1c = ", Level::kLow"
+			s1 += s1b + s1c + s1d + '>'
 			s1 = align_to_col(s1, 60)
 		s2 = "{0}_{1}{2};".format(self.dev, self.port, self.pin)
 		lines.append(s1+s2)
@@ -473,6 +496,8 @@ def create_types(all_pins):
 	last_title = ""
 	with open(OUTF2, 'wt') as fh:
 		fh.write("#pragma once\n")
+		fh.write("\n")
+		fh.write("#include \"pinremap.h\"\n")
 		fh.write("\n")
 		fh.write("namespace Bmt\n")
 		fh.write("{\n")

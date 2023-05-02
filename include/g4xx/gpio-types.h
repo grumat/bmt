@@ -11,21 +11,6 @@ namespace Gpio
 //////////////////////////////////////////////////////////////////////
 // SYS
 //////////////////////////////////////////////////////////////////////
-
-//! This datatype configure JTAG/SWD as seen right after the boot
-template <
-	const Gpio::Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map								///< Pin remapping feature (pinremap.h)
-> class SwdJtag_ : public AnyAltOut<
-	kPort
-	, kPin
-	, Map
-	, Speed::kFast
-	, Level::kLow
-	, PuPd::kPullDown
->
-{ };
 /// A default configuration to map MCO on PA8 pin
 typedef AnyAltOut<Port::PA, 8, AfMCO_PA8>					MCO_PA8;
 #if defined(GPIOG_BASE)
@@ -33,33 +18,33 @@ typedef AnyAltOut<Port::PA, 8, AfMCO_PA8>					MCO_PA8;
 typedef AnyAltOut<Port::PG, 10, AfMCO_PG10>					MCO_PG10;
 #endif	// defined(GPIOG_BASE)
 /// A default configuration to map JTCK on PA14 pin
-typedef SwdJtag_<Port::PA, 14, AfJTCK_PA14>				JTCK_PA14;
+typedef AnyAltOut<Port::PA, 14, AfJTCK_PA14, Speed::kFast, Level::kLow, PuPd::kPullDown>	JTCK_PA14;
 /// A default configuration to map JTDI on PA15 pin
-typedef SwdJtag_<Port::PA, 15, AfJTDI_PA15>				JTDI_PA15;
+typedef AnyAltOut<Port::PA, 15, AfJTDI_PA15, Speed::kFast, Level::kLow, PuPd::kPullUp>	JTDI_PA15;
 /// A default configuration to map JTDO on PB3 pin
-typedef SwdJtag_<Port::PB, 3, AfJTDO_PB3>					JTDO_PB3;
+typedef AnyAltOut<Port::PB, 3, AfJTDO_PB3, Speed::kFast>	JTDO_PB3;
 /// A default configuration to map JTMS on PA13 pin
-typedef SwdJtag_<Port::PA, 13, AfJTMS_PA13>				JTMS_PA13;
+typedef AnyAltOut<Port::PA, 13, AfJTMS_PA13, Speed::kFastest, Level::kLow, PuPd::kPullUp>	JTMS_PA13;
 /// A default configuration to map JTRST on PB4 pin
-typedef SwdJtag_<Port::PB, 4, AfJTRST_PB4>					JTRST_PB4;
+typedef AnyAltOut<Port::PB, 4, AfJTRST_PB4, Speed::kSlow, Level::kLow, PuPd::kPullUp>	JTRST_PB4;
 /// A default configuration to map TRACESWO on PB3 pin
-typedef SwdJtag_<Port::PB, 3, AfTRACESWO_PB3>				TRACESWO_PB3;
+typedef AnyAltOut<Port::PB, 3, AfTRACESWO_PB3, Speed::kFast>	TRACESWO_PB3;
 #if defined(GPIOE_BASE)
 /// A default configuration to map TRACECK on PE2 pin
-typedef SwdJtag_<Port::PE, 2, AfTRACECK_PE2>				TRACECK_PE2;
+typedef AnyAltOut<Port::PE, 2, AfTRACECK_PE2, Speed::kFast>	TRACECK_PE2;
 /// A default configuration to map TRACED0 on PE3 pin
-typedef SwdJtag_<Port::PE, 3, AfTRACED0_PE3>				TRACED0_PE3;
+typedef AnyAltOut<Port::PE, 3, AfTRACED0_PE3, Speed::kFast>	TRACED0_PE3;
 /// A default configuration to map TRACED1 on PE4 pin
-typedef SwdJtag_<Port::PE, 4, AfTRACED1_PE4>				TRACED1_PE4;
+typedef AnyAltOut<Port::PE, 4, AfTRACED1_PE4, Speed::kFast>	TRACED1_PE4;
 /// A default configuration to map TRACED2 on PE5 pin
-typedef SwdJtag_<Port::PE, 5, AfTRACED2_PE5>				TRACED2_PE5;
+typedef AnyAltOut<Port::PE, 5, AfTRACED2_PE5, Speed::kFast>	TRACED2_PE5;
 /// A default configuration to map TRACED3 on PE6 pin
-typedef SwdJtag_<Port::PE, 6, AfTRACED3_PE6>				TRACED3_PE6;
+typedef AnyAltOut<Port::PE, 6, AfTRACED3_PE6, Speed::kFast>	TRACED3_PE6;
 #endif	// defined(GPIOE_BASE)
 /// A default configuration to map SWCLK on PA14 pin
-typedef SwdJtag_<Port::PA, 14, AfSWCLK_PA14>				SWCLK_PA14;
+typedef AnyAltOut<Port::PA, 14, AfSWCLK_PA14, Speed::kFast, Level::kLow, PuPd::kPullDown>	SWCLK_PA14;
 /// A default configuration to map SWDIO on PA13 pin
-typedef SwdJtag_<Port::PA, 13, AfSWDIO_PA13>				SWDIO_PA13;
+typedef AnyAltOut<Port::PA, 13, AfSWDIO_PA13, Speed::kFastest, Level::kLow, PuPd::kPullUp>	SWDIO_PA13;
 
 //////////////////////////////////////////////////////////////////////
 // ADC1
