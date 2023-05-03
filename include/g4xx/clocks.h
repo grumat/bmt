@@ -49,8 +49,8 @@ class AnyHsi16 : public Private::AnyHsi<Id::kHSI16, 16000000UL, kHsiDefaultTrim>
 
 /// Template class for the HSE clock source
 template<
-	const uint32_t kFrequency = 8000000UL	///< Frequency of oscillator
-	, const bool kBypass = true				///< Low pin count devices have only CK input
+	const uint32_t kFrequency = 24000000UL	///< Frequency of oscillator
+	, const bool kBypass = false			///< Low pin count devices have only CK input
 	, const bool kCssEnabled = false		///< Clock Security System enable
 >
 class AnyHse : public Private::AnyHse<Id::kHSE, kFrequency, kBypass, kCssEnabled>
