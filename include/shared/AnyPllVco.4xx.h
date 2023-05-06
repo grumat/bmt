@@ -104,7 +104,7 @@ public:
 			|| kPllFraction_.r == 8
 			, "'/R' divisor value not supported by HW");
 		// Check for device limits (Note: If one wants to over-clock device, do it by itself)
-		static_assert(kFrequency_ <= 84000000UL
+		static_assert(kFrequency_ <= (PllCalculator::kOutMax_ + (PllCalculator::kOutMax_/10)*2)
 			, "System Over-clock detected (>5%!!!).");
 		// Desired Frequency cannot be configured in the PLL
 		static_assert(kPllFraction_.n >= PllCalculator::kN_Min_, "Underflow of PLLN configuration.");

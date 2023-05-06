@@ -105,7 +105,8 @@ using PllRange1 = Private::AnyPllVco<
 	96000000UL,						//!< 96 Mhz regardless of power mode
 	344000000UL,					//!< Power mode determines the PLL top range
 	8UL, 86UL,						//!< PLL 'xN' adjustment range
-	1UL, 8UL						//!< PLL '/M' adjustment range
+	1UL, 8UL,						//!< PLL '/M' adjustment range
+	80000000UL						//!< 80 MHz is the max expected final output frequency
 >;
 
 //! Use this as base for the PllVco<>/PllVcoAuto<> calculator
@@ -115,7 +116,8 @@ using PllRange2 = Private::AnyPllVco<
 	96000000UL,						//!< 96 Mhz regardless of power mode
 	128000000UL,					//!< Power mode determines the PLL top range
 	8UL, 86UL,						//!< PLL 'xN' adjustment range
-	1UL, 8UL						//!< PLL '/M' adjustment range
+	1UL, 8UL,						//!< PLL '/M' adjustment range
+	26000000UL						//!< 26 Hz max expected final output frequency
 >;
 
 

@@ -44,7 +44,8 @@ template<
 	const uint32_t kN_Min,		//!< The minimum allowed multiplier
 	const uint32_t kN_Max,		//!< The maximum allowed multiplier
 	const uint32_t kM_Min,		//!< The minimum allowed divisor
-	const uint32_t kM_Max		//!< The maximum allowed divisor
+	const uint32_t kM_Max,		//!< The maximum allowed divisor
+	const uint32_t kMaxFreq		//!< The maximum allowed final frequency
 >
 class AnyPllVco
 {
@@ -65,6 +66,8 @@ public:
 	static constexpr uint32_t kM_Min_ = kM_Min;
 	//! The maximum allowed divisor
 	static constexpr uint32_t kM_Max_ = kM_Max;
+	//! The maximum allowed final output frequency
+	static constexpr uint32_t kOutMax_ = kMaxFreq;
 
 	//! Computes the result for a given input and desired output frequencies
 	/*!

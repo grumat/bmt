@@ -68,6 +68,7 @@ class AnyPllVco : public Private::AnyPllVco<
 	, 16000000UL, 72000000UL
 	, 2, 16
 	, 1 + (ClockSource::kClockSource_ == Id::kHSI), 2
+	, 72000000UL
 >
 {};
 

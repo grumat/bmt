@@ -78,7 +78,20 @@ using PllRange1 = Private::AnyPllVco<
 	96000000UL,						//!< 96 Mhz regardless of power mode
 	344000000UL,					//!< Power mode determines the PLL top range
 	8UL, 86UL,						//!< PLL 'xN' adjustment range
-	1UL, 8UL						//!< PLL '/M' adjustment range
+	1UL, 8UL,						//!< PLL '/M' adjustment range
+	150000000UL						//!< 150 MHz is system top frequency
+>;
+
+
+//! Use this as base for the PllVco<>/PllVcoAuto<> calculator
+using PllBoostRange = Private::AnyPllVco<
+	4000000UL,						//!< VCO input is after '/M' divisor
+	16000000UL,						//!< Data-sheet limits PLL to 16 MHz
+	96000000UL,						//!< 96 Mhz regardless of power mode
+	344000000UL,					//!< Power mode determines the PLL top range
+	8UL, 86UL,						//!< PLL 'xN' adjustment range
+	1UL, 8UL,						//!< PLL '/M' adjustment range
+	170000000UL						//!< 170 MHz is system top frequency with boost active
 >;
 
 //! Use this as base for the PllVco<>/PllVcoAuto<> calculator
@@ -88,16 +101,21 @@ using PllRange2 = Private::AnyPllVco<
 	96000000UL,						//!< 96 Mhz regardless of power mode
 	128000000UL,					//!< Power mode determines the PLL top range
 	8UL, 86UL,						//!< PLL 'xN' adjustment range
-	1UL, 8UL						//!< PLL '/M' adjustment range
+	1UL, 8UL,						//!< PLL '/M' adjustment range
+	26000000UL						//!< 20 MHz is system top frequency
 >;
 
 
 // General PLL calculator for Range 1 core voltage
 typedef AnyPllVco<PllRange1> Range1;
+// General PLL calculator for Range 1 core voltage
+typedef AnyPllVco<PllBoostRange> BoostRange;
 // General PLL calculator for Range 2 core voltage
 typedef AnyPllVco<PllRange2> Range2;
 // Most flexible PLL calculator ('/R' auto-selected)
 typedef AnyPllVcoAuto<PllRange1> AutoRange1;
+// Most flexible PLL calculator ('/R' auto-selected)
+typedef AnyPllVcoAuto<PllBoostRange> AutoBoostRange;
 // Most flexible PLL calculator ('/R' auto-selected)
 typedef AnyPllVcoAuto<PllRange2> AutoRange2;
 
@@ -220,22 +238,22 @@ public:
 		);
 	// Invalid Clock setting
 	static_assert(
-		kFrequency_ <= 80000000UL
+		kFrequency_ <= 170000000UL
 		, "Clock setting is overclocking MCU"
 		);
 	// Invalid AHB Clock setting
 	static_assert(
-		kAhbClock_ <= 80000000UL
+		kAhbClock_ <= 170000000UL
 		, "AHB divisor is overclocked"
 		);
 	// Invalid APB1 Clock setting
 	static_assert(
-		kApb1Clock_ <= 80000000UL
+		kApb1Clock_ <= 1700000000UL
 		, "APB1 divisor is overclocked"
 		);
 	// Invalid APB2 Clock setting
 	static_assert(
-		kApb2Clock_ <= 80000000UL
+		kApb2Clock_ <= 1700000000UL
 		, "APB2 divisor is overclocked"
 		);
 
