@@ -8,6 +8,11 @@ extern "C" void SysTick_Handler(void);
 
 namespace Bmt
 {
+namespace Timer
+{
+
+/// A type safe uint32_t for systimer tick units
+enum SysTickUnits : uint32_t;
 
 /// How a time delay shall be done
 enum SysTickPollType
@@ -23,7 +28,7 @@ template<
 	, const uint32_t kFrequency = 1000	///< Tick frequency
 	, const SysTickPollType kSysTickPollType = kPollRun	/// How to perform delays
 >
-class ALIGNED SysTickTemplate
+class ALIGNED AnySysTick
 {
 public:
 	/// Constant with the Tick frequency
@@ -54,6 +59,54 @@ public:
 	{
 		SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
 	}
+	/// Returns the current counter raw value
+	ALWAYS_INLINE static SysTickUnits GetRawValue()
+	{
+		return (SysTickUnits)SysTick->VAL;
+	}
+	// Returns distance of raw counter to an initial reference (interval has to be less than kFrequency_ period)
+	ALWAYS_INLINE static SysTickUnits GetDif(SysTickUnits t0)
+	{
+		SysTickUnits t1 = GetRawValue();
+		// SysTick is a down-counter!!!
+		int32_t dif = (t0 - t1);
+		if(dif < 0)
+			return (SysTickUnits)(dif + kReload_ + 1);
+		else
+			return (SysTickUnits)dif;
+	}
+
+// High resolution short delays (necessarily below kFrequency_ period)
+public:
+	/// Conversion from us to timer ticks
+	template<const uint32_t kUS>
+	struct U2T
+	{
+		static constexpr SysTickUnits kTicks = (SysTickUnits)(((uint64_t)kUS * SysClk::kFrequency_) / 1000000);
+	};
+	/// Delays CPU by a given timer tick value
+	void DelayTicks(SysTickUnits ticks) NO_INLINE
+	{
+		uint32_t t0 = GetRawValue();
+		while ((int32_t)(GetRawValue() - t0) < (int32_t)ticks)
+		{
+		}
+	}
+	/// Constant delay of CPU in us (optimized code)
+	/*!
+	Only very short periods should be used. Put it into a CriticalSection if 
+	timing is at a premium. Interrupts will certainly add sensitive jitter on 
+	time precision.
+	*/
+	template<const uint32_t kUS> ALWAYS_INLINE void DelayUS()
+	{
+		static constexpr SysTickUnits kTicks = U2T<kUS>::kTicks;
+		// Delay time to big for timer resolution 
+		static_assert(kTicks < kReload_/2, "This timer may run very fast, so we rely on 50% of the range only");
+		// Hold CPU flow as long as time has not elapsed
+		DelayTicks(kTicks);
+	}
+
 protected:
 	/// ISR can access this class
 	friend void SysTick_Handler(void);
@@ -114,11 +167,11 @@ template<
 	, const uint32_t kSoftFreq = 200UL		///< Frequency of the soft-generated sub-frequency
 	, const SysTickPollType kSysTickPollType = kPollWfi	///< How to halt the CPU
 >
-class ALIGNED SysTickExTemplate : public SysTickTemplate<SysClk, kFrequency, kSysTickPollType>
+class ALIGNED AnySysTickEx : public AnySysTick<SysClk, kFrequency, kSysTickPollType>
 {
 public:
 	/// Base class
-	typedef SysTickTemplate<SysClk, kFrequency, kSysTickPollType> Base;
+	typedef AnySysTick<SysClk, kFrequency, kSysTickPollType> Base;
 	/// Soft frequency
 	static constexpr uint32_t kFrequency_ = kSoftFreq;
 	/// Soft generated tick counter
@@ -160,10 +213,15 @@ protected:
 	}
 };
 
-/// A type safe uint32_t for systimer tick units
-enum SysTickUnits : uint32_t;
 
 /// Use of SysTick as a simple raw timer without interrupts
+/*!
+This class cannot interoperate with AnySysTick/AnySysTickEx.
+Either one or the other approach should be used, completely.
+The first is designed for a collaborative, low-power, interrupt-driven design, 
+while this class is for a firmware that relies on energy inefficient polling.
+Needless to say, that time precision is the great gain here.
+*/
 template<
 	typename SysClk			///< System clock
 >
@@ -172,12 +230,14 @@ class ALIGNED SysTickCounter
 public:
 	/// Use CPUFreq/8 as time base
 	static constexpr uint32_t kFrequency_ = SysClk::kFrequency_ / 8;
+	/// Overflow for this timer working in full range
+	static constexpr uint32_t kTimerOverflow_ = 0x01000000UL;
 
 	/// Initialize the tick timer
 	ALWAYS_INLINE static void Init(void)
 	{
 		SysTick->LOAD = 0x00FFFFFF;
-		SysTick->CTRL = SysTick_CTRL_ENABLE_Msk;	// CPU/8
+		SysTick->CTRL = SysTick_CTRL_ENABLE_Msk;		// CPU/8
 	}
 	/// Returns the current counter raw value
 	ALWAYS_INLINE static uint32_t GetRawValue()
@@ -199,19 +259,19 @@ public:
 	template<const uint32_t kMS>
 	struct M2T
 	{
-		static constexpr SysTickUnits kTicks = (SysTickUnits)(kMS * (kFrequency_ / 1000));
+		static constexpr SysTickUnits kTicks = (SysTickUnits)(((uint64_t)kMS * kFrequency_) / 1000);
 	};
 
 	/// Conversion from us to timer ticks
 	template<const uint32_t kUS>
 	struct U2T
 	{
-		static constexpr SysTickUnits kTicks = (SysTickUnits)(kUS * (kFrequency_/100000) / 10);
+		static constexpr SysTickUnits kTicks = (SysTickUnits)(((uint64_t)kUS * kFrequency_) / 1000000);
 	};
 
 public:
 	/// A stopwatch class using the tick counter
-	class StopWatch
+	class ALIGNED StopWatch
 	{
 	public:
 		/// ctor starts the stop watch
@@ -224,55 +284,105 @@ public:
 			t0_ = GetRawValue();
 		}
 		/// Elapsed time in ms
-		ALWAYS_INLINE SysTickUnits GetEllapsedTicks() const
+		ALWAYS_INLINE SysTickUnits GetElapsedTicks() const
 		{
-			int dif = t0_ - GetRawValue();	// down-counter
+			int32_t dif = t0_ - GetRawValue();	// down-counter
 			if (dif < 0)
-				dif += 0x01000000;
+				dif += kTimerOverflow_;
 			return (SysTickUnits)dif;
 		}
 		/// Delays CPU by a given timer tick value
 		void DelayTicks(SysTickUnits ticks) NO_INLINE
 		{
-			while (GetEllapsedTicks() < ticks)
+			while (GetElapsedTicks() < ticks)
 			{ }
 		}
 		/// Delay CPU using ms value (worst case scenario)
 		void Delay(uint32_t ms) NO_INLINE
 		{
-			if (ms)
+			static constexpr SysTickUnits k1ms = M2T<1>::kTicks;
+			while(ms >= 1)
 			{
-				// Only good for variables; not recommended for constants
-				const SysTickUnits ticks = ToTicks(ms);
-				while (GetEllapsedTicks() < ticks)
-				{ }
+				Delay<k1ms>();
+				int32_t tmp = t0_ - k1ms;
+				if (tmp >= 0)
+					t0_ = tmp;
+				else
+					t0_ = tmp + kTimerOverflow_;
+				ms -= 1;
 			}
 		}
 		/// Constant delay of CPU in ms (optimized code)
-		template<const uint32_t kMS> NO_INLINE void Delay()
+		template<const uint32_t kMS> constexpr void Delay()
 		{
-			static constexpr SysTickUnits kTicks = M2T<kMS>::kTicks;
+			const SysTickUnits kTicks = M2T<kMS>::kTicks;
 			// Delay time to big for timer resolution 
-			static_assert(kTicks <= 0x00FFFF80);
+			static_assert(kTicks <= 0x00FFFF80, "Overflow will happen (a margin was included since this timer works on stamina)");
 			// Hold CPU flow as long as time has not elapsed
 			DelayTicks(kTicks);
 		}
 		/// Constant delay of CPU in us (optimized code)
-		template<const uint32_t kUS> ALWAYS_INLINE void DelayUS()
+		template<const uint32_t kUS> constexpr void DelayUS()
 		{
-			static constexpr SysTickUnits kTicks = U2T<kUS>::kTicks;
+			const SysTickUnits kTicks = U2T<kUS>::kTicks;
 			// Delay time to big for timer resolution 
-			static_assert(kTicks <= 0x00FFFF80);
+			static_assert(kTicks <= 0x00FFFF80, "Overflow will happen (a margin was included since this timer works on stamina)");
 			// Hold CPU flow as long as time has not elapsed
 			DelayTicks(kTicks);
 		}
 
-	private:
+	protected:
 		// The clock value when the stop watch was last started. Its units vary
 		// depending on the platform.
 		uint32_t t0_;
 	};
+	// Similar to StopWatch but supports very long intervals
+	class ALIGNED LongStopWatch : public StopWatch
+	{
+	public:
+		LongStopWatch(uint32_t total_ms) : ms_(total_ms) {}
+		// Check if time was not elapsed (call at least 10 times a second!!!)
+		bool IsNotElapsed() NO_INLINE
+		{
+			static constexpr SysTickUnits k1ms = M2T<1>::kTicks;
+			// Removes all accumulated microseconds
+			while ((ms_ > 0)
+				&& (StopWatch::GetElapsedTicks() > k1ms)
+				)
+			{
+				// SysTick is a down-counter!!!
+				if (StopWatch::t0_ >= k1ms)
+					StopWatch::t0_ -= k1ms;
+				else
+					StopWatch::t0_ = (StopWatch::t0_ - k1ms) + kTimerOverflow_;
+				--ms_;
+			}
+			// returns state
+			return ms_ > 0;
+		}
+		// Sets a new duration, initial base time will continue from the 
+		// initial mark
+		void Continue(uint32_t total_ms)
+		{
+			ms_ = total_ms;
+		}
+		// Adds a duration to current current state
+		void Append(uint32_t total_ms)
+		{
+			ms_ += total_ms;
+		}
+		// Restarts counter. A new time base is used
+		void Restart(uint32_t total_ms)
+		{
+			StopWatch::Start();
+			ms_ = total_ms;
+		}
+
+	private:
+		uint32_t ms_;
+	};
 };
 
 
+}	// namespace Timer
 }	// namespace Bmt
