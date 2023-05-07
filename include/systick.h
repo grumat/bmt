@@ -233,6 +233,7 @@ public:
 	/// Overflow for this timer working in full range
 	static constexpr uint32_t kTimerOverflow_ = 0x01000000UL;
 
+
 	/// Initialize the tick timer
 	ALWAYS_INLINE static void Init(void)
 	{
@@ -268,6 +269,10 @@ public:
 	{
 		static constexpr SysTickUnits kTicks = (SysTickUnits)(((uint64_t)kUS * kFrequency_) / 1000000);
 	};
+	
+public:
+	/// The number of ticks used for 1 ms
+	static constexpr SysTickUnits k1ms_ = M2T<1>::kTicks;
 
 public:
 	/// A stopwatch class using the tick counter
@@ -300,11 +305,10 @@ public:
 		/// Delay CPU using ms value (worst case scenario)
 		void Delay(uint32_t ms) NO_INLINE
 		{
-			static constexpr SysTickUnits k1ms = M2T<1>::kTicks;
 			while(ms >= 1)
 			{
-				Delay<k1ms>();
-				int32_t tmp = t0_ - k1ms;
+				DelayTicks(k1ms_);
+				int32_t tmp = t0_ - k1ms_;
 				if (tmp >= 0)
 					t0_ = tmp;
 				else
@@ -344,17 +348,16 @@ public:
 		// Check if time was not elapsed (call at least 10 times a second!!!)
 		bool IsNotElapsed() NO_INLINE
 		{
-			static constexpr SysTickUnits k1ms = M2T<1>::kTicks;
 			// Removes all accumulated microseconds
 			while ((ms_ > 0)
-				&& (StopWatch::GetElapsedTicks() > k1ms)
+				&& (StopWatch::GetElapsedTicks() > k1ms_)
 				)
 			{
 				// SysTick is a down-counter!!!
-				if (StopWatch::t0_ >= k1ms)
-					StopWatch::t0_ -= k1ms;
+				if (StopWatch::t0_ >= k1ms_)
+					StopWatch::t0_ -= k1ms_;
 				else
-					StopWatch::t0_ = (StopWatch::t0_ - k1ms) + kTimerOverflow_;
+					StopWatch::t0_ = (StopWatch::t0_ - k1ms_) + kTimerOverflow_;
 				--ms_;
 			}
 			// returns state
