@@ -16,14 +16,20 @@ public:
 	// Frequency of the clock source
 	static constexpr uint32_t kFrequency_ = kFreq;
 	static constexpr uint32_t kIsPll_ = kIsPll;
+	// Computes the total wait state
+	static constexpr uint32_t kWaitState_ = 
+		kFrequency_ > 48000000UL	? 2
+		: kFrequency_ > 24000000UL	? 1
+		/*lower clock*/				: 0
+		;
 
 	static constexpr void Setup()
 	{
 		uint32_t tmp = 0;
 		// Flash memory
-		if (kFrequency_ > 48000000UL)
+		if (kWaitState_ == 2)
 			tmp = FLASH_ACR_LATENCY_2 | FLASH_ACR_PRFTBE;
-		else if (kFrequency_ > 24000000UL)
+		else if (kWaitState_ == 1)
 			tmp = FLASH_ACR_LATENCY_1 | FLASH_ACR_PRFTBE;
 		else
 			tmp = FLASH_ACR_PRFTBE;

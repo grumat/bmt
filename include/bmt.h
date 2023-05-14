@@ -11,6 +11,7 @@
 /// Isolate official classes from Example 2
 #include "critical_section.h"
 
+#include "delay.h"
 #include "timer.h"
 #include "uart.h"
 #include "stopwatch.h"

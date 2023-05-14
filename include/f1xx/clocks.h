@@ -238,6 +238,7 @@ public:
 	/// Clock required by the USB peripheral
 	static constexpr uint32_t kUsbClock_ = (kOpts_ & SysClkOpts::kUsbClock) == SysClkOpts::kUsbClock
 		? 48000000UL : 0UL;
+	typedef System::WaitState < kFrequency_, ClockSource::kClockSource_ == Id::kPLL> WaitState;
 
 	/// Starts associated oscillator, initializes clock tree prescalers and use oscillator for system clock
 	constexpr static void Init(void)
@@ -339,7 +340,7 @@ public:
 
 		// When increasing frequency apply wait state before setting clock, to avoid crash
 		if ((kOpts_ & SysClkOpts::kFreqDown) == SysClkOpts::kDefault)
-			System::WaitState < kFrequency_, ClockSource::kClockSource_ == Id::kPLL>::Setup();
+			WaitState::Setup();
 
 		uint32_t tmp;
 		// Load state to register and clear all bits handled here
@@ -467,7 +468,7 @@ public:
 
 		// When decreasing frequency apply wait state after setting clock
 		if ((kOpts_ & SysClkOpts::kFreqDown) == SysClkOpts::kFreqDown)
-			System::WaitState < kFrequency_, ClockSource::kClockSource_ == Id::kPLL>::Setup();
+			WaitState::Setup();
 	}
 };
 
