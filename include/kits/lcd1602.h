@@ -13,10 +13,18 @@ namespace Lcd1602
 // Unchanged
 enum class Options
 {
-	kDefault	= 0b00000000,	// Defaults to 2 lines and 5x8 char
-	k1Line		= 0b00000001,	// Display has one lines
-	k5x10Char	= 0b00000010,	// Display has 5x10 chars
-	kSlowBus	= 0b00000100,	// Slower bus transactions good for long cables
+	kDefault	= 0b00000000,	// Defaults to 2x16; 5x8 cell
+	k1Line		= 0b00100000,	// Display has one line (1x16, 1x20, 1x40)
+	k1202		= 0b00000000,	// 2x12 (@ 0x00, 0x40)
+	k1602		= 0b00000000,	// 2x16 (@ 0x00, 0x40)
+	k2002		= 0b00000000,	// 2x20 (@ 0x00, 0x40)
+	k2402		= 0b00000000,	// 2x24 (@ 0x00, 0x40)
+	k4002		= 0b00000000,	// 2x40 (@ 0x00, 0x40)
+	k1604		= 0b00000001,	// 4x16 (@ 0x00, 0x40, 0x10, 0x50)
+	k2004a		= 0b00000010,	// 4x20 (@ 0x00, 0x40, 0x14, 0x54)
+	k2004b		= 0b00000011,	// 4x20 (@ 0x00, 0x20, 0x40, 0x60)
+	k5x10Char	= 0b01000000,	// Display has 5x10 chars
+	kSlowBus	= 0b10000000,	// Slower bus transactions good for long cables
 };
 // Bit merge
 constexpr static Options operator|(Options lhs, Options rhs)
@@ -180,6 +188,8 @@ public:
 	// Ensure that 40ms have passed after power on, before calling this
 	void Init()
 	{
+		m_Poll.Wait();
+		WaitBusy();
 		FunctionSet(FuncSetOpts::k8BitMode);
 		FunctionSet(FuncSetOpts::k8BitMode);
 		FunctionSet(FuncSetOpts::k4BitMode);
@@ -193,6 +203,9 @@ public:
 	/*
 	If you write anything to the display CPU will be halted until unlock
 	timer releases.
+	NOTE: Internal timers uses ordinary polling technique and may fail if 
+	internal timer wraps around. To avoid issues. You should 'ping' internal
+	timer at a reasonable rate to avoid irregular delays.
 	*/
 	constexpr bool IsLocked()
 	{
@@ -243,17 +256,36 @@ public:
 		m_Poll.Restart(20);
 	}
 	// Sets the cursor position
-	constexpr void SetCursorPos(uint8_t x, uint8_t y)
+	void SetCursorPos(uint8_t x, uint8_t y)
 	{
-		constexpr uint8_t rmax 
-			= ((kFormat_ & FuncSetOpts::k2Line) == FuncSetOpts::k2Line)
-			? 2 
-			: 1
+		constexpr uint8_t rmax
+			= (kOpts & Options::k1Line) == Options::k1Line 		? 1
+			: (kOpts & Options::k2004b) != Options::kDefault	? 4
+			/* Defaults to 2 line display */					: 2
 			;
+		constexpr static uint8_t addr0[] =
+		{
+			0x00, 0x40, 0x10, 0x50
+		};
+		constexpr static uint8_t addr1[] =
+		{
+			0x00, 0x40, 0x14, 0x54
+		};
+		constexpr static uint8_t addr2[] =
+		{
+			0x00, 0x20, 0x40, 0x60
+		};
+		// Truncate y coordinate
 		if (y >= rmax)
 			y = 0;
-		y = y ? 0x40 : 0;	// start of line 2, offsets at 0x40
-		x += y;				// final mem position
+		// Memory offset depends on hardware design
+		if ((kOpts & Options::k2004b) == Options::k2004b)
+			y = addr2[y];
+		else if ((kOpts & Options::k2004b) == Options::k2004a)
+			y = addr1[y];
+		else
+			y = addr0[y];
+		x = x + y;				// final mem position
 		WriteInstruction(x | kSetRamAddress);
 		m_Poll.Restart(15);
 	}
@@ -285,6 +317,7 @@ private:
 	}
 	void FunctionSet(FuncSetOpts opts) NO_INLINE
 	{
+		m_Poll.Wait();
 		uint8_t raw = (uint8_t)opts | kFunctionSet;
 		WriteInstruction4(raw >> 4);
 		if ((opts & FuncSetOpts::k8BitMode) != FuncSetOpts::k8BitMode)
