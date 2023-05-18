@@ -116,7 +116,7 @@ template<
 		PolledStopWatch(uint32_t total_ms)
 			: ms_(total_ms)
 		{
-			SUPER::template StartUS<1000>();
+			SUPER::template Start<Usec(1000)>();
 		}
 		// Check if time was not elapsed (call at least 10 times a second!!!)
 		bool IsNotElapsed() NO_INLINE
@@ -126,7 +126,7 @@ template<
 			{
 				if (SUPER::IsNotElapsed() == false)
 				{
-					SUPER::template AppendUS<1000>();
+					SUPER::template Append<Usec(1000)>();
 					--ms_;
 				}
 			}

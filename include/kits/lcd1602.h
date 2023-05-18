@@ -224,7 +224,7 @@ public:
 	constexpr void ClearDisplay()
 	{
 		WriteInstruction(kClearDisplay);
-		m_Poll.template RestartUS<1500>();
+		m_Poll.template Restart<Timer::Usec(1500)>();
 	}
 	// Clears the display (requires at least 1,5 ms)
 	constexpr void ReturnHome()
@@ -237,28 +237,28 @@ public:
 	{
 		uint8_t raw = (uint8_t)opts | kEntryModeSet;
 		WriteInstruction(raw);
-		m_Poll.template RestartUS<20>();
+		m_Poll.template Restart < Timer::Usec(20) > ();
 	}
 	// Sends the DisplayControl command
 	constexpr void DisplayControl(DisplayOpts opts)
 	{
 		uint8_t raw = (uint8_t)opts | kDisplayControl;
 		WriteInstruction(raw);
-		m_Poll.template RestartUS<20>();
+		m_Poll.template Restart < Timer::Usec(20) > ();
 	}
 	// Sends the CursorShift command
 	constexpr void CursorShift(ShiftOpts opts)
 	{
 		uint8_t raw = (uint8_t)opts | kCursorShift;
 		WriteInstruction(raw);
-		m_Poll.template RestartUS<20>();
+		m_Poll.template Restart < Timer::Usec(20) > ();
 	}
 	// Set CGRAM Address to AC
 	constexpr void SetCGRAM(const uint8_t addr)
 	{
 		uint8_t raw = (addr & 0b00111111) | kSetCgAddress;
 		WriteInstruction(raw);
-		m_Poll.template RestartUS<20>();
+		m_Poll.template Restart < Timer::Usec(20) > ();
 	}
 	// Sets the cursor position
 	void SetCursorPos(uint8_t x, uint8_t y)
@@ -292,7 +292,7 @@ public:
 			y = addr0[y];
 		x = x + y;				// final mem position
 		WriteInstruction(x | kSetRamAddress);
-		m_Poll.template RestartUS<15>();
+		m_Poll.template Restart < Timer::Usec(15) > ();
 	}
 	// Writes an unformatted string to current cursor position
 	ALWAYS_INLINE constexpr void Write(char ch)
@@ -327,7 +327,7 @@ private:
 		WriteInstruction4(raw >> 4);
 		if ((opts & FuncSetOpts::k8BitMode) != FuncSetOpts::k8BitMode)
 			WriteInstruction4(raw & 0xf);
-		m_Poll.template RestartUS<37>();
+		m_Poll.template Restart < Timer::Usec(37) > ();
 	}
 	ALWAYS_INLINE static constexpr void WriteInstruction4(const uint8_t v)
 	{
@@ -377,7 +377,7 @@ private:
 		Mode_::Write(Ctrl::kWrData);
 		WriteData4(v >> 4);
 		WriteData4(v & 0x0f);
-		m_Poll.template RestartUS<20>();
+		m_Poll.template Restart < Timer::Usec(20) > ();
 		Mode_::Write(Ctrl::kWrInstruction);
 	}
 	ALWAYS_INLINE static constexpr uint8_t ReadData4()
