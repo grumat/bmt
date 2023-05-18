@@ -146,6 +146,13 @@ private:
 		kSetCgAddress	= 0b01000000,
 		kSetRamAddress	= 0b10000000,
 	};
+	enum Ctrl : uint8_t
+	{
+		kWrInstruction	= 0b00,	// Send instructions to the display (LCD in, MCU out)
+		kRdAddress		= 0b01,	// and busy flag (LCD out, MCU in)
+		kWrData			= 0b10,	// Writes data to the RAM (LCD in, MCU out)
+		kRdData			= 0b11,	// Reads data from the RAM (LCD out, MCU in)
+	};
 public:
 	typedef Delay Delay_;
 	typedef Gpio::AnyOut<kPort, kRS> RS_;
@@ -174,19 +181,19 @@ public:
 		;
 	// Determines the base period of the bus transactions
 	static constexpr uint32_t kSlopeWidth_ = (kOpts & Options::kSlowBus) == Options::kSlowBus
-		? 500 : 250;
+		? 1000 : 500;
 
 	AnyLcd1602()
-		: m_Poll(40)
-	{}
+	{ }
 
+	// Enables bus (not necessary if you initialized bus elsewhere)
 	static void Enable()
 	{
 		typedef Gpio::AnyPinGroup<kPort, RS_, RW_, EN_, D4_, D5_, D6_, D7_> AllPins;
 		AllPins::Enable();
 	}
 	// Ensure that 40ms have passed after power on, before calling this
-	void Init()
+	void InitLcd()
 	{
 		m_Poll.Wait();
 		WaitBusy();
@@ -211,49 +218,47 @@ public:
 	{
 		if (m_Poll.IsNotElapsed())
 			return true;
-		// Makes sure timer values are near to avoid wrap around
-		m_Poll.Restart(0);
 		return false;
 	}
 	// Clears the display (requires at least 1,5 ms)
 	constexpr void ClearDisplay()
 	{
 		WriteInstruction(kClearDisplay);
-		m_Poll.Restart(1500);
+		m_Poll.template RestartUS<1500>();
 	}
 	// Clears the display (requires at least 1,5 ms)
 	constexpr void ReturnHome()
 	{
 		WriteInstruction(kReturnHome);
-		m_Poll.Restart(1500);
+		m_Poll.template RestartUS<1500>();
 	}
 	// Sends the EntryModeSet command
 	constexpr void EntryModeSet(EntryModeOpts opts)
 	{
 		uint8_t raw = (uint8_t)opts | kEntryModeSet;
 		WriteInstruction(raw);
-		m_Poll.Restart(20);
+		m_Poll.template RestartUS<20>();
 	}
 	// Sends the DisplayControl command
 	constexpr void DisplayControl(DisplayOpts opts)
 	{
 		uint8_t raw = (uint8_t)opts | kDisplayControl;
 		WriteInstruction(raw);
-		m_Poll.Restart(20);
+		m_Poll.template RestartUS<20>();
 	}
 	// Sends the CursorShift command
 	constexpr void CursorShift(ShiftOpts opts)
 	{
 		uint8_t raw = (uint8_t)opts | kCursorShift;
 		WriteInstruction(raw);
-		m_Poll.Restart(20);
+		m_Poll.template RestartUS<20>();
 	}
 	// Set CGRAM Address to AC
 	constexpr void SetCGRAM(const uint8_t addr)
 	{
 		uint8_t raw = (addr & 0b00111111) | kSetCgAddress;
 		WriteInstruction(raw);
-		m_Poll.Restart(20);
+		m_Poll.template RestartUS<20>();
 	}
 	// Sets the cursor position
 	void SetCursorPos(uint8_t x, uint8_t y)
@@ -287,7 +292,7 @@ public:
 			y = addr0[y];
 		x = x + y;				// final mem position
 		WriteInstruction(x | kSetRamAddress);
-		m_Poll.Restart(15);
+		m_Poll.template RestartUS<15>();
 	}
 	// Writes an unformatted string to current cursor position
 	ALWAYS_INLINE constexpr void Write(char ch)
@@ -322,7 +327,7 @@ private:
 		WriteInstruction4(raw >> 4);
 		if ((opts & FuncSetOpts::k8BitMode) != FuncSetOpts::k8BitMode)
 			WriteInstruction4(raw & 0xf);
-		m_Poll.Restart(38);
+		m_Poll.template RestartUS<37>();
 	}
 	ALWAYS_INLINE static constexpr void WriteInstruction4(const uint8_t v)
 	{
@@ -336,7 +341,7 @@ private:
 	{
 		m_Poll.Wait();
 		WaitBusy();
-		Mode_::Write(0b00);
+		Mode_::Write(Ctrl::kWrInstruction);
 		WriteInstruction4(v >> 4);
 		WriteInstruction4(v & 0x0f);
 	}
@@ -352,10 +357,10 @@ private:
 	static uint8_t ReadAddress() NO_INLINE
 	{
 		InPins_::Enable();
-		Mode_::Write(0b01);
+		Mode_::Write(Ctrl::kRdAddress);
 		uint8_t v = ReadAddress4() << 4;
 		v |= (ReadAddress4() & 0x0f);
-		Mode_::Write(0b00);
+		Mode_::Write(Ctrl::kWrInstruction);
 		OutPin_::Enable();
 		return v;
 	}
@@ -369,11 +374,11 @@ private:
 	}
 	void WriteData(const uint8_t v) NO_INLINE
 	{
-		Mode_::Write(0b10);
+		Mode_::Write(Ctrl::kWrData);
 		WriteData4(v >> 4);
 		WriteData4(v & 0x0f);
-		Mode_::Write(0b00);
-		m_Poll.Restart(20);
+		m_Poll.template RestartUS<20>();
+		Mode_::Write(Ctrl::kWrInstruction);
 	}
 	ALWAYS_INLINE static constexpr uint8_t ReadData4()
 	{
@@ -387,10 +392,10 @@ private:
 	static uint8_t ReadData() NO_INLINE
 	{
 		InPins_::Enable();
-		Mode_::Write(0b10);
+		Mode_::Write(Ctrl::kRdData);
 		uint8_t v = ReadData4() << 4;
 		v |= (ReadData4() & 0x0f);
-		Mode_::Write(0b00);
+		Mode_::Write(Ctrl::kWrInstruction);
 		OutPin_::Enable();
 		return v;
 	}

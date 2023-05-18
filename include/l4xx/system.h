@@ -36,34 +36,31 @@ public:
 	static constexpr bool kPrefetch_ = (kOpts & FlashOpts::kNoPrefetch) == FlashOpts::kDefault;
 	static constexpr bool kICache_ = (kOpts & FlashOpts::kNoInstrCache) == FlashOpts::kDefault;
 	static constexpr bool kDCache_ = (kOpts & FlashOpts::kNoDataCache) == FlashOpts::kDefault;
+	// Computes the total wait state
+	static constexpr uint32_t kWaitState_
+		= (kPower_ == Power::Mode::kRange1 && kFrequency_ > 64000000UL)	? 4
+		: (kPower_ == Power::Mode::kRange1 && kFrequency_ > 48000000UL) ? 3
+		: (kPower_ == Power::Mode::kRange1 && kFrequency_ > 32000000UL) ? 2
+		: (kPower_ == Power::Mode::kRange1 && kFrequency_ > 16000000UL) ? 1
+		: (kFrequency_ > 18000000UL) 									? 3
+		: (kFrequency_ > 12000000UL) 									? 2
+		: (kFrequency_ > 6000000UL) 									? 1
+		/*lowest clock*/ 												: 0
+		;
 
 	static constexpr void Setup()
 	{
 		uint32_t tmp = 0;
-		if (kPower_ == Power::Mode::kRange1)
-		{
-			if (kFrequency_ > 64000000UL)
-				tmp = FLASH_ACR_LATENCY_4WS;
-			else if (kFrequency_ > 48000000UL)
-				tmp = FLASH_ACR_LATENCY_3WS;
-			else if (kFrequency_ > 32000000UL)
-				tmp = FLASH_ACR_LATENCY_2WS;
-			else if (kFrequency_ > 16000000UL)
-				tmp = FLASH_ACR_LATENCY_1WS;
-			else
-				tmp = FLASH_ACR_LATENCY_0WS;
-		}
+		if (kWaitState_ == 4)
+			tmp = FLASH_ACR_LATENCY_4WS;
+		else if (kWaitState_ == 3)
+			tmp = FLASH_ACR_LATENCY_3WS;
+		else if (kWaitState_ == 2)
+			tmp = FLASH_ACR_LATENCY_2WS;
+		else if (kWaitState_ == 1)
+			tmp = FLASH_ACR_LATENCY_1WS;
 		else
-		{
-			if (kFrequency_ > 18000000UL)
-				tmp = FLASH_ACR_LATENCY_3WS;
-			else if (kFrequency_ > 12000000UL)
-				tmp = FLASH_ACR_LATENCY_2WS;
-			else if (kFrequency_ > 6000000UL)
-				tmp = FLASH_ACR_LATENCY_1WS;
-			else
-				tmp = FLASH_ACR_LATENCY_0WS;
-		}
+			tmp = FLASH_ACR_LATENCY_0WS;
 		// Prefetch makes sense when having one or more wait-states
 		if (tmp != 0 && kPrefetch_)
 			tmp |= FLASH_ACR_PRFTEN;

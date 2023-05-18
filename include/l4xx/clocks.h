@@ -208,6 +208,7 @@ public:
 	static constexpr Mco kMco_ = kClockOut;
 	/// Clock output mode
 	static constexpr McoPrscl kMcoPrscl_ = kMcoPrscl;
+	typedef System::WaitState<kFrequency_, kMode> WaitState;
 
 	// System clock restricts sources
 	static_assert(
@@ -290,7 +291,7 @@ public:
 	{
 		// Before switching to a faster clock, impose compatible wait state to avoid crash
 		if ((kOpts & SysClkOpts::kFreqDown) == SysClkOpts::kDefault)
-			System::WaitState<kFrequency_, kMode>::Setup();
+			WaitState::Setup();
 
 		uint32_t tmp;	// reset value
 		// Load state to register and clear all bits handled here
@@ -408,7 +409,7 @@ public:
 		}
 		// When reducing frequency, wait states have to come after the clock is set
 		if ((kOpts & SysClkOpts::kFreqDown) != SysClkOpts::kDefault)
-			System::WaitState<kFrequency_, kMode>::Setup();
+			WaitState::Setup();
 	}
 };
 

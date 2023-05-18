@@ -123,6 +123,24 @@ public:
 			DelayTicks(k500);
 		}
 	}
+	/// Elapsed time in hardware ticks
+	ALWAYS_INLINE static SysTickUnits GetElapsedTicks(SysTickUnits t0)
+	{
+		int32_t dif = t0 - (uint32_t)GetRawValue();	// down-counter
+		if (dif < 0)
+			dif += kReload_;
+		return (SysTickUnits)dif;
+	}
+	/// Elapsed time in hardware ticks and updates t0 to new base time
+	ALWAYS_INLINE static SysTickUnits GetElapsedTicksEx(SysTickUnits& t0)
+	{
+		SysTickUnits tn = GetRawValue();
+		int32_t dif = t0 - (uint32_t)tn;	// down-counter
+		if (dif < 0)
+			dif += kReload_;
+		t0 = tn;
+		return (SysTickUnits)dif;
+	}
 
 protected:
 	/// ISR can access this class
@@ -170,65 +188,6 @@ public:
 		// The clock value when the stop watch was last started. Its units vary
 		// depending on the platform.
 		uint32_t t0_;
-	};
-
-	// A polled stopwatch with support for long intervals. Call IsNotElapsed()
-	// in a rate above timer reload frequency for this class to work
-	class ALIGNED PolledStopWatch
-	{
-	public:
-		static constexpr uint32_t k250_ = U2T<250>::kTicks;
-
-		PolledStopWatch(uint32_t total_ms) : quarter_(total_ms << 2)
-		{
-			t0_ = GetRawValue();
-		}
-		// Check if time was not elapsed (call at least 10 times a second!!!)
-		bool IsNotElapsed() NO_INLINE
-		{
-			// Removes all accumulated microseconds
-			while ((quarter_ > 0)
-				&& (StopWatch::GetElapsedTicks(t0_) > k250_)
-				)
-			{
-				// SysTick is a down-counter!!!
-				if (t0_ >= k250_)
-					t0_ = t0_ - k250_;
-				else
-					t0_ = (t0_ - k250_) + kReload_;
-				--quarter_;
-			}
-			// returns state
-			return quarter_ > 0;
-		}
-		// Sets a new duration, initial base time will continue from the 
-		// initial mark
-		void Continue(uint32_t total_ms)
-		{
-			quarter_ = (total_ms << 2);
-		}
-		// Adds a duration to current current state
-		void Append(uint32_t total_ms)
-		{
-			quarter_ += (total_ms << 2);
-		}
-		// Restarts counter. A new time base is used
-		void Restart(uint32_t total_ms)
-		{
-			t0_ = GetRawValue();
-			quarter_ = (total_ms << 2);
-		}
-		// Locks processor flow until stopwatch reaches desired time
-		void Wait()
-		{
-			while (IsNotElapsed())
-			{
-			}
-		}
-
-	private:
-		uint32_t quarter_;
-		SysTickUnits t0_;
 	};
 };
 
@@ -317,22 +276,32 @@ public:
 		SysTick->CTRL = SysTick_CTRL_ENABLE_Msk;		// CPU/8
 	}
 	/// Returns the current counter raw value
-	ALWAYS_INLINE static uint32_t GetRawValue()
+	ALWAYS_INLINE static SysTickUnits GetRawValue()
 	{
-		return SysTick->VAL;
+		return SysTickUnits(SysTick->VAL);
 	}
 	/// Elapsed time in ms
-	ALWAYS_INLINE static SysTickUnits GetElapsedTicks(uint32_t t0)
+	ALWAYS_INLINE static SysTickUnits GetElapsedTicks(SysTickUnits t0)
 	{
 		int32_t dif = t0 - GetRawValue();	// down-counter
 		if (dif < 0)
 			dif += kTimerOverflow_;
 		return (SysTickUnits)dif;
 	}
+	/// Elapsed time in ms and update t0
+	ALWAYS_INLINE static SysTickUnits GetElapsedTicksEx(SysTickUnits &t0)
+	{
+		const SysTickUnits tn = GetRawValue();
+		int32_t dif = t0 - tn;	// down-counter
+		if (dif < 0)
+			dif += kTimerOverflow_;
+		t0 = tn;
+		return (SysTickUnits)dif;
+	}
 	/// Delays CPU by a given timer tick value
 	static void DelayTicks(SysTickUnits ticks) NO_INLINE
 	{
-		uint32_t t0 = GetRawValue();
+		SysTickUnits t0 = GetRawValue();
 		while (GetElapsedTicks(t0) < ticks)
 		{
 		}
@@ -370,124 +339,6 @@ public:
 		// Hold CPU flow as long as time has not elapsed
 		DelayTicks(kTicks);
 	}
-	
-public:
-	/// The number of ticks used for 1 ms
-	static constexpr SysTickUnits k1ms_ = M2T<1>::kTicks;
-
-public:
-	/// A stopwatch class using the tick counter
-	class ALIGNED StopWatch
-	{
-	public:
-		/// ctor starts the stop watch
-		ALWAYS_INLINE StopWatch() { Start(); }
-		// Start the stop watch at the moment t0 expressed in milliseconds (i.e.
-		// calling Time() immediately afterwards returns t0). This can be used to
-		// restart an existing stopwatch.
-		ALWAYS_INLINE void Start()
-		{
-			t0_ = GetRawValue();
-		}
-		/// Elapsed time in ms
-		ALWAYS_INLINE SysTickUnits GetElapsedTicks() const
-		{
-			return SysTickCounter<SysClk>::GetElapsedTicks(t0_);
-		}
-		/// Delays CPU by a given timer tick value
-		void DelayTicks(SysTickUnits ticks) NO_INLINE
-		{
-			while (GetElapsedTicks() < ticks)
-			{ }
-		}
-		/// Delay CPU using ms value (worst case scenario)
-		void Delay(uint32_t ms) NO_INLINE
-		{
-			while(ms >= 1)
-			{
-				DelayTicks(k1ms_);
-				int32_t tmp = t0_ - k1ms_;
-				if (tmp >= 0)
-					t0_ = tmp;
-				else
-					t0_ = tmp + kTimerOverflow_;
-				ms -= 1;
-			}
-		}
-		/// Constant delay of CPU in ms (optimized code)
-		template<const uint32_t kMS> constexpr void Delay()
-		{
-			const SysTickUnits kTicks = M2T<kMS>::kTicks;
-			// Delay time to big for timer resolution 
-			static_assert(kTicks <= 0x00FFFF80, "Overflow will happen (a margin was included since this timer works on stamina)");
-			// Hold CPU flow as long as time has not elapsed
-			DelayTicks(kTicks);
-		}
-		/// Constant delay of CPU in us (optimized code)
-		template<const uint32_t kUS> constexpr void DelayUS()
-		{
-			const SysTickUnits kTicks = U2T<kUS>::kTicks;
-			// Delay time to big for timer resolution 
-			static_assert(kTicks <= 0x00FFFF80, "Overflow will happen (a margin was included since this timer works on stamina)");
-			// Hold CPU flow as long as time has not elapsed
-			DelayTicks(kTicks);
-		}
-
-	protected:
-		// The clock value when the stop watch was last started. Its units vary
-		// depending on the platform.
-		uint32_t t0_;
-	};
-	// A polled stopwatch with support for long intervals
-	class ALIGNED PolledStopWatch : public StopWatch
-	{
-	public:
-		PolledStopWatch(uint32_t total_ms) : ms_(total_ms) {}
-		// Check if time was not elapsed (call at least 10 times a second!!!)
-		bool IsNotElapsed() NO_INLINE
-		{
-			// Removes all accumulated microseconds
-			while ((ms_ > 0)
-				&& (StopWatch::GetElapsedTicks() > k1ms_)
-				)
-			{
-				// SysTick is a down-counter!!!
-				if (StopWatch::t0_ >= k1ms_)
-					StopWatch::t0_ -= k1ms_;
-				else
-					StopWatch::t0_ = (StopWatch::t0_ - k1ms_) + kTimerOverflow_;
-				--ms_;
-			}
-			// returns state
-			return ms_ > 0;
-		}
-		// Sets a new duration, initial base time will continue from the 
-		// initial mark
-		void Continue(uint32_t total_ms)
-		{
-			ms_ = total_ms;
-		}
-		// Adds a duration to current current state
-		void Append(uint32_t total_ms)
-		{
-			ms_ += total_ms;
-		}
-		// Restarts counter. A new time base is used
-		void Restart(uint32_t total_ms)
-		{
-			StopWatch::Start();
-			ms_ = total_ms;
-		}
-		// Locks processor flow until stopwatch reaches desired time
-		void Wait()
-		{
-			while(IsNotElapsed())
-			{}
-		}
-
-	private:
-		uint32_t ms_;
-	};
 };
 
 
