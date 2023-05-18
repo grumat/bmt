@@ -24,33 +24,38 @@ template<
 			, t1_(ticks)
 		{ }
 		// Starts counting in µs
-		template<const int kUS> constexpr void StartUS()
+		template<Usec kUS> constexpr void Start()
 		{
 			t0_ = Timer::GetRawValue();
 			t1_ = Timer::template U2T<kUS>::kTicks; // full 32-bit resolution supported
 		}
 		// Starts counting in ms
-		template<const int kMS> constexpr void Start()
+		template<Msec kMS> constexpr void Start()
 		{
 			t0_ = Timer::GetRawValue();
 			t1_ = Timer::template M2T<kMS>::kTicks; // full 32-bit resolution supported
 		}
 		// Same as Start()
-		template<const int kUS> constexpr void RestartUS()
+		template<Usec kUS> constexpr void Restart()
 		{
 			t0_ = Timer::GetRawValue();
 			t1_ = Timer::template U2T<kUS>::kTicks; // full 32-bit resolution supported
 		}
 		// Same as Start()
-		template<const int kMS> constexpr void Restart()
+		template<Msec kMS> constexpr void Restart()
 		{
 			t0_ = Timer::GetRawValue();
 			t1_ = Timer::template M2T<kMS>::kTicks; // full 32-bit resolution supported
 		}
 		// Adds a time offset to the current duration without stopping current time
-		template<const int kUS> constexpr void AppendUS()
+		template<Usec kUS> constexpr void Append()
 		{
 			t1_ = Ticks(t1_ + Timer::template U2T<kUS>::kTicks);
+		}
+		// Adds a time offset to the current duration without stopping current time
+		template<Msec kMS> constexpr void Append()
+		{
+			t1_ = Ticks(t1_ + Timer::template M2T<kMS>::kTicks);
 		}
 		// Checks if interval has elapsed.
 		// Call this method in a rate below timer period for correct functionality
@@ -77,20 +82,20 @@ template<
 			{
 			}
 		}
-		template<const int kUS> constexpr void DelayUS()
+		template<Usec kUS> constexpr void Delay()
 		{
-			RestartUS<kUS>();
+			Restart<kUS>();
 			Wait();
 		}
-		template<const int kMS> constexpr void Delay()
+		template<Msec kMS> constexpr void Delay()
 		{
 			Restart<kMS>();
 			Wait();
 		}
-		ALWAYS_INLINE void Delay(const int kMS)
+		ALWAYS_INLINE void Delay(const Msec kMS)
 		{
 			t0_ = Timer::GetRawValue();
-			t1_ = Ticks(kMS * Timer::template M2T<1>::kTicks);
+			t1_ = Ticks(kMS * Timer::template M2T<Msec(1)>::kTicks);
 			Wait();
 		}
 	private:

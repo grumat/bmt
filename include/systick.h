@@ -13,6 +13,10 @@ namespace Timer
 
 /// A type safe uint32_t for systimer tick units
 enum Ticks : uint32_t;
+/// A type safe uint32_t for microseconds unit
+enum Usec : uint32_t;
+/// A type safe uint32_t for milliseconds unit
+enum Msec : uint32_t;
 
 /// How a time delay shall be done
 enum SysTickPollType
@@ -79,7 +83,7 @@ public:
 // High resolution short delays (necessarily below kFrequency_ period)
 public:
 	/// Conversion from us to timer ticks
-	template<const uint32_t kUS>
+	template<Usec kUS>
 	struct U2T
 	{
 		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kUS * SysClk::kFrequency_) / 1000000);
@@ -98,25 +102,25 @@ public:
 	timing is at a premium. Interrupts will certainly add sensitive jitter on 
 	time precision.
 	*/
-	template<const uint32_t kUS> static constexpr void DelayUS()
+	template<Usec kUS> static constexpr void Delay()
 	{
-		constexpr uint32_t kChunk = kReload_ / 2;
-		uint32_t kTicks = (uint32_t)U2T<kUS>::kTicks;
+		constexpr Ticks kChunk = Ticks(kReload_ / 2);
+		Ticks kTicks = U2T<kUS>::kTicks;
 		while (kTicks < kChunk)
 		{
-			DelayTicks((Ticks)kTicks);
-			kTicks -= kChunk;
+			DelayTicks(kTicks);
+			kTicks = Ticks(kTicks - kChunk);
 		}
 		if(kTicks)
 		{
 			// Hold CPU flow as long as time has not elapsed
-			DelayTicks((Ticks)kTicks);
+			DelayTicks(kTicks);
 		}
 	}
 	/// Milliseconds delay; Works for tick frequencies strictly below 2000 Hz
 	static constexpr void DelayMS(uint32_t ms) NO_INLINE
 	{
-		constexpr uint32_t k500 = U2T<500>::kTicks;
+		constexpr Ticks k500 = U2T<Usec(500)>::kTicks;
 		for(; ms; --ms)
 		{
 			DelayTicks(k500);
@@ -318,20 +322,20 @@ public:
 	}
 
 	/// Conversion from ms to timer ticks
-	template<const uint32_t kMS>
+	template<Msec kMS>
 	struct M2T
 	{
 		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kMS * kFrequency_) / 1000);
 	};
 
 	/// Conversion from us to timer ticks
-	template<const uint32_t kUS>
+	template<Usec kUS>
 	struct U2T
 	{
 		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kUS * kFrequency_) / 1000000);
 	};
 	/// Constant delay of CPU in us (optimized code)
-	template<uint32_t kUS> static ALWAYS_INLINE void DelayUS()
+	template<Usec kUS> static ALWAYS_INLINE void Delay()
 	{
 		constexpr Ticks kTicks = U2T<kUS>::kTicks;
 		// Delay time to big for timer resolution 
