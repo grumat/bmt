@@ -12,7 +12,7 @@ namespace Timer
 {
 
 /// A type safe uint32_t for systimer tick units
-enum SysTickUnits : uint32_t;
+enum Ticks : uint32_t;
 
 /// How a time delay shall be done
 enum SysTickPollType
@@ -60,20 +60,20 @@ public:
 		SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
 	}
 	/// Returns the current counter raw value
-	ALWAYS_INLINE static SysTickUnits GetRawValue()
+	ALWAYS_INLINE static Ticks GetRawValue()
 	{
-		return (SysTickUnits)SysTick->VAL;
+		return (Ticks)SysTick->VAL;
 	}
 	// Returns distance of raw counter to an initial reference (interval has to be less than kFrequency_ period)
-	ALWAYS_INLINE static SysTickUnits GetDif(SysTickUnits t0)
+	ALWAYS_INLINE static Ticks GetDif(Ticks t0)
 	{
-		SysTickUnits t1 = GetRawValue();
+		Ticks t1 = GetRawValue();
 		// SysTick is a down-counter!!!
 		int32_t dif = (t0 - t1);
 		if(dif < 0)
-			return (SysTickUnits)(dif + kReload_ + 1);
+			return (Ticks)(dif + kReload_ + 1);
 		else
-			return (SysTickUnits)dif;
+			return (Ticks)dif;
 	}
 
 // High resolution short delays (necessarily below kFrequency_ period)
@@ -82,10 +82,10 @@ public:
 	template<const uint32_t kUS>
 	struct U2T
 	{
-		static constexpr SysTickUnits kTicks = (SysTickUnits)(((uint64_t)kUS * SysClk::kFrequency_) / 1000000);
+		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kUS * SysClk::kFrequency_) / 1000000);
 	};
 	/// Delays CPU by a given timer tick value
-	void DelayTicks(SysTickUnits ticks) NO_INLINE
+	void DelayTicks(Ticks ticks) NO_INLINE
 	{
 		uint32_t t0 = GetRawValue();
 		while ((int32_t)(GetRawValue() - t0) < (int32_t)ticks)
@@ -104,13 +104,13 @@ public:
 		uint32_t kTicks = (uint32_t)U2T<kUS>::kTicks;
 		while (kTicks < kChunk)
 		{
-			DelayTicks((SysTickUnits)kTicks);
+			DelayTicks((Ticks)kTicks);
 			kTicks -= kChunk;
 		}
 		if(kTicks)
 		{
 			// Hold CPU flow as long as time has not elapsed
-			DelayTicks((SysTickUnits)kTicks);
+			DelayTicks((Ticks)kTicks);
 		}
 	}
 	/// Milliseconds delay; Works for tick frequencies strictly below 2000 Hz
@@ -124,22 +124,22 @@ public:
 		}
 	}
 	/// Elapsed time in hardware ticks
-	ALWAYS_INLINE static SysTickUnits GetElapsedTicks(SysTickUnits t0)
+	ALWAYS_INLINE static Ticks GetElapsedTicks(Ticks t0)
 	{
 		int32_t dif = t0 - (uint32_t)GetRawValue();	// down-counter
 		if (dif < 0)
 			dif += kReload_;
-		return (SysTickUnits)dif;
+		return (Ticks)dif;
 	}
 	/// Elapsed time in hardware ticks and updates t0 to new base time
-	ALWAYS_INLINE static SysTickUnits GetElapsedTicksEx(SysTickUnits& t0)
+	ALWAYS_INLINE static Ticks GetElapsedTicksEx(Ticks& t0)
 	{
-		SysTickUnits tn = GetRawValue();
+		Ticks tn = GetRawValue();
 		int32_t dif = t0 - (uint32_t)tn;	// down-counter
 		if (dif < 0)
 			dif += kReload_;
 		t0 = tn;
-		return (SysTickUnits)dif;
+		return (Ticks)dif;
 	}
 
 protected:
@@ -276,32 +276,32 @@ public:
 		SysTick->CTRL = SysTick_CTRL_ENABLE_Msk;		// CPU/8
 	}
 	/// Returns the current counter raw value
-	ALWAYS_INLINE static SysTickUnits GetRawValue()
+	ALWAYS_INLINE static Ticks GetRawValue()
 	{
-		return SysTickUnits(SysTick->VAL);
+		return Ticks(SysTick->VAL);
 	}
 	/// Elapsed time in ms
-	ALWAYS_INLINE static SysTickUnits GetElapsedTicks(SysTickUnits t0)
+	ALWAYS_INLINE static Ticks GetElapsedTicks(Ticks t0)
 	{
 		int32_t dif = t0 - GetRawValue();	// down-counter
 		if (dif < 0)
 			dif += kTimerOverflow_;
-		return (SysTickUnits)dif;
+		return (Ticks)dif;
 	}
 	/// Elapsed time in ms and update t0
-	ALWAYS_INLINE static SysTickUnits GetElapsedTicksEx(SysTickUnits &t0)
+	ALWAYS_INLINE static Ticks GetElapsedTicksEx(Ticks &t0)
 	{
-		const SysTickUnits tn = GetRawValue();
+		const Ticks tn = GetRawValue();
 		int32_t dif = t0 - tn;	// down-counter
 		if (dif < 0)
 			dif += kTimerOverflow_;
 		t0 = tn;
-		return (SysTickUnits)dif;
+		return (Ticks)dif;
 	}
 	/// Delays CPU by a given timer tick value
-	static void DelayTicks(SysTickUnits ticks) NO_INLINE
+	static void DelayTicks(Ticks ticks) NO_INLINE
 	{
-		SysTickUnits t0 = GetRawValue();
+		Ticks t0 = GetRawValue();
 		while (GetElapsedTicks(t0) < ticks)
 		{
 		}
@@ -310,30 +310,30 @@ public:
 // Time conversion
 public:
 	/// Computes the total amount of ticks for the given milliseconds (low performance option when used with constants)
-	static SysTickUnits ToTicks(uint32_t ms) NO_INLINE
+	static Ticks ToTicks(uint32_t ms) NO_INLINE
 	{
 		const uint32_t ticks = (ms * (kFrequency_ / 1000));
 		assert(ticks < 0x00FFFF80);
-		return (SysTickUnits)ticks;
+		return (Ticks)ticks;
 	}
 
 	/// Conversion from ms to timer ticks
 	template<const uint32_t kMS>
 	struct M2T
 	{
-		static constexpr SysTickUnits kTicks = (SysTickUnits)(((uint64_t)kMS * kFrequency_) / 1000);
+		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kMS * kFrequency_) / 1000);
 	};
 
 	/// Conversion from us to timer ticks
 	template<const uint32_t kUS>
 	struct U2T
 	{
-		static constexpr SysTickUnits kTicks = (SysTickUnits)(((uint64_t)kUS * kFrequency_) / 1000000);
+		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kUS * kFrequency_) / 1000000);
 	};
 	/// Constant delay of CPU in us (optimized code)
 	template<uint32_t kUS> static ALWAYS_INLINE void DelayUS()
 	{
-		constexpr SysTickUnits kTicks = U2T<kUS>::kTicks;
+		constexpr Ticks kTicks = U2T<kUS>::kTicks;
 		// Delay time to big for timer resolution 
 		static_assert(kTicks < 0x00FFFF80, "This timer may run very fast, so we rely on 50% of the range only");
 		// Hold CPU flow as long as time has not elapsed

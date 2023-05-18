@@ -80,6 +80,14 @@ public:
 		// Use bit-set-reset register to apply output
 		port.BSRR = kValues[val & kTop_];
 	}
+	/// Apply an enum value in the range of 0-15 (negative logic)
+	ALWAYS_INLINE static void WriteComplement(const uint32_t val)
+	{
+		// Base address of the peripheral registers
+		volatile GPIO_TypeDef& port = Io();
+		// Use bit-set-reset register to apply output
+		port.BSRR = kValues[kTop_ - (val & kTop_)];
+	}
 	// Reads data
 	ALWAYS_INLINE static uint32_t Read()
 	{
