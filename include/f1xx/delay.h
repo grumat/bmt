@@ -19,20 +19,13 @@ public:
 	template<const uint32_t NS> ALWAYS_INLINE static void DelayNS()
 	{
 		// Time of the NOP instruction is much faster because no branch is used
-		constexpr uint32_t kSCycle
-			= kWaitState_ == 2 	? 1300000000ULL / kFrequency_
-			: kWaitState_ == 1 	? 1200000000ULL / kFrequency_
-			/* 0 wait states */ : 1200000000ULL / kFrequency_
-			;
+		constexpr uint32_t kSCycle = 1500000000ULL / kFrequency_;
 		// At least one instruction cycle is inherently consumed
 		if (NS > kSCycle / 2)
 		{
 			constexpr uint32_t kNS = NS;
 			// Duration of one iteration of the long loop cycle in ns
-			constexpr uint32_t kLCycle
-				= kWaitState_ == 2 	? 3000000000ULL / kFrequency_
-				: kWaitState_ == 1 	? 3600000000ULL / kFrequency_
-				/* 0 wait states */ : 3000000000ULL / kFrequency_
+			constexpr uint32_t kLCycle = 3000000000ULL / kFrequency_
 				;
 			// Number of long cycles (with rounding compensation)
 			constexpr uint32_t kLong = (kNS + (kLCycle / 2)) / kLCycle;
