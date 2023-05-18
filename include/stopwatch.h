@@ -121,7 +121,7 @@ template<
 			{
 				if (SUPER::IsNotElapsed() == false)
 				{
-					SUPER::template Append<1000>();
+					SUPER::template AppendUS<1000>();
 					--ms_;
 				}
 			}
