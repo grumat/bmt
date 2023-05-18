@@ -19,7 +19,7 @@ public:
 	template<const uint32_t NS> ALWAYS_INLINE static void DelayNS()
 	{
 		// Time of the NOP instruction is much faster because no branch is used
-		constexpr uint32_t kSCycle = 1400000000ULL / kFrequency_;
+		constexpr uint32_t kSCycle = 1460000000ULL / kFrequency_;
 		// At least one instruction cycle is inherently consumed
 		if (NS > kSCycle)
 		{
