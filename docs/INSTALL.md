@@ -148,6 +148,21 @@ installing the plugin does not install all required support file (most
 are licensed ones).
 
 
+# General Configuration of VSCode for Debug
+
+Configuring **VSCode** and **Cortex Debug** is not exactly trivial. 
+**Cortex Debug** is multi platform and able to handle a very complete set of 
+options. This flexibility makes it very difficult when combining specific 
+configurations.
+
+In the repository you will find the `.vscode` folder which contains a 
+configuration that worked with me. It is a good starting point.
+Tested debuggers are **STLink**, **JLink** and the **Black Magic Probe**.
+The **Black Magic Probe** is by far the easiest to configure. You just 
+need to configure a single communication port. The other options will 
+require you to install the required middleware and sometimes inform the 
+path where they are installed.
+
 
 # Tips with the Installed BSP
 
@@ -169,39 +184,3 @@ A typical gcc command line would look like this:
 ```
 arm-none-eabi-gcc.exe -DSTM32F103xB -I "%USERPROFILE%\AppData\Local\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F1xxxx\CMSIS_HAL\Device\ST\STM32F1xx\Include\stm32f1xx.h" ...etc...
 ```
-
-## Startup File
-
-The BSP has startup files for each member of the family.
-
-![images/startup_file.svg](images/startup_file.svg)
-
-
-<div hidden>
-```
-@startuml startup_file
-hide empty description
-
-state "Startup.s" as Startup
-Startup : Initializes static variables
-
-state "SystemInit()" as SystemInit
-SystemInit : Here you put hardware initialization
-state "main()" as main
-main: Implementation of your program
-
-state "Interrupt Handlers" as Interrupt
-Interrupt : The complete interrupt vector map
-Interrupt : A default handler for uncaught interrupt
-
-[*] --> Startup 
-main --> [*]
-
-Startup -> SystemInit
-SystemInit -> Startup
-Startup --> main
-Startup --> Interrupt
-@enduml
-```
-</div>
-

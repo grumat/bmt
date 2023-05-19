@@ -273,3 +273,77 @@ Putting data into a nice table (see data-sheet for terms):
 | `err`  | 4        | Approximate frequency error (4%)                   |
 
 
+
+# Startup Files
+
+The BSP delivers startup files for each MCU member of the family. The 
+startup files on STM32CubeMX are files written in assembly, while 
+VisualGDB deploys regular C files. There are no technical advantages on 
+the assembly version of the files and probably a design decision of STM 
+related to support other compilers brands.
+
+The image below shows the general structure of a startup file:
+
+![images/startup_file.svg](images/startup_file.svg)
+
+<div hidden>
+```
+@startuml startup_file
+hide empty description
+state "Startup.s" as Startup
+Startup : Initializes static variables
+state "SystemInit()" as SystemInit
+SystemInit : Here you put hardware initialization
+state "main()" as main
+main: Implementation of your program
+state "Interrupt Handlers" as Interrupt
+Interrupt : The complete interrupt vector map
+Interrupt : A default handler for uncaught interrupt
+[*] --> Startup 
+main --> [*]
+Startup -> SystemInit
+SystemInit -> Startup
+Startup --> main
+Startup --> Interrupt
+@enduml
+``` 
+</div>
+
+The startup file executes the following steps:
+- Initialize the stack pointer
+- Call the `SystemInit()` function which is intended to initialize the 
+clock system. You cannot refer to any global variable during this 
+function, since contents will be unpredictable and changes will be lost. 
+- Global/Static variables defined in your program are initialized, which 
+are of two different types:
+  - Non zero variables, which copies a data block from Flash to the 
+  corresponding RAM address
+  - Variables initialized with zero (default for all globals/static)
+- A C library `__libc_init_array()` function is called, which is 
+responsible to initialize all static constructors, so global C++ 
+object instances behaves as expected.
+- Finally, the `main()` function is called to transfer control to your 
+program.
+- In case your main function returns, an infinite loop will halt the CPU 
+forever.
+
+One important feature of the startup file is the presence of the 
+interrupt vector table. Labels for interrupts are predefined there, but 
+they are initialized with a weak symbol alias to the `Default_Handler`.
+
+The weak alias ensures that if your program defines a handler with the 
+same name, linker will override the startup file definition with your 
+customization.
+
+The `Default_Handler` enters an infinite loop stopping the execution of 
+your program.
+
+> On a VisualGDB startup file, `Default_Handler` has a different 
+> behavior:  
+> On a Debug build it issues a `BKPT 255` assembler instruction with 
+> causes a hardware interruption. IMHO, this is a better solution for a 
+> serious development.
+
+
+
+
