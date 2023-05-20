@@ -739,7 +739,7 @@ public:
 		else
 			Delay_(1);
 	}
-	ALWAYS_INLINE static bool HasEllapsed()
+	ALWAYS_INLINE static bool HasElapsed()
 	{
 		TIM_TypeDef *timer_ = (TIM_TypeDef *)Base::kTimerBase_;
 		return ((timer_->CR1 & TIM_CR1_CEN) == 0);

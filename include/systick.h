@@ -43,12 +43,12 @@ public:
 	static constexpr SysTickPollType kSysTickPollType_ = kSysTickPollType;
 
 	/// The tick counter value
-	static inline volatile uint32_t sys_tick_;
+	static inline volatile uint32_t soft_tick_;
 
 	/// Initialize the tick timer
 	ALWAYS_INLINE static void Init(void)
 	{
-		sys_tick_ = 0;
+		soft_tick_ = 0;
 		SysTick->LOAD = kReload_;
 		SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
 		EnableIRQ();
@@ -67,17 +67,6 @@ public:
 	ALWAYS_INLINE static Ticks GetRawValue()
 	{
 		return (Ticks)SysTick->VAL;
-	}
-	// Returns distance of raw counter to an initial reference (interval has to be less than kFrequency_ period)
-	ALWAYS_INLINE static Ticks GetDif(Ticks t0)
-	{
-		Ticks t1 = GetRawValue();
-		// SysTick is a down-counter!!!
-		int32_t dif = ((uint32_t)t0 - (uint32_t)t1);
-		if(dif < 0)
-			return (Ticks)(dif + kReload_ + 1);
-		else
-			return (Ticks)dif;
 	}
 
 // High resolution short delays (necessarily below kFrequency_ period)
@@ -118,8 +107,9 @@ public:
 		}
 	}
 	/// Milliseconds delay; Works for tick frequencies strictly below 2000 Hz
-	static constexpr void DelayMS(uint32_t ms) NO_INLINE
+	static constexpr void Delay(Msec ms_) NO_INLINE
 	{
+		uint32_t ms = (uint32_t)ms_;
 		constexpr Ticks k500 = U2T<Usec(500)>::kTicks;
 		for(; ms; --ms)
 		{
@@ -132,7 +122,7 @@ public:
 	{
 		int32_t dif = (uint32_t)t0 - (uint32_t)GetRawValue();	// down-counter
 		if (dif < 0)
-			dif += kReload_;
+			dif += kReload_ + 1;
 		return (Ticks)dif;
 	}
 	/// Elapsed time in hardware ticks and updates t0 to new base time
@@ -141,7 +131,7 @@ public:
 		Ticks tn = GetRawValue();
 		int32_t dif = (uint32_t&)t0 - (uint32_t)tn;	// down-counter
 		if (dif < 0)
-			dif += kReload_;
+			dif += kReload_ + 1;
 		t0 = tn;
 		return (Ticks)dif;
 	}
@@ -152,11 +142,11 @@ protected:
 	/// Simple tick counter is implemented here
 	ALWAYS_INLINE static void Handler()
 	{
-		++sys_tick_;
+		++soft_tick_;
 	}
 
 public:
-	/// A stopwatch class using the tick timer
+	/// A stopwatch class using the soft tick timer
 	class ALIGNED StopWatch
 	{
 	public:
@@ -167,18 +157,18 @@ public:
 		// restart an existing stopwatch.
 		ALWAYS_INLINE void Start()
 		{
-			t0_ = sys_tick_;
+			t0_ = soft_tick_;
 		}
 		/// Elapsed time in ms
-		ALWAYS_INLINE uint32_t GetEllapsedTime() const
+		ALWAYS_INLINE uint32_t GetElapsedTime() const
 		{
-			return sys_tick_ - t0_;
+			return soft_tick_ - t0_;
 		}
 		/// Delay CPU
 		void Delay(uint32_t ms)
 		{
 			/// Hold CPU flow as long as time has not elapsed
-			while (GetEllapsedTime() < ms)
+			while (GetElapsedTime() < ms)
 			{
 				/// Halt the CPU for low power use
 				if (kSysTickPollType_ == kPollWfi)
@@ -187,7 +177,6 @@ public:
 					__WFE();
 			}
 		}
-
 	protected:
 		// The clock value when the stop watch was last started. Its units vary
 		// depending on the platform.
@@ -255,7 +244,7 @@ protected:
 
 /// Use of SysTick as a simple raw timer without interrupts
 /*!
-This class cannot interoperate with AnySysTick/AnySysTickEx.
+This class cannot inter-operate with AnySysTick/AnySysTickEx.
 Either one or the other approach should be used, completely.
 The first is designed for a collaborative, low-power, interrupt-driven design, 
 while this class is for a firmware that relies on energy inefficient polling.
@@ -303,24 +292,29 @@ public:
 		return (Ticks)dif;
 	}
 	/// Delays CPU by a given timer tick value
-	static void DelayTicks(Ticks ticks) NO_INLINE
+	static void DelayTicks(Ticks ticks)
 	{
 		Ticks t0 = GetRawValue();
-		while (GetElapsedTicks(t0) < ticks)
+		while(true)
 		{
+			Ticks dif = GetElapsedTicksEx(t0);
+			if (dif < ticks)
+				ticks = Ticks((uint32_t)ticks - (uint32_t)dif);
+			else
+				break;
 		}
 	}
 
 // Time conversion
 public:
 	/// Computes the total amount of ticks for the given milliseconds (low performance option when used with constants)
-	static Ticks ToTicks(Msec ms) NO_INLINE
+	static constexpr Ticks ToTicks(Msec ms)
 	{
 		const uint32_t ticks = ((uint32_t)ms * (kFrequency_ / 1000));
 		return (Ticks)ticks;
 	}
 	/// Computes the total amount of ticks for the given milliseconds (low performance option when used with constants)
-	static Ticks ToTicks(Usec us) NO_INLINE
+	static constexpr Ticks ToTicks(Usec us)
 	{
 		const uint32_t ticks = ((uint32_t)us * (kFrequency_ / 1000000));
 		return (Ticks)ticks;
@@ -340,7 +334,7 @@ public:
 		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kUS * kFrequency_) / 1000000);
 	};
 	/// Constant delay of CPU in us (optimized code)
-	template<Usec kUS> static ALWAYS_INLINE void Delay()
+	template<Usec kUS> static ALWAYS_INLINE constexpr void Delay()
 	{
 		constexpr Ticks kTicks = U2T<kUS>::kTicks;
 		// Delay time to big for timer resolution 
@@ -348,12 +342,26 @@ public:
 		// Hold CPU flow as long as time has not elapsed
 		DelayTicks(kTicks);
 	}
-	/// Constant delay of CPU in us (optimized code)
-	template<Msec kMS> static ALWAYS_INLINE void Delay()
+	/// Variable delay of CPU in us (avoid this variant, if possible)
+	static ALWAYS_INLINE constexpr void Delay(Usec kUS)
+	{
+		const Ticks kTicks = ToTicks(kUS);
+		// Hold CPU flow as long as time has not elapsed
+		DelayTicks(kTicks);
+	}
+	/// Constant delay of CPU in ms (optimized code)
+	template<Msec kMS> static ALWAYS_INLINE constexpr void Delay()
 	{
 		constexpr Ticks kTicks = M2T<kMS>::kTicks;
 		// Delay time to big for timer resolution 
 		static_assert((uint32_t)kTicks < 0x00FFFF80, "This timer may run very fast, so we rely on 50% of the range only");
+		// Hold CPU flow as long as time has not elapsed
+		DelayTicks(kTicks);
+	}
+	/// Variable delay of CPU in ms (avoid this variant, if possible)
+	static ALWAYS_INLINE constexpr void Delay(Msec kMS)
+	{
+		const Ticks kTicks = ToTicks(kMS);
 		// Hold CPU flow as long as time has not elapsed
 		DelayTicks(kTicks);
 	}
