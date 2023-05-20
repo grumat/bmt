@@ -11,14 +11,16 @@ namespace Timer
 
 // A stopwatch for very short single shot times (uses polling)
 template<
-	typename Timer		// A timer to serve ticks
+	typename Timer,					// A timer to serve ticks
+	const Ticks kPeriod = Ticks(0)	// Auto-reload feature
 >
 	class ALIGNED MicroStopWatch
 	{
 	public:
 		MicroStopWatch()
-			: t1_(Ticks(0))
-			, t0_(Ticks(0)) {}
+			: t0_(Timer::GetRawValue())
+			, t1_(kPeriod)
+		{ }
 		MicroStopWatch(Ticks ticks)
 			: t0_(Timer::GetRawValue())
 			, t1_(ticks)
@@ -63,7 +65,7 @@ template<
 		// Adds a time offset to the current duration without stopping current time
 		template<Msec kMS> constexpr void Append()
 		{
-			t1_ = Ticks(t1_ + Timer::template M2T<kMS>::kTicks);
+			t1_ = Ticks((uint32_t)t1_ + (uint32_t)Timer::template M2T<kMS>::kTicks);
 		}
 		// Checks if interval has elapsed.
 		// Call this method in a rate below timer period for correct functionality
@@ -79,7 +81,7 @@ template<
 					return true;
 				}
 				else
-					t1_ = Ticks(0);
+					t1_ = kPeriod;	// auto reload feature
 			}
 			return false;
 		}
