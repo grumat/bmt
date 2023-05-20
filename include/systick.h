@@ -12,11 +12,11 @@ namespace Timer
 {
 
 /// A type safe uint32_t for systimer tick units
-enum Ticks : uint32_t;
+enum class Ticks : uint32_t;
 /// A type safe uint32_t for microseconds unit
-enum Usec : uint32_t;
+enum class Usec : uint32_t;
 /// A type safe uint32_t for milliseconds unit
-enum Msec : uint32_t;
+enum class Msec : uint32_t;
 
 /// How a time delay shall be done
 enum SysTickPollType
@@ -73,7 +73,7 @@ public:
 	{
 		Ticks t1 = GetRawValue();
 		// SysTick is a down-counter!!!
-		int32_t dif = (t0 - t1);
+		int32_t dif = ((uint32_t)t0 - (uint32_t)t1);
 		if(dif < 0)
 			return (Ticks)(dif + kReload_ + 1);
 		else
@@ -91,8 +91,8 @@ public:
 	/// Delays CPU by a given timer tick value
 	void DelayTicks(Ticks ticks) NO_INLINE
 	{
-		uint32_t t0 = GetRawValue();
-		while ((int32_t)(GetRawValue() - t0) < (int32_t)ticks)
+		uint32_t t0 = (uint32_t)GetRawValue();
+		while ((int32_t)((uint32_t)GetRawValue() - t0) < (int32_t)ticks)
 		{
 		}
 	}
@@ -109,9 +109,9 @@ public:
 		while (kTicks < kChunk)
 		{
 			DelayTicks(kTicks);
-			kTicks = Ticks(kTicks - kChunk);
+			kTicks = Ticks((uint32_t)kTicks - (uint32_t)kChunk);
 		}
-		if(kTicks)
+		if((uint32_t)kTicks)
 		{
 			// Hold CPU flow as long as time has not elapsed
 			DelayTicks(kTicks);
@@ -130,7 +130,7 @@ public:
 	/// Elapsed time in hardware ticks
 	ALWAYS_INLINE static Ticks GetElapsedTicks(Ticks t0)
 	{
-		int32_t dif = t0 - (uint32_t)GetRawValue();	// down-counter
+		int32_t dif = (uint32_t)t0 - (uint32_t)GetRawValue();	// down-counter
 		if (dif < 0)
 			dif += kReload_;
 		return (Ticks)dif;
@@ -139,7 +139,7 @@ public:
 	ALWAYS_INLINE static Ticks GetElapsedTicksEx(Ticks& t0)
 	{
 		Ticks tn = GetRawValue();
-		int32_t dif = t0 - (uint32_t)tn;	// down-counter
+		int32_t dif = (uint32_t&)t0 - (uint32_t)tn;	// down-counter
 		if (dif < 0)
 			dif += kReload_;
 		t0 = tn;
@@ -287,7 +287,7 @@ public:
 	/// Elapsed time in ms
 	ALWAYS_INLINE static Ticks GetElapsedTicks(Ticks t0)
 	{
-		int32_t dif = t0 - GetRawValue();	// down-counter
+		int32_t dif = (uint32_t)t0 - (uint32_t)GetRawValue();	// down-counter
 		if (dif < 0)
 			dif += kTimerOverflow_;
 		return (Ticks)dif;
@@ -296,7 +296,7 @@ public:
 	ALWAYS_INLINE static Ticks GetElapsedTicksEx(Ticks &t0)
 	{
 		const Ticks tn = GetRawValue();
-		int32_t dif = t0 - tn;	// down-counter
+		int32_t dif = (uint32_t&)t0 - (uint32_t)tn;	// down-counter
 		if (dif < 0)
 			dif += kTimerOverflow_;
 		t0 = tn;
@@ -314,10 +314,15 @@ public:
 // Time conversion
 public:
 	/// Computes the total amount of ticks for the given milliseconds (low performance option when used with constants)
-	static Ticks ToTicks(uint32_t ms) NO_INLINE
+	static Ticks ToTicks(Msec ms) NO_INLINE
 	{
-		const uint32_t ticks = (ms * (kFrequency_ / 1000));
-		assert(ticks < 0x00FFFF80);
+		const uint32_t ticks = ((uint32_t)ms * (kFrequency_ / 1000));
+		return (Ticks)ticks;
+	}
+	/// Computes the total amount of ticks for the given milliseconds (low performance option when used with constants)
+	static Ticks ToTicks(Usec us) NO_INLINE
+	{
+		const uint32_t ticks = ((uint32_t)us * (kFrequency_ / 1000000));
 		return (Ticks)ticks;
 	}
 
@@ -339,7 +344,16 @@ public:
 	{
 		constexpr Ticks kTicks = U2T<kUS>::kTicks;
 		// Delay time to big for timer resolution 
-		static_assert(kTicks < 0x00FFFF80, "This timer may run very fast, so we rely on 50% of the range only");
+		static_assert((uint32_t)kTicks < 0x00FFFF80, "This timer may run very fast, so we rely on 50% of the range only");
+		// Hold CPU flow as long as time has not elapsed
+		DelayTicks(kTicks);
+	}
+	/// Constant delay of CPU in us (optimized code)
+	template<Msec kMS> static ALWAYS_INLINE void Delay()
+	{
+		constexpr Ticks kTicks = M2T<kMS>::kTicks;
+		// Delay time to big for timer resolution 
+		static_assert((uint32_t)kTicks < 0x00FFFF80, "This timer may run very fast, so we rely on 50% of the range only");
 		// Hold CPU flow as long as time has not elapsed
 		DelayTicks(kTicks);
 	}

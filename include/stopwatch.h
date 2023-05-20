@@ -23,6 +23,14 @@ template<
 			: t0_(Timer::GetRawValue())
 			, t1_(ticks)
 		{ }
+		MicroStopWatch(Msec ms)
+			: t0_(Timer::GetRawValue())
+			, t1_(Timer::ToTicks(ms))
+		{ }
+		MicroStopWatch(Usec us)
+			: t0_(Timer::GetRawValue())
+			, t1_(Timer::ToTicks(us))
+		{ }
 		// Starts counting in µs
 		template<Usec kUS> constexpr void Start()
 		{
@@ -50,7 +58,7 @@ template<
 		// Adds a time offset to the current duration without stopping current time
 		template<Usec kUS> constexpr void Append()
 		{
-			t1_ = Ticks(t1_ + Timer::template U2T<kUS>::kTicks);
+			t1_ = Ticks((uint32_t)t1_ + (uint32_t)Timer::template U2T<kUS>::kTicks);
 		}
 		// Adds a time offset to the current duration without stopping current time
 		template<Msec kMS> constexpr void Append()
@@ -67,7 +75,7 @@ template<
 			{
 				if (ticks < t1_)
 				{
-					t1_ = Ticks(t1_ - ticks);
+					t1_ = Ticks((uint32_t)t1_ - (uint32_t)ticks);
 					return true;
 				}
 				else
@@ -113,8 +121,8 @@ template<
 		typedef MicroStopWatch<Timer> SUPER;
 
 	public:
-		PolledStopWatch(uint32_t total_ms)
-			: ms_(total_ms)
+		PolledStopWatch(Msec total_ms)
+			: ms_((uint32_t)total_ms)
 		{
 			SUPER::template Start<Usec(1000)>();
 		}
@@ -135,21 +143,21 @@ template<
 		}
 	public:
 		// Adds a duration to current current state
-		void Append(uint32_t total_ms)
+		void Append(Msec total_ms)
 		{
-			ms_ += total_ms;
+			ms_ += (uint32_t)total_ms;
 		}
 		// Sets a new duration, initial base time will continue from the 
 		// initial mark
-		void Continue(uint32_t total_ms)
+		void Continue(Msec total_ms)
 		{
-			ms_ = total_ms;
+			ms_ = (uint32_t)total_ms;
 		}
 		// Restarts counter. A new time base is used
-		void Restart(uint32_t total_ms)
+		void Restart(Msec total_ms)
 		{
-			SUPER::template StartUS<1000>();
-			ms_ = total_ms;
+			SUPER::template Start<Usec(1000)>();
+			ms_ = (uint32_t)total_ms;
 		}
 		// Locks processor flow until stopwatch reaches desired time
 		void Wait()
