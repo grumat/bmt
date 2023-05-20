@@ -80,8 +80,10 @@ template<
 					t1_ = Ticks((uint32_t)t1_ - (uint32_t)ticks);
 					return true;
 				}
+				else if(kPeriod != Ticks(0))	// auto reload feature
+					t1_ = Ticks((uint32_t)t1_ + (uint32_t)kPeriod - (uint32_t)ticks);
 				else
-					t1_ = kPeriod;	// auto reload feature
+					t1_ = Ticks(0);				// stop
 			}
 			return false;
 		}
