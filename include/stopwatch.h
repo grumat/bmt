@@ -107,7 +107,7 @@ template<
 		ALWAYS_INLINE void Delay(const Msec kMS)
 		{
 			t0_ = Timer::GetRawValue();
-			t1_ = Ticks(kMS * Timer::template M2T<Msec(1)>::kTicks);
+			t1_ = Ticks((uint32_t)kMS * (uint32_t)Timer::template M2T<Msec(1)>::kTicks);
 			Wait();
 		}
 	private:

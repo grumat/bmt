@@ -4,23 +4,25 @@
 
 namespace Bmt
 {
+namespace Timer
+{
 
 /// Enumeration for the timer instance
-enum class Tim
+enum Unit
 {
-	k1 = 1		///< Timer 1
-	, k2		///< Timer 2
-	, k3		///< Timer 3
-	, k4		///< Timer 4
+	kTim1 = 1	///< Timer 1
+	, kTim2		///< Timer 2
+	, kTim3		///< Timer 3
+	, kTim4		///< Timer 4
 };
 
 /// The timer channel
-enum class TimChannel
+enum class Channel
 {
-	k1		///< Timer Channel 1
-	, k2	///< Timer Channel 2
-	, k3	///< Timer Channel 3
-	, k4	///< Timer Channel 4
+	k1			///< Timer Channel 1
+	, k2		///< Timer Channel 2
+	, k3		///< Timer Channel 3
+	, k4		///< Timer Channel 4
 };
 
 /// Capture block input control
@@ -31,7 +33,7 @@ enum class CaptureEdge
 };
 
 /// Timer count mode
-enum class TimerMode
+enum class Mode
 {
 	kUpCounter,
 	kDownCounter,
@@ -40,19 +42,19 @@ enum class TimerMode
 };
 
 /// External clock source selection
-enum class ExtClockSource
+enum class ExtClk
 {
 	kETR,			///< ETR signal after being prescaled, synchronized then filtered
 	kETRN,			///< ETR signal after being prescaled, synchronized then filtered
-	kTI1F_EdgeDet,	///< The TI1FD signal which sensitive to both signal edges
-	kTI1FP1Clk,		///< The TI1FP1 input signal that are the synchronized, filtered TI1
-	kTI1FP1ClkN,	///< The negative TI1FP1 input signal
-	kTI2FP2Clk,		///< The TI2FP2 input signal that are the synchronized, filtered TI2
-	kTI2FP2ClkN,	///< The negative TI2FP2 input signal
+	kTI1F_ED,		///< The TI1FD signal which sensitive to both signal edges
+	kTI1FP1,		///< The TI1FP1 input signal that are the synchronized, filtered TI1
+	kTI1FP1N,		///< The negative TI1FP1 input signal
+	kTI2FP2,		///< The TI2FP2 input signal that are the synchronized, filtered TI2
+	kTI2FP2N,		///< The negative TI2FP2 input signal
 };
 
 /// Master timer mode
-enum class MasterTimerMode
+enum class MasterMode
 {
 	kUpdate,		///< Sends trigger to slave on every update event
 	kEnable,		///< Sends trigger to slave when master is enabled
@@ -65,7 +67,7 @@ enum class MasterTimerMode
 
 
 /// Slave timer mode
-enum class SlaveTimerMode
+enum class SlaveMode
 {
 	kMasterIsClock,	///< Triggers from master are used to generate clock
 	kResetCnt,		///< Trigger from master clears the slave counter
@@ -87,54 +89,54 @@ enum class InputCapture
 	kTRC,		///< TRC clock input
 };
 
-enum class TimOutMode
+enum class OutMode
 {
-	kTimOutFrozen = 0
-	, kTimOutSet
-	, kTimOutReset
-	, kTimOutToggle
-	, kTimOutLow
-	, kTimOutHigh
-	, kTimOutPwm1
-	, kTimOutPwm2
+	kFrozen = 0
+	, kSetActive
+	, kSetInactive
+	, kToggle
+	, kForceInactive
+	, kForceActive
+	, kPWM1
+	, kPWM2
 };
 
-enum class TimOutDrive
+enum class Output
 {
-	kTimOutInactive
-	, kTimOutActiveHigh
-	, kTimOutActiveLow
+	kDisabled
+	, kEnabled
+	, kInverted
 };
 
 
 template <
-	const Tim kTimerNum
+	const Unit kTimerNum
 >
 class AnyTimer_
 {
 public:
-	static constexpr Tim kTimerNum_ = kTimerNum;
+	static constexpr Unit kTimerNum_ = kTimerNum;
 	static constexpr uintptr_t kTimerBase_ =
-		(kTimerNum_ == Tim::k1) ? TIM1_BASE
-		: (kTimerNum_ == Tim::k2) ? TIM2_BASE
-		: (kTimerNum_ == Tim::k3) ? TIM3_BASE
-		: (kTimerNum_ == Tim::k4) ? TIM4_BASE
+		(kTimerNum_ == kTim1) ? TIM1_BASE
+		: (kTimerNum_ == kTim2) ? TIM2_BASE
+		: (kTimerNum_ == kTim3) ? TIM3_BASE
+		: (kTimerNum_ == kTim4) ? TIM4_BASE
 		: 0;
 	static constexpr Dma::Itf DmaInstance_ = Dma::Itf::k1;
 	// Timer update DMA channel
 	static constexpr Dma::Chan DmaCh_ =
-		(kTimerNum_ == Tim::k1) ? Dma::Chan::k5
-		: (kTimerNum_ == Tim::k2) ? Dma::Chan::k2
-		: (kTimerNum_ == Tim::k3) ? Dma::Chan::k3
-		: (kTimerNum_ == Tim::k4) ? Dma::Chan::k7
+		(kTimerNum_ == kTim1) ? Dma::Chan::k5
+		: (kTimerNum_ == kTim2) ? Dma::Chan::k2
+		: (kTimerNum_ == kTim3) ? Dma::Chan::k3
+		: (kTimerNum_ == kTim4) ? Dma::Chan::k7
 		: Dma::Chan::kNone;
 	// Timer trigger DMA channel
 	static constexpr Dma::Chan DmaChTrigger_ =
-		(kTimerNum_ == Tim::k1) ? Dma::Chan::k4
-		: (kTimerNum_ == Tim::k3) ? Dma::Chan::k6
+		(kTimerNum_ == kTim1) ? Dma::Chan::k4
+		: (kTimerNum_ == kTim3) ? Dma::Chan::k6
 		: Dma::Chan::kNone;
 	/// Timer having BDTR register
-	static constexpr bool kHasBdtr = (kTimerNum_ == Tim::k1);
+	static constexpr bool kHasBdtr = (kTimerNum_ == kTim1);
 
 	ALWAYS_INLINE static TIM_TypeDef *GetDevice()
 	{
@@ -202,7 +204,7 @@ public:
 
 //! Template to adjust timer prescaler to register counts
 template <
-	const Tim kTimerNum
+	const Unit kTimerNum
 	, typename SysClk
 	, const uint32_t kPrescaler = 0U	// max speed
 >
@@ -211,7 +213,7 @@ class InternalClock : public AnyTimer_<kTimerNum>
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
 	static constexpr uint32_t kFrequency_ = SysClk::kFrequency_;
-	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == Tim::k1)
+	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
@@ -221,7 +223,7 @@ public:
 
 //! Template to adjust timer prescaler to us
 template <
-	const Tim kTimerNum
+	const Unit kTimerNum
 	, typename SysClk
 	, const uint32_t kMicroSecs = 1000U
 >
@@ -229,7 +231,7 @@ class InternalClock_us : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
-	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == Tim::k1)
+	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
@@ -243,7 +245,7 @@ public:
 
 //! Template to adjust timer prescaler to Hz
 template <
-	const Tim kTimerNum
+	const Unit kTimerNum
 	, typename SysClk
 	, const uint32_t kMHz = 1000000
 >
@@ -252,7 +254,7 @@ class InternalClock_Hz : public AnyTimer_<kTimerNum>
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
 	static constexpr uint32_t kFrequency_ = SysClk::kFrequency_;
-	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == Tim::k1)
+	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
@@ -264,8 +266,8 @@ public:
 
 
 template <
-	const Tim kTimerNum
-	, const ExtClockSource kExtIn
+	const Unit kTimerNum
+	, const ExtClk kExtIn
 	, const uint32_t kFreq = 1000000	// this value has no effect, but helps interacting with template
 	, const uint32_t kPrescaler = 1
 	, const uint32_t kFilter = 0		// a value between 0 and 15 (see docs)
@@ -274,12 +276,12 @@ class ExternalClock : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
-	static constexpr ExtClockSource kExtIn_ = kExtIn;
+	static constexpr ExtClk kExtIn_ = kExtIn;
 	static constexpr uint32_t kFrequency_ = kFreq;
 	static constexpr uint32_t kPrescaler_ = 0;
 	static constexpr uint32_t kInputPrescaler_ = kPrescaler;
-	static constexpr bool kUsesInput1 = (kExtIn == ExtClockSource::kTI1F_EdgeDet || kExtIn == ExtClockSource::kTI1FP1Clk);
-	static constexpr bool kUsesInput2 = (kExtIn == ExtClockSource::kTI2FP2Clk);
+	static constexpr bool kUsesInput1 = (kExtIn == ExtClk::kTI1F_ED || kExtIn == ExtClk::kTI1FP1);
+	static constexpr bool kUsesInput2 = (kExtIn == ExtClk::kTI2FP2);
 	static constexpr uint16_t kSmcr_Mask = TIM_SMCR_MSM_Msk;
 	static constexpr uint16_t kCcmr_Mask =
 		(kUsesInput1) ? TIM_CCMR1_CC1S_Msk | TIM_CCMR1_IC1PSC_Msk | TIM_CCMR1_IC1F_Msk
@@ -301,13 +303,13 @@ public:
 		// Use a local variable so the code optimizer condenses all logic to a single constant
 		uint32_t tmp = 0;
 		// Apply pulse polarity
-		if (kExtIn_ == ExtClockSource::kETRN)
+		if (kExtIn_ == ExtClk::kETRN)
 			tmp |= TIM_SMCR_ETP;
 
 		switch (kExtIn_)
 		{
-		case ExtClockSource::kETR:
-		case ExtClockSource::kETRN:
+		case ExtClk::kETR:
+		case ExtClk::kETRN:
 			// Apply mode 2 bit
 			tmp |= TIM_SMCR_ECE;
 			switch (kInputPrescaler_)
@@ -327,13 +329,13 @@ public:
 			tmp |= (kFilter << TIM_SMCR_ETF_Pos);
 			tmp |= TIM_SMCR_TS_0 | TIM_SMCR_TS_1 | TIM_SMCR_TS_2;
 			break;
-		case ExtClockSource::kTI1F_EdgeDet:
+		case ExtClk::kTI1F_ED:
 			tmp |= TIM_SMCR_TS_2;
 			break;
-		case ExtClockSource::kTI1FP1Clk:
+		case ExtClk::kTI1FP1:
 			tmp |= TIM_SMCR_TS_0 | TIM_SMCR_TS_2;
 			break;
-		case ExtClockSource::kTI2FP2Clk:
+		case ExtClk::kTI2FP2:
 			tmp |= TIM_SMCR_TS_1 | TIM_SMCR_TS_2;
 			break;
 		default:
@@ -368,9 +370,9 @@ public:
 
 			// Setup CCER register
 			tmp = 0;
-			if (kExtIn_ == ExtClockSource::kTI1FP1ClkN)
+			if (kExtIn_ == ExtClk::kTI1FP1N)
 				tmp |= TIM_CCER_CC1P;
-			else if(kExtIn_ == ExtClockSource::kTI2FP2ClkN)
+			else if(kExtIn_ == ExtClk::kTI2FP2N)
 				tmp |= TIM_CCER_CC2P;
 			timer->CCER = (timer->CCER & ~kCcer_Mask) | tmp;
 		}
@@ -388,78 +390,78 @@ Following parameters are configurable:
 
 Examples:
 	// TIM1 is master and updates on it will be used as clock for TIM2
-	typedef MasterSlaveTimers<Tim::k1, Tim::k2> Tim1PrescalerToTim2;
+	typedef MasterSlaveTimers<kTim1, kTim2> Tim1PrescalerToTim2;
 	Tim1PrescalerToTim2::Setup();
 	// Use Output Compare of Timer 1 to enable Timer 2
 	// Note: TIM1 clock and Compare register needs to be setup
-	MasterSlaveTimers<Tim::k1, Tim::k2, kCompare1, kGatedMode>::Setup();
+	MasterSlaveTimers<kTim1, kTim2, kCompare1, kGatedMode>::Setup();
 */
 template <
-	const Tim kMasterTimer						///< Master timer
-	, const Tim kSlaveTimer						///< Slave timer
-	, const MasterTimerMode kMasterMode = MasterTimerMode::kUpdate		///< Master timer mode
-	, const SlaveTimerMode kSlaveMode = SlaveTimerMode::kMasterIsClock	///< Master used as clock source
-	, const uint32_t kPrescaler = 0						///< Optional prescaler
+	const Unit kMasterTimer										///< Master timer
+	, const Unit kSlaveTimer									///< Slave timer
+	, const MasterMode kMasterMode = MasterMode::kUpdate		///< Master timer mode
+	, const SlaveMode kSlaveMode = SlaveMode::kMasterIsClock	///< Master used as clock source
+	, const uint32_t kPrescaler = 0								///< Optional prescaler
 >
 class MasterSlaveTimers : public AnyTimer_<kSlaveTimer>
 {
 public:
 	typedef AnyTimer_<kSlaveTimer> BASE;
 	typedef AnyTimer_<kMasterTimer> MASTER;
-	static constexpr Tim kMasterTimer_ = kMasterTimer;
+	static constexpr Unit kMasterTimer_ = kMasterTimer;
 	static constexpr uint32_t kPrescaler_ = kPrescaler;
 	static constexpr uint32_t kTS_ =
 		// TIM1
 #if 0
-		kSlaveTimer == Tim::k1 && kMasterTimer == Tim::k5 ? 0 :
+		kSlaveTimer == kTim1 && kMasterTimer == kTim5 ? 0 :
 #endif
-		kSlaveTimer == Tim::k1 && kMasterTimer == Tim::k2 ? TIM_SMCR_TS_0 :
-		kSlaveTimer == Tim::k1 && kMasterTimer == Tim::k3 ? TIM_SMCR_TS_1 :
-		kSlaveTimer == Tim::k1 && kMasterTimer == Tim::k4 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim1 && kMasterTimer == kTim2 ? TIM_SMCR_TS_0 :
+		kSlaveTimer == kTim1 && kMasterTimer == kTim3 ? TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim1 && kMasterTimer == kTim4 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
 		// TIM2
-		kSlaveTimer == Tim::k2 && kMasterTimer == Tim::k1 ? 0 :
+		kSlaveTimer == kTim2 && kMasterTimer == kTim1 ? 0 :
 #if 0
-		kSlaveTimer == Tim::k2 && kMasterTimer == Tim::k8 ? TIM_SMCR_TS_0 :
+		kSlaveTimer == kTim2 && kMasterTimer == kTim8 ? TIM_SMCR_TS_0 :
 #endif
-		kSlaveTimer == Tim::k2 && kMasterTimer == Tim::k3 ? TIM_SMCR_TS_1 :
-		kSlaveTimer == Tim::k2 && kMasterTimer == Tim::k4 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim2 && kMasterTimer == kTim3 ? TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim2 && kMasterTimer == kTim4 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
 		// TIM3
-		kSlaveTimer == Tim::k3 && kMasterTimer == Tim::k1 ? 0 :
-		kSlaveTimer == Tim::k3 && kMasterTimer == Tim::k2 ? TIM_SMCR_TS_0 :
+		kSlaveTimer == kTim3 && kMasterTimer == kTim1 ? 0 :
+		kSlaveTimer == kTim3 && kMasterTimer == kTim2 ? TIM_SMCR_TS_0 :
 #if 0
-		kSlaveTimer == Tim::k3 && kMasterTimer == Tim::k5 ? TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim3 && kMasterTimer == kTim5 ? TIM_SMCR_TS_1 :
 #endif
-		kSlaveTimer == Tim::k3 && kMasterTimer == Tim::k4 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim3 && kMasterTimer == kTim4 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
 		// TIM4
-		kSlaveTimer == Tim::k4 && kMasterTimer == Tim::k1 ? 0 :
-		kSlaveTimer == Tim::k4 && kMasterTimer == Tim::k2 ? TIM_SMCR_TS_0 :
-		kSlaveTimer == Tim::k4 && kMasterTimer == Tim::k3 ? TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim4 && kMasterTimer == kTim1 ? 0 :
+		kSlaveTimer == kTim4 && kMasterTimer == kTim2 ? TIM_SMCR_TS_0 :
+		kSlaveTimer == kTim4 && kMasterTimer == kTim3 ? TIM_SMCR_TS_1 :
 #if 0
-		kSlaveTimer == Tim::k4 && kMasterTimer == Tim::k8 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim4 && kMasterTimer == kTim8 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
 		// TIM5
-		kSlaveTimer == Tim::k5 && kMasterTimer == Tim::k2 ? 0 :
-		kSlaveTimer == Tim::k5 && kMasterTimer == Tim::k3 ? TIM_SMCR_TS_0 :
-		kSlaveTimer == Tim::k5 && kMasterTimer == Tim::k4 ? TIM_SMCR_TS_1 :
-		kSlaveTimer == Tim::k5 && kMasterTimer == Tim::k8 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim5 && kMasterTimer == kTim2 ? 0 :
+		kSlaveTimer == kTim5 && kMasterTimer == kTim3 ? TIM_SMCR_TS_0 :
+		kSlaveTimer == kTim5 && kMasterTimer == kTim4 ? TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim5 && kMasterTimer == kTim8 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
 		// TIM8
-		kSlaveTimer == Tim::k8 && kMasterTimer == Tim::k1 ? 0 :
-		kSlaveTimer == Tim::k8 && kMasterTimer == Tim::k2 ? TIM_SMCR_TS_0 :
-		kSlaveTimer == Tim::k8 && kMasterTimer == Tim::k4 ? TIM_SMCR_TS_1 :
-		kSlaveTimer == Tim::k8 && kMasterTimer == Tim::k5 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim8 && kMasterTimer == kTim1 ? 0 :
+		kSlaveTimer == kTim8 && kMasterTimer == kTim2 ? TIM_SMCR_TS_0 :
+		kSlaveTimer == kTim8 && kMasterTimer == kTim4 ? TIM_SMCR_TS_1 :
+		kSlaveTimer == kTim8 && kMasterTimer == kTim5 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
 #endif
 		TIM_SMCR_TS_2;
 	static constexpr uint32_t kMMS_ =
-		kMasterMode == MasterTimerMode::kEnable ? TIM_CR2_MMS_0 :
-		kMasterMode == MasterTimerMode::kComparePulse ? TIM_CR2_MMS_1 | TIM_CR2_MMS_0 :
-		kMasterMode == MasterTimerMode::kCompare1 ? TIM_CR2_MMS_2 :
-		kMasterMode == MasterTimerMode::kCompare2 ? TIM_CR2_MMS_2 | TIM_CR2_MMS_0 :
-		kMasterMode == MasterTimerMode::kCompare3 ? TIM_CR2_MMS_2 | TIM_CR2_MMS_1 :
-		kMasterMode == MasterTimerMode::kCompare4 ? TIM_CR2_MMS_2 | TIM_CR2_MMS_1 | TIM_CR2_MMS_0 :
+		kMasterMode == MasterMode::kEnable ? TIM_CR2_MMS_0 :
+		kMasterMode == MasterMode::kComparePulse ? TIM_CR2_MMS_1 | TIM_CR2_MMS_0 :
+		kMasterMode == MasterMode::kCompare1 ? TIM_CR2_MMS_2 :
+		kMasterMode == MasterMode::kCompare2 ? TIM_CR2_MMS_2 | TIM_CR2_MMS_0 :
+		kMasterMode == MasterMode::kCompare3 ? TIM_CR2_MMS_2 | TIM_CR2_MMS_1 :
+		kMasterMode == MasterMode::kCompare4 ? TIM_CR2_MMS_2 | TIM_CR2_MMS_1 | TIM_CR2_MMS_0 :
 		TIM_CR2_MMS_1;
 	static constexpr uint32_t kSMS_ =
-		kSlaveMode == SlaveTimerMode::kResetCnt ? TIM_SMCR_SMS_2 :
-		kSlaveMode == SlaveTimerMode::kGatedMode ? TIM_SMCR_SMS_2 | TIM_SMCR_SMS_0 :
-		kSlaveMode == SlaveTimerMode::kStartMode ? TIM_SMCR_SMS_2 | TIM_SMCR_SMS_1 :
+		kSlaveMode == SlaveMode::kResetCnt ? TIM_SMCR_SMS_2 :
+		kSlaveMode == SlaveMode::kGatedMode ? TIM_SMCR_SMS_2 | TIM_SMCR_SMS_0 :
+		kSlaveMode == SlaveMode::kStartMode ? TIM_SMCR_SMS_2 | TIM_SMCR_SMS_1 :
 		TIM_SMCR_SMS_0 | TIM_SMCR_SMS_1 | TIM_SMCR_SMS_2;
 
 	ALWAYS_INLINE static void Setup()
@@ -483,13 +485,13 @@ public:
 **
 ** @tparam TimeBase: A timer base used for the timer (a InternalClock_us, 
 **		InternalClock_Hz or ExtTimeBase declaration)
-** @tparam kTimerMode: See TimerMode
+** @tparam kTimerMode: See Mode
 ** @tparam kReload: A value used for the auto-reload register (ARR)
 ** @tparam kBuffered: If auto-reload register should have a buffer (ARPE bit)
 */
 template <
 	typename TimeBase
-	, const TimerMode kTimerMode = TimerMode::kUpCounter
+	, const Mode kTimerMode = Mode::kUpCounter
 	, const uint32_t kReload = 0
 	, const bool kBuffered = true
 >
@@ -499,7 +501,7 @@ public:
 	typedef AnyTimer_<TimeBase::kTimerNum_> BASE;
 	typedef uint16_t TypCnt;
 	static constexpr uint32_t kPrescaler_ = TimeBase::kPrescaler_;
-	static constexpr TimerMode kTimerMode_ = kTimerMode;
+	static constexpr Mode kTimerMode_ = kTimerMode;
 	static constexpr uint32_t kCr1Mask = TIM_CR1_CEN_Msk | TIM_CR1_UDIS_Msk | TIM_CR1_URS_Msk
 		| TIM_CR1_OPM_Msk | TIM_CR1_DIR_Msk | TIM_CR1_CMS_Msk | TIM_CR1_ARPE_Msk
 		| TIM_CR1_CKD_Msk
@@ -511,22 +513,22 @@ public:
 		// Enable clock
 		switch (BASE::kTimerNum_)
 		{
-		case Tim::k1:
+		case kTim1:
 			RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
 			RCC->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
 			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
 			break;
-		case Tim::k2:
+		case kTim2:
 			RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 			RCC->APB1RSTR |= RCC_APB1RSTR_TIM2RST;
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM2RST;
 			break;
-		case Tim::k3:
+		case kTim3:
 			RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 			RCC->APB1RSTR |= RCC_APB1RSTR_TIM3RST;
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM3RST;
 			break;
-		case Tim::k4:
+		case kTim4:
 			RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
 			RCC->APB1RSTR |= RCC_APB1RSTR_TIM4RST;
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM4RST;
@@ -542,15 +544,15 @@ public:
 		TIM_TypeDef *timer = BASE::GetDevice();
 		// Compute CR1 register
 		uint32_t tmp = kBuffered ? TIM_CR1_ARPE : 0;
-		if (kTimerMode_ == TimerMode::kDownCounter)
+		if (kTimerMode_ == Mode::kDownCounter)
 		{
 			tmp |= TIM_CR1_DIR;
 		}
-		else if (kTimerMode_ == TimerMode::kSingleShot)
+		else if (kTimerMode_ == Mode::kSingleShot)
 		{
 			tmp |= TIM_CR1_OPM;
 		}
-		else if (kTimerMode_ == TimerMode::kSingleShotDown)
+		else if (kTimerMode_ == Mode::kSingleShotDown)
 		{
 			tmp |= TIM_CR1_DIR | TIM_CR1_OPM;
 		}
@@ -576,10 +578,10 @@ public:
 	{
 		switch (BASE::kTimerNum_)
 		{
-		case Tim::k1: RCC->APB2ENR &= ~RCC_APB2ENR_TIM1EN; break;
-		case Tim::k2: RCC->APB1ENR &= ~RCC_APB1ENR_TIM2EN; break;
-		case Tim::k3: RCC->APB1ENR &= ~RCC_APB1ENR_TIM3EN; break;
-		case Tim::k4: RCC->APB1ENR &= ~RCC_APB1ENR_TIM4EN; break;
+		case kTim1: RCC->APB2ENR &= ~RCC_APB2ENR_TIM1EN; break;
+		case kTim2: RCC->APB1ENR &= ~RCC_APB1ENR_TIM2EN; break;
+		case kTim3: RCC->APB1ENR &= ~RCC_APB1ENR_TIM3EN; break;
+		case kTim4: RCC->APB1ENR &= ~RCC_APB1ENR_TIM4EN; break;
 		}
 	}
 
@@ -589,11 +591,11 @@ public:
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
 		{
-		case Tim::k1: NVIC_ClearPendingIRQ(TIM1_BRK_IRQn); NVIC_EnableIRQ(TIM1_BRK_IRQn);
+		case kTim1: NVIC_ClearPendingIRQ(TIM1_BRK_IRQn); NVIC_EnableIRQ(TIM1_BRK_IRQn);
 			NVIC_ClearPendingIRQ(TIM1_CC_IRQn); NVIC_EnableIRQ(TIM1_CC_IRQn); break;
-		case Tim::k2: NVIC_ClearPendingIRQ(TIM2_IRQn); NVIC_EnableIRQ(TIM2_IRQn); break;
-		case Tim::k3: NVIC_ClearPendingIRQ(TIM3_IRQn); NVIC_EnableIRQ(TIM3_IRQn); break;
-		case Tim::k4: NVIC_ClearPendingIRQ(TIM4_IRQn); NVIC_EnableIRQ(TIM4_IRQn); break;
+		case kTim2: NVIC_ClearPendingIRQ(TIM2_IRQn); NVIC_EnableIRQ(TIM2_IRQn); break;
+		case kTim3: NVIC_ClearPendingIRQ(TIM3_IRQn); NVIC_EnableIRQ(TIM3_IRQn); break;
+		case kTim4: NVIC_ClearPendingIRQ(TIM4_IRQn); NVIC_EnableIRQ(TIM4_IRQn); break;
 		}
 	}
 
@@ -603,11 +605,11 @@ public:
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
 		{
-		case Tim::k1: NVIC_DisableIRQ(TIM1_BRK_IRQn);
+		case kTim1: NVIC_DisableIRQ(TIM1_BRK_IRQn);
 			NVIC_DisableIRQ(TIM1_CC_IRQn); break;
-		case Tim::k2: NVIC_DisableIRQ(TIM2_IRQn); break;
-		case Tim::k3:NVIC_DisableIRQ(TIM3_IRQn); break;
-		case Tim::k4:NVIC_DisableIRQ(TIM4_IRQn); break;
+		case kTim2: NVIC_DisableIRQ(TIM2_IRQn); break;
+		case kTim3:NVIC_DisableIRQ(TIM3_IRQn); break;
+		case kTim4:NVIC_DisableIRQ(TIM4_IRQn); break;
 		}
 	}
 
@@ -683,7 +685,7 @@ public:
 	ALWAYS_INLINE static void StartShot()
 	{
 		TIM_TypeDef *timer_ = BASE::GetDevice();
-		if (kTimerMode_ == TimerMode::kSingleShot || kTimerMode_ == TimerMode::kUpCounter)
+		if (kTimerMode_ == Mode::kSingleShot || kTimerMode_ == Mode::kUpCounter)
 			timer_->CNT = 0;
 		timer_->EGR = TIM_EGR_UG;
 		timer_->CR1 |= TIM_CR1_CEN;
@@ -694,7 +696,7 @@ public:
 	{
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		timer_->ARR = ticks;
-		if (kTimerMode_ == TimerMode::kSingleShot || kTimerMode_ == TimerMode::kUpCounter)
+		if (kTimerMode_ == Mode::kSingleShot || kTimerMode_ == Mode::kUpCounter)
 			timer_->CNT = 0;
 		timer_->EGR = TIM_EGR_UG;
 		timer_->CR1 |= TIM_CR1_CEN;
@@ -725,10 +727,10 @@ public:
 template <
 	typename TimeBase
 >
-class DelayTimerTemplate : public TimerTemplate<TimeBase, TimerMode::kSingleShotDown>
+class DelayTimerTemplate : public TimerTemplate<TimeBase, Mode::kSingleShotDown>
 {
 public:
-	typedef TimerTemplate<TimeBase, TimerMode::kSingleShotDown> Base;
+	typedef TimerTemplate<TimeBase, Mode::kSingleShotDown> Base;
 	// An rough overhead based on CPU speed for the us tick
 	static constexpr uint32_t kOverhead_ = (70 / (Base::kPrescaler_ + 1));
 
@@ -761,30 +763,30 @@ protected:
 
 
 template <
-	const Tim kTimerNum
-	, const TimChannel kChannelNum
+	const Unit kTimerNum
+	, const Channel kChannelNum
 >
 class AnyTimerChannel_ : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
-	static constexpr TimChannel kChannelNum_ = kChannelNum;
+	static constexpr Channel kChannelNum_ = kChannelNum;
 	static constexpr Dma::Itf DmaInstance_ = Dma::Itf::k1;
 	static constexpr Dma::Chan DmaCh_
-		= BASE::kTimerNum_ == Tim::k1 && kChannelNum_ == TimChannel::k1 ? Dma::Chan::k2
-		: BASE::kTimerNum_ == Tim::k1 && kChannelNum_ == TimChannel::k2 ? Dma::Chan::k3
-		: BASE::kTimerNum_ == Tim::k1 && kChannelNum_ == TimChannel::k3 ? Dma::Chan::k6
-		: BASE::kTimerNum_ == Tim::k1 && kChannelNum_ == TimChannel::k4 ? Dma::Chan::k4
-		: BASE::kTimerNum_ == Tim::k2 && kChannelNum_ == TimChannel::k1 ? Dma::Chan::k5
-		: BASE::kTimerNum_ == Tim::k2 && kChannelNum_ == TimChannel::k2 ? Dma::Chan::k7
-		: BASE::kTimerNum_ == Tim::k2 && kChannelNum_ == TimChannel::k3 ? Dma::Chan::k1
-		: BASE::kTimerNum_ == Tim::k2 && kChannelNum_ == TimChannel::k4 ? Dma::Chan::k7
-		: BASE::kTimerNum_ == Tim::k3 && kChannelNum_ == TimChannel::k1 ? Dma::Chan::k6
-		: BASE::kTimerNum_ == Tim::k3 && kChannelNum_ == TimChannel::k3 ? Dma::Chan::k2
-		: BASE::kTimerNum_ == Tim::k3 && kChannelNum_ == TimChannel::k4 ? Dma::Chan::k3
-		: BASE::kTimerNum_ == Tim::k4 && kChannelNum_ == TimChannel::k1 ? Dma::Chan::k1
-		: BASE::kTimerNum_ == Tim::k4 && kChannelNum_ == TimChannel::k2 ? Dma::Chan::k4
-		: BASE::kTimerNum_ == Tim::k4 && kChannelNum_ == TimChannel::k3 ? Dma::Chan::k5
+		= BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k1 ? Dma::Chan::k2
+		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k2 ? Dma::Chan::k3
+		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k3 ? Dma::Chan::k6
+		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k4 ? Dma::Chan::k4
+		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k1 ? Dma::Chan::k5
+		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k2 ? Dma::Chan::k7
+		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k3 ? Dma::Chan::k1
+		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k4 ? Dma::Chan::k7
+		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k1 ? Dma::Chan::k6
+		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k3 ? Dma::Chan::k2
+		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k4 ? Dma::Chan::k3
+		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k1 ? Dma::Chan::k1
+		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k2 ? Dma::Chan::k4
+		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k3 ? Dma::Chan::k5
 		: Dma::Chan::kNone;	// default; Not all combinations are possible
 
 	ALWAYS_INLINE static volatile void* GetCcrAddress()
@@ -792,10 +794,10 @@ public:
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1: return &timer->CCR1;
-		case TimChannel::k2: return &timer->CCR2;
-		case TimChannel::k3: return &timer->CCR3;
-		case TimChannel::k4: return &timer->CCR4;
+		case Channel::k1: return &timer->CCR1;
+		case Channel::k2: return &timer->CCR2;
+		case Channel::k3: return &timer->CCR3;
+		case Channel::k4: return &timer->CCR4;
 		}
 		return 0;
 	}
@@ -805,16 +807,16 @@ public:
 		TIM_TypeDef* timer_ = BASE::GetDevice();
 		switch (BASE::kChannelNum_)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer_->DIER |= TIM_DIER_CC1IE;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer_->DIER |= TIM_DIER_CC2IE;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer_->DIER |= TIM_DIER_CC3IE;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer_->DIER |= TIM_DIER_CC4IE;
 			break;
 		}
@@ -826,16 +828,16 @@ public:
 		TIM_TypeDef* timer_ = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer_->DIER &= ~TIM_DIER_CC1IE;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer_->DIER &= ~TIM_DIER_CC2IE;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer_->DIER &= ~TIM_DIER_CC3IE;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer_->DIER &= ~TIM_DIER_CC4IE;
 			break;
 		}
@@ -849,16 +851,16 @@ public:
 			TIM_TypeDef* timer_ = BASE::GetDevice();
 			switch (kChannelNum_)
 			{
-			case TimChannel::k1:
+			case Channel::k1:
 				timer_->DIER |= TIM_DIER_CC1DE;
 				break;
-			case TimChannel::k2:
+			case Channel::k2:
 				timer_->DIER |= TIM_DIER_CC2DE;
 				break;
-			case TimChannel::k3:
+			case Channel::k3:
 				timer_->DIER |= TIM_DIER_CC3DE;
 				break;
-			case TimChannel::k4:
+			case Channel::k4:
 				timer_->DIER |= TIM_DIER_CC4DE;
 				break;
 			}
@@ -876,16 +878,16 @@ public:
 		TIM_TypeDef* timer_ = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer_->DIER &= ~TIM_DIER_CC1DE;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer_->DIER &= ~TIM_DIER_CC2DE;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer_->DIER &= ~TIM_DIER_CC3DE;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer_->DIER &= ~TIM_DIER_CC4DE;
 			break;
 		}
@@ -897,10 +899,10 @@ public:
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1: timer->CCR1 = ccr; break;
-		case TimChannel::k2: timer->CCR2 = ccr; break;
-		case TimChannel::k3: timer->CCR3 = ccr; break;
-		case TimChannel::k4: timer->CCR4 = ccr; break;
+		case Channel::k1: timer->CCR1 = ccr; break;
+		case Channel::k2: timer->CCR2 = ccr; break;
+		case Channel::k3: timer->CCR3 = ccr; break;
+		case Channel::k4: timer->CCR4 = ccr; break;
 		}
 	}
 
@@ -909,10 +911,10 @@ public:
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1: return timer->CCR1;
-		case TimChannel::k2: return timer->CCR2;
-		case TimChannel::k3: return timer->CCR3;
-		case TimChannel::k4: return timer->CCR4;
+		case Channel::k1: return timer->CCR1;
+		case Channel::k2: return timer->CCR2;
+		case Channel::k3: return timer->CCR3;
+		case Channel::k4: return timer->CCR4;
 		}
 	}
 	//! This bit is set by hardware on a capture. It is cleared by reading the CCRx register.
@@ -921,10 +923,10 @@ public:
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1: return (timer->SR & TIM_SR_CC1IF) != 0;
-		case TimChannel::k2: return (timer->SR & TIM_SR_CC2IF) != 0;
-		case TimChannel::k3: return (timer->SR & TIM_SR_CC3IF) != 0;
-		case TimChannel::k4: return (timer->SR & TIM_SR_CC4IF) != 0;
+		case Channel::k1: return (timer->SR & TIM_SR_CC1IF) != 0;
+		case Channel::k2: return (timer->SR & TIM_SR_CC2IF) != 0;
+		case Channel::k3: return (timer->SR & TIM_SR_CC3IF) != 0;
+		case Channel::k4: return (timer->SR & TIM_SR_CC4IF) != 0;
 		}
 	}
 	//! This flag is set by hardware when the counter matches the compare value. Flag is also cleared here.
@@ -934,10 +936,10 @@ public:
 		uint16_t flag = 0;
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1: flag = TIM_SR_CC1IF; break;
-		case TimChannel::k2: flag = TIM_SR_CC2IF; break;
-		case TimChannel::k3: flag = TIM_SR_CC3IF; break;
-		case TimChannel::k4: flag = TIM_SR_CC4IF; break;
+		case Channel::k1: flag = TIM_SR_CC1IF; break;
+		case Channel::k2: flag = TIM_SR_CC2IF; break;
+		case Channel::k3: flag = TIM_SR_CC3IF; break;
+		case Channel::k4: flag = TIM_SR_CC4IF; break;
 		}
 		uint16_t old = timer->SR;
 		timer->SR = old & ~flag;
@@ -950,10 +952,10 @@ public:
 		uint16_t flag = 0;
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1: flag = TIM_SR_CC1OF; break;
-		case TimChannel::k2: flag = TIM_SR_CC2OF; break;
-		case TimChannel::k3: flag = TIM_SR_CC3OF; break;
-		case TimChannel::k4: flag = TIM_SR_CC4OF; break;
+		case Channel::k1: flag = TIM_SR_CC1OF; break;
+		case Channel::k2: flag = TIM_SR_CC2OF; break;
+		case Channel::k3: flag = TIM_SR_CC3OF; break;
+		case Channel::k4: flag = TIM_SR_CC4OF; break;
 		}
 		uint16_t old = timer->SR;
 		timer->SR = old & ~flag;
@@ -965,10 +967,10 @@ public:
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1: timer->EGR = TIM_EGR_CC1G; break;
-		case TimChannel::k2: timer->EGR = TIM_EGR_CC2G; break;
-		case TimChannel::k3: timer->EGR = TIM_EGR_CC3G; break;
-		case TimChannel::k4: timer->EGR = TIM_EGR_CC4G; break;
+		case Channel::k1: timer->EGR = TIM_EGR_CC1G; break;
+		case Channel::k2: timer->EGR = TIM_EGR_CC2G; break;
+		case Channel::k3: timer->EGR = TIM_EGR_CC3G; break;
+		case Channel::k4: timer->EGR = TIM_EGR_CC4G; break;
 		}
 	}
 	//! Software generated compare event
@@ -977,10 +979,10 @@ public:
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
-		case TimChannel::k1: timer->EGR = TIM_EGR_CC1G; break;
-		case TimChannel::k2: timer->EGR = TIM_EGR_CC2G; break;
-		case TimChannel::k3: timer->EGR = TIM_EGR_CC3G; break;
-		case TimChannel::k4: timer->EGR = TIM_EGR_CC4G; break;
+		case Channel::k1: timer->EGR = TIM_EGR_CC1G; break;
+		case Channel::k2: timer->EGR = TIM_EGR_CC2G; break;
+		case Channel::k3: timer->EGR = TIM_EGR_CC3G; break;
+		case Channel::k4: timer->EGR = TIM_EGR_CC4G; break;
 		}
 	}
 };
@@ -988,8 +990,8 @@ public:
 
 // TODO: Improve this one
 template <
-	const Tim kTimerNum
-	, const TimChannel kChannelNum
+	const Unit kTimerNum
+	, const Channel kChannelNum
 	, const InputCapture kInputSrc
 	, const CaptureEdge kEdge = CaptureEdge::kRising
 	, const int kFilter = 0
@@ -1008,14 +1010,14 @@ public:
 	static constexpr CaptureEdge kEdge_ = kEdge;			///< Clock edge
 	static constexpr uint32_t kCCxS =
 		kInputSrc_ == InputCapture::kTRC ? TIM_CCMR1_CC1S_1 | TIM_CCMR1_CC1S_0 :
-		kChannelNum == TimChannel::k1 && kInputSrc_ == InputCapture::kTI1FP1 ? TIM_CCMR1_CC1S_0 :
-		kChannelNum == TimChannel::k1 && kInputSrc_ == InputCapture::kTI1FP2 ? TIM_CCMR1_CC1S_1 :
-		kChannelNum == TimChannel::k2 && kInputSrc_ == InputCapture::kTI2FP1 ? TIM_CCMR1_CC2S_0 :
-		kChannelNum == TimChannel::k2 && kInputSrc_ == InputCapture::kTI2FP2 ? TIM_CCMR1_CC2S_1 :
-		kChannelNum == TimChannel::k3 && kInputSrc_ == InputCapture::kTI3FP3 ? TIM_CCMR2_CC3S_0 :
-		kChannelNum == TimChannel::k3 && kInputSrc_ == InputCapture::kTI3FP4 ? TIM_CCMR2_CC3S_1 :
-		kChannelNum == TimChannel::k4 && kInputSrc_ == InputCapture::kTI4FP3 ? TIM_CCMR2_CC4S_0 :
-		kChannelNum == TimChannel::k4 && kInputSrc_ == InputCapture::kTI4FP4 ? TIM_CCMR2_CC4S_1 :
+		kChannelNum == Channel::k1 && kInputSrc_ == InputCapture::kTI1FP1 ? TIM_CCMR1_CC1S_0 :
+		kChannelNum == Channel::k1 && kInputSrc_ == InputCapture::kTI1FP2 ? TIM_CCMR1_CC1S_1 :
+		kChannelNum == Channel::k2 && kInputSrc_ == InputCapture::kTI2FP1 ? TIM_CCMR1_CC2S_0 :
+		kChannelNum == Channel::k2 && kInputSrc_ == InputCapture::kTI2FP2 ? TIM_CCMR1_CC2S_1 :
+		kChannelNum == Channel::k3 && kInputSrc_ == InputCapture::kTI3FP3 ? TIM_CCMR2_CC3S_0 :
+		kChannelNum == Channel::k3 && kInputSrc_ == InputCapture::kTI3FP4 ? TIM_CCMR2_CC3S_1 :
+		kChannelNum == Channel::k4 && kInputSrc_ == InputCapture::kTI4FP3 ? TIM_CCMR2_CC4S_0 :
+		kChannelNum == Channel::k4 && kInputSrc_ == InputCapture::kTI4FP4 ? TIM_CCMR2_CC4S_1 :
 		0;
 	static constexpr uint32_t kICxPSC =
 		kPrescaler_ == 2 ? (TIM_CCMR1_IC1PSC_0) << kShift8_ :
@@ -1036,19 +1038,19 @@ public:
 		TIM_TypeDef* timer_ = BASE::GetDevice();
 		switch (kChannelNum)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer_->CCR1 = 0;
 			timer_->CCMR1 = kICxF | kICxPSC | kCCxS;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer_->CCR2 = 0;
 			timer_->CCMR1 = kICxF | kICxPSC | kCCxS;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer_->CCR3 = 0;
 			timer_->CCMR2 = kICxF | kICxPSC | kCCxS;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer_->CCR4 = 0;
 			timer_->CCMR2 = kICxF | kICxPSC | kCCxS;
 			break;
@@ -1077,16 +1079,16 @@ public:
 		TIM_TypeDef* timer_ = BASE::GetDevice();
 		switch (kChannelNum)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer_->DIER |= TIM_DIER_CC1IE;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer_->DIER |= TIM_DIER_CC2IE;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer_->DIER |= TIM_DIER_CC3IE;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer_->DIER |= TIM_DIER_CC4IE;
 			break;
 		}
@@ -1098,16 +1100,16 @@ public:
 		TIM_TypeDef* timer_ = BASE::GetDevice();
 		switch (kChannelNum)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer_->DIER &= ~TIM_DIER_CC1IE;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer_->DIER &= ~TIM_DIER_CC2IE;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer_->DIER &= ~TIM_DIER_CC3IE;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer_->DIER &= ~TIM_DIER_CC4IE;
 			break;
 		}
@@ -1119,16 +1121,16 @@ public:
 		TIM_TypeDef* timer_ = BASE::GetDevice();
 		switch (kChannelNum)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer_->DIER |= TIM_DIER_CC1DE;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer_->DIER |= TIM_DIER_CC2DE;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer_->DIER |= TIM_DIER_CC3DE;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer_->DIER |= TIM_DIER_CC4DE;
 			break;
 		}
@@ -1140,16 +1142,16 @@ public:
 		TIM_TypeDef* timer_ = BASE::GetDevice();
 		switch (kChannelNum)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer_->DIER &= ~TIM_DIER_CC1DE;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer_->DIER &= ~TIM_DIER_CC2DE;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer_->DIER &= ~TIM_DIER_CC3DE;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer_->DIER &= ~TIM_DIER_CC4DE;
 			break;
 		}
@@ -1161,10 +1163,10 @@ public:
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (BASE::kChannelNum_)
 		{
-		case TimChannel::k1: return timer->CCR1;
-		case TimChannel::k2: return timer->CCR2;
-		case TimChannel::k3: return timer->CCR3;
-		case TimChannel::k4: return timer->CCR4;
+		case Channel::k1: return timer->CCR1;
+		case Channel::k2: return timer->CCR2;
+		case Channel::k3: return timer->CCR3;
+		case Channel::k4: return timer->CCR4;
 		}
 	}
 };
@@ -1180,10 +1182,10 @@ public:
 /// Configures a timer channel as compare mode (output)
 template <
 	typename TimType
-	, const TimChannel kChannelNum
-	, const TimOutMode kMode = TimOutMode::kTimOutFrozen
-	, const TimOutDrive kOut = TimOutDrive::kTimOutInactive
-	, const TimOutDrive kOutN = TimOutDrive::kTimOutInactive
+	, const Channel kChannelNum
+	, const OutMode kMode = OutMode::kFrozen
+	, const Output kOut = Output::kDisabled
+	, const Output kOutN = Output::kDisabled
 	, const bool kPreloadEnable = false
 	, const bool kFastEnable = false
 	, const bool kClearOnEtrf = false
@@ -1193,22 +1195,22 @@ class TimerOutputChannel : public AnyTimerChannel_<TimType::kTimerNum_, kChannel
 public:
 	typedef AnyTimerChannel_<TimType::kTimerNum_, kChannelNum> BASE;
 	static constexpr uint16_t kCcmr_Mask =
-		(BASE::kChannelNum_ == TimChannel::k1) ? TIM_CCMR1_CC1S_Msk | TIM_CCMR1_OC1FE_Msk | TIM_CCMR1_OC1PE_Msk | TIM_CCMR1_OC1M_Msk | TIM_CCMR1_OC1CE_Msk
-		: (BASE::kChannelNum_ == TimChannel::k2) ? TIM_CCMR1_CC2S_Msk | TIM_CCMR1_OC2FE_Msk | TIM_CCMR1_OC2PE_Msk | TIM_CCMR1_OC2M_Msk | TIM_CCMR1_OC2CE_Msk
-		: (BASE::kChannelNum_ == TimChannel::k3) ? TIM_CCMR2_CC3S_Msk | TIM_CCMR2_OC3FE_Msk | TIM_CCMR2_OC3PE_Msk | TIM_CCMR2_OC3M_Msk | TIM_CCMR2_OC3CE_Msk
-		: (BASE::kChannelNum_ == TimChannel::k4) ? TIM_CCMR2_CC4S_Msk | TIM_CCMR2_OC4FE_Msk | TIM_CCMR2_OC4PE_Msk | TIM_CCMR2_OC4M_Msk | TIM_CCMR2_OC4CE_Msk
+		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCMR1_CC1S_Msk | TIM_CCMR1_OC1FE_Msk | TIM_CCMR1_OC1PE_Msk | TIM_CCMR1_OC1M_Msk | TIM_CCMR1_OC1CE_Msk
+		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCMR1_CC2S_Msk | TIM_CCMR1_OC2FE_Msk | TIM_CCMR1_OC2PE_Msk | TIM_CCMR1_OC2M_Msk | TIM_CCMR1_OC2CE_Msk
+		: (BASE::kChannelNum_ == Channel::k3) ? TIM_CCMR2_CC3S_Msk | TIM_CCMR2_OC3FE_Msk | TIM_CCMR2_OC3PE_Msk | TIM_CCMR2_OC3M_Msk | TIM_CCMR2_OC3CE_Msk
+		: (BASE::kChannelNum_ == Channel::k4) ? TIM_CCMR2_CC4S_Msk | TIM_CCMR2_OC4FE_Msk | TIM_CCMR2_OC4PE_Msk | TIM_CCMR2_OC4M_Msk | TIM_CCMR2_OC4CE_Msk
 		: 0;
 	static constexpr uint16_t kCcer_Mask =
-		(BASE::kChannelNum_ == TimChannel::k1) ? TIM_CCER_CC1E_Msk | TIM_CCER_CC1P_Msk | TIM_CCER_CC1NE_Msk | TIM_CCER_CC1NP_Msk
-		: (BASE::kChannelNum_ == TimChannel::k2) ? TIM_CCER_CC2E_Msk | TIM_CCER_CC2P_Msk | TIM_CCER_CC2NE_Msk | TIM_CCER_CC2NP_Msk
-		: (BASE::kChannelNum_ == TimChannel::k3) ? TIM_CCER_CC3E_Msk | TIM_CCER_CC3P_Msk | TIM_CCER_CC3NE_Msk | TIM_CCER_CC3NP_Msk
-		: (BASE::kChannelNum_ == TimChannel::k4) ? TIM_CCER_CC4E_Msk | TIM_CCER_CC4P_Msk
+		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCER_CC1E_Msk | TIM_CCER_CC1P_Msk | TIM_CCER_CC1NE_Msk | TIM_CCER_CC1NP_Msk
+		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCER_CC2E_Msk | TIM_CCER_CC2P_Msk | TIM_CCER_CC2NE_Msk | TIM_CCER_CC2NP_Msk
+		: (BASE::kChannelNum_ == Channel::k3) ? TIM_CCER_CC3E_Msk | TIM_CCER_CC3P_Msk | TIM_CCER_CC3NE_Msk | TIM_CCER_CC3NP_Msk
+		: (BASE::kChannelNum_ == Channel::k4) ? TIM_CCER_CC4E_Msk | TIM_CCER_CC4P_Msk
 		: 0;
 	static constexpr uint16_t kCCxE =
-		(BASE::kChannelNum_ == TimChannel::k1) ? TIM_CCER_CC1E
-		: (BASE::kChannelNum_ == TimChannel::k2) ? TIM_CCER_CC2E
-		: (BASE::kChannelNum_ == TimChannel::k3) ? TIM_CCER_CC3E
-		: (BASE::kChannelNum_ == TimChannel::k4) ? TIM_CCER_CC4E
+		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCER_CC1E
+		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCER_CC2E
+		: (BASE::kChannelNum_ == Channel::k3) ? TIM_CCER_CC3E
+		: (BASE::kChannelNum_ == Channel::k4) ? TIM_CCER_CC4E
 		: 0;
 
 	ALWAYS_INLINE static void Init()
@@ -1227,7 +1229,7 @@ public:
 		uint32_t tmp = 0;
 		switch (BASE::kChannelNum_)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			tmpccmr = timer->CCMR1;
 			tmp = (kPreloadEnable ? TIM_CCMR1_OC1PE : 0)
 				| (uint32_t(kMode) << TIM_CCMR1_OC1M_Pos)
@@ -1237,19 +1239,19 @@ public:
 			tmpccmr = (tmpccmr & ~kCcmr_Mask) | tmp;
 			tmp =
 				(
-					(kOut == TimOutDrive::kTimOutActiveHigh) ? TIM_CCER_CC1E
-					: (kOut == TimOutDrive::kTimOutActiveLow) ? TIM_CCER_CC1E | TIM_CCER_CC1P
+					(kOut == Output::kEnabled) ? TIM_CCER_CC1E
+					: (kOut == Output::kInverted) ? TIM_CCER_CC1E | TIM_CCER_CC1P
 					: 0
 					) |
 				(
-					(kOutN == TimOutDrive::kTimOutActiveHigh) ? TIM_CCER_CC1NE
-					: (kOutN == TimOutDrive::kTimOutActiveLow) ? TIM_CCER_CC1NE | TIM_CCER_CC1NP
+					(kOutN == Output::kEnabled) ? TIM_CCER_CC1NE
+					: (kOutN == Output::kInverted) ? TIM_CCER_CC1NE | TIM_CCER_CC1NP
 					: 0
 					)
 				;
 			tmpccer = (tmpccer & ~kCcer_Mask) | tmp;
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			tmpccmr = timer->CCMR1;
 			tmp = (kPreloadEnable ? TIM_CCMR1_OC2PE : 0)
 				| (uint32_t(kMode) << TIM_CCMR1_OC2M_Pos)
@@ -1259,19 +1261,19 @@ public:
 			tmpccmr = (tmpccmr & ~kCcmr_Mask) | tmp;
 			tmp =
 				(
-					(kOut == TimOutDrive::kTimOutActiveHigh) ? TIM_CCER_CC2E
-					: (kOut == TimOutDrive::kTimOutActiveLow) ? TIM_CCER_CC2E | TIM_CCER_CC2P
+					(kOut == Output::kEnabled) ? TIM_CCER_CC2E
+					: (kOut == Output::kInverted) ? TIM_CCER_CC2E | TIM_CCER_CC2P
 					: 0
 					) |
 				(
-					(kOutN == TimOutDrive::kTimOutActiveHigh) ? TIM_CCER_CC2NE
-					: (kOutN == TimOutDrive::kTimOutActiveLow) ? TIM_CCER_CC2NE | TIM_CCER_CC2NP
+					(kOutN == Output::kEnabled) ? TIM_CCER_CC2NE
+					: (kOutN == Output::kInverted) ? TIM_CCER_CC2NE | TIM_CCER_CC2NP
 					: 0
 					)
 				;
 			tmpccer = (tmpccer & ~kCcer_Mask) | tmp;
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			tmpccmr = timer->CCMR2;
 			tmp = (kPreloadEnable ? TIM_CCMR2_OC3PE : 0)
 				| (uint32_t(kMode) << TIM_CCMR2_OC3M_Pos)
@@ -1281,19 +1283,19 @@ public:
 			tmpccmr = (tmpccmr & ~kCcmr_Mask) | tmp;
 			tmp =
 				(
-					(kOut == TimOutDrive::kTimOutActiveHigh) ? TIM_CCER_CC3E
-					: (kOut == TimOutDrive::kTimOutActiveLow) ? TIM_CCER_CC3E | TIM_CCER_CC3P
+					(kOut == Output::kEnabled) ? TIM_CCER_CC3E
+					: (kOut == Output::kInverted) ? TIM_CCER_CC3E | TIM_CCER_CC3P
 					: 0
 					) |
 				(
-					(kOutN == TimOutDrive::kTimOutActiveHigh) ? TIM_CCER_CC3NE
-					: (kOutN == TimOutDrive::kTimOutActiveLow) ? TIM_CCER_CC3NE | TIM_CCER_CC3NP
+					(kOutN == Output::kEnabled) ? TIM_CCER_CC3NE
+					: (kOutN == Output::kInverted) ? TIM_CCER_CC3NE | TIM_CCER_CC3NP
 					: 0
 					)
 				;
 			tmpccer = (tmpccer & ~kCcer_Mask) | tmp;
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			tmpccmr = timer->CCMR2;
 			tmp = (kPreloadEnable ? TIM_CCMR2_OC4PE : 0)
 				| (uint32_t(kMode) << TIM_CCMR2_OC4M_Pos)
@@ -1302,11 +1304,11 @@ public:
 				;
 			tmpccmr = (tmpccmr & ~kCcmr_Mask) | tmp;
 			// Ch4 does not have OutN
-			static_assert(BASE::kChannelNum_ != TimChannel::k4 || kOutN == TimOutDrive::kTimOutInactive, "Hardware does not support this combination");
+			static_assert(BASE::kChannelNum_ != Channel::k4 || kOutN == Output::kDisabled, "Hardware does not support this combination");
 			tmp =
 				(
-					(kOut == TimOutDrive::kTimOutActiveHigh) ? TIM_CCER_CC4E
-					: (kOut == TimOutDrive::kTimOutActiveLow) ? TIM_CCER_CC4E | TIM_CCER_CC4P
+					(kOut == Output::kEnabled) ? TIM_CCER_CC4E
+					: (kOut == Output::kInverted) ? TIM_CCER_CC4E | TIM_CCER_CC4P
 					: 0
 					)
 				;
@@ -1317,16 +1319,16 @@ public:
 		if (BASE::kHasBdtr)
 		{
 			static constexpr uint16_t kCr2Bits =
-				(BASE::kChannelNum_ == TimChannel::k1) ? TIM_CR2_OIS1 | TIM_CR2_OIS1N
-				: (BASE::kChannelNum_ == TimChannel::k2) ? TIM_CR2_OIS2 | TIM_CR2_OIS2N
-				: (BASE::kChannelNum_ == TimChannel::k3) ? TIM_CR2_OIS3 | TIM_CR2_OIS3N
-				: (BASE::kChannelNum_ == TimChannel::k4) ? TIM_CR2_OIS4
+				(BASE::kChannelNum_ == Channel::k1) ? TIM_CR2_OIS1 | TIM_CR2_OIS1N
+				: (BASE::kChannelNum_ == Channel::k2) ? TIM_CR2_OIS2 | TIM_CR2_OIS2N
+				: (BASE::kChannelNum_ == Channel::k3) ? TIM_CR2_OIS3 | TIM_CR2_OIS3N
+				: (BASE::kChannelNum_ == Channel::k4) ? TIM_CR2_OIS4
 				: 0;
 			uint32_t tmpcr2 = timer->CR2;
 			tmpcr2 &= ~kCr2Bits;			// use default (feature not implemented)
 			timer->CR2 = tmpcr2;
 		}
-		if((BASE::kChannelNum_ == TimChannel::k1) || (BASE::kChannelNum_ == TimChannel::k2))
+		if((BASE::kChannelNum_ == Channel::k1) || (BASE::kChannelNum_ == Channel::k2))
 			timer->CCMR1 = tmpccmr;
 		else
 			timer->CCMR2 = tmpccmr;
@@ -1336,21 +1338,21 @@ public:
 		timer->CCER = tmpccer;
 	}
 
-	ALWAYS_INLINE static void SetOutputMode(TimOutMode mode)
+	ALWAYS_INLINE static void SetOutputMode(OutMode mode)
 	{
 		TIM_TypeDef *timer = BASE::GetDevice();
 		switch (BASE::kChannelNum_)
 		{
-		case TimChannel::k1:
+		case Channel::k1:
 			timer->CCMR1 = (timer->CCMR1 & ~TIM_CCMR1_OC1M_Msk) | (uint32_t(mode) << TIM_CCMR1_OC1M_Pos);
 			break;
-		case TimChannel::k2:
+		case Channel::k2:
 			timer->CCMR1 = (timer->CCMR1 & ~TIM_CCMR1_OC2M_Msk) | (uint32_t(mode) << TIM_CCMR1_OC2M_Pos);
 			break;
-		case TimChannel::k3:
+		case Channel::k3:
 			timer->CCMR2 = (timer->CCMR2 & ~TIM_CCMR2_OC3M_Msk) | (uint32_t(mode) << TIM_CCMR2_OC3M_Pos);
 			break;
-		case TimChannel::k4:
+		case Channel::k4:
 			timer->CCMR2 = (timer->CCMR2 & ~TIM_CCMR2_OC4M_Msk) | (uint32_t(mode) << TIM_CCMR2_OC4M_Pos);
 			break;
 		}
@@ -1358,4 +1360,5 @@ public:
 };
 
 
+}	// namespace Timer
 }	// namespace Bmt
