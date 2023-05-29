@@ -36,6 +36,13 @@ enum class Chan
 	, kNone		///< Indicates configuration not available
 };
 
+/// Pair specifying a DMA channel
+struct DmaPair
+{
+	Itf itf;
+	Chan chan;
+};
+
 #if OPT_DMA_VERSION > 1
 enum class PerifSel
 {

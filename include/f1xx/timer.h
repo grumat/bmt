@@ -8,13 +8,155 @@ namespace Timer
 {
 
 /// Enumeration for the timer instance
-enum Unit
+/*!
+Note: The original macros are redefined to remove the pointer cast, which is 
+illegal for constexpr. Normal scalar values are used instead. If you check the
+device header, you'll find a set of IS_TIM_XXX_INSTANCE() macros, which describes 
+in detail the feature supported by a timer unit. Without the scalars these macros
+cannot be handled as constexpr.
+Later we restore original values
+*/
+enum Unit : uintptr_t
 {
-	kTim1 = 1	///< Timer 1
-	, kTim2		///< Timer 2
-	, kTim3		///< Timer 3
-	, kTim4		///< Timer 4
+	kTimInvalid = 0,
+#ifdef TIM1_BASE
+	kTim1 = TIM1_BASE,		///< Timer 1
+#	pragma push_macro("TIM1")
+#	undef TIM1
+#	define TIM1 kTim1
+#else
+	kTim1 = kTimInvalid,
+#endif
+#ifdef TIM2_BASE
+	kTim2 = TIM2_BASE,		///< Timer 2
+#	pragma push_macro("TIM2")
+#	undef TIM2
+#	define TIM2 kTim2
+#else
+	kTim2 = kTimInvalid,
+#endif
+#ifdef TIM3_BASE
+	kTim3 = TIM3_BASE,		///< Timer 3
+#	pragma push_macro("TIM3")
+#	undef TIM3
+#	define TIM3 kTim3
+#else
+	kTim3 = kTimInvalid,
+#endif
+#ifdef TIM4_BASE
+	kTim4 = TIM4_BASE,		///< Timer 4
+#	pragma push_macro("TIM4")
+#	undef TIM4
+#	define TIM4 kTim4
+#else
+	kTim4 = kTimInvalid,
+#endif
+#ifdef TIM5_BASE
+	kTim5 = TIM5_BASE,		///< Timer 5
+#	pragma push_macro("TIM5")
+#	undef TIM5
+#	define TIM5 kTim5
+#else
+	kTim5 = kTimInvalid,
+#endif
+#ifdef TIM6_BASE
+	kTim6 = TIM6_BASE,		///< Timer 6
+#	pragma push_macro("TIM6")
+#	undef TIM6
+#	define TIM6 kTim6
+#else
+	kTim6 = kTimInvalid,
+#endif
+#ifdef TIM7_BASE
+	kTim7 = TIM7_BASE,		///< Timer 7
+#	pragma push_macro("TIM7")
+#	undef TIM7
+#	define TIM7 kTim7
+#else
+	kTim7 = kTimInvalid,
+#endif
+#ifdef TIM8_BASE
+	kTim8 = TIM8_BASE,		///< Timer 8
+#	pragma push_macro("TIM8")
+#	undef TIM8
+#	define TIM8 kTim8
+#else
+	kTim8 = kTimInvalid,
+#endif
+#ifdef TIM9_BASE
+	kTim9 = TIM9_BASE,		///< Timer 9
+#	pragma push_macro("TIM9")
+#	undef TIM9
+#	define TIM9 kTim9
+#else
+	kTim9 = kTimInvalid,
+#endif
+#ifdef TIM10_BASE
+	kTim10 = TIM10_BASE,	///< Timer 10
+#	pragma push_macro("TIM10")
+#	undef TIM10
+#	define TIM10 kTim10
+#else
+	kTim10 = kTimInvalid,
+#endif
+#ifdef TIM11_BASE
+	kTim11 = TIM11_BASE,	///< Timer 11
+#	pragma push_macro("TIM11")
+#	undef TIM11
+#	define TIM11 kTim11
+#else
+	kTim11 = kTimInvalid,
+#endif
+#ifdef TIM12_BASE
+	kTim12 = TIM12_BASE,	///< Timer 12
+#	pragma push_macro("TIM12")
+#	undef TIM12
+#	define TIM12 kTim12
+#else
+	kTim12 = kTimInvalid,
+#endif
+#ifdef TIM13_BASE
+	kTim13 = TIM13_BASE,	///< Timer 13
+#	pragma push_macro("TIM13")
+#	undef TIM13
+#	define TIM13 kTim13
+#else
+	kTim13 = kTimInvalid,
+#endif
+#ifdef TIM14_BASE
+	kTim14 = TIM14_BASE,	///< Timer 14
+#	pragma push_macro("TIM14")
+#	undef TIM14
+#	define TIM14 kTim14
+#else
+	kTim14 = kTimInvalid,
+#endif
+#ifdef TIM15_BASE
+	kTim15 = TIM15_BASE,	///< Timer 15
+#	pragma push_macro("TIM15")
+#	undef TIM15
+#	define TIM15 kTim15
+#else
+	kTim15 = kTimInvalid,
+#endif
+#ifdef TIM16_BASE
+	kTim16 = TIM16_BASE,	///< Timer 16
+#	pragma push_macro("TIM16")
+#	undef TIM16
+#	define TIM16 kTim16
+#else
+	kTim16 = kTimInvalid,
+#endif
+#ifdef TIM17_BASE
+	kTim17 = TIM17_BASE,	///< Timer 17
+#	pragma push_macro("TIM17")
+#	undef TIM17
+#	define TIM17 kTim17
+#else
+	kTim17 = kTimInvalid,
+#endif
 };
+
 
 /// The timer channel
 enum class Channel
@@ -116,31 +258,116 @@ class AnyTimer_
 {
 public:
 	static constexpr Unit kTimerNum_ = kTimerNum;
-	static constexpr uintptr_t kTimerBase_ =
-		(kTimerNum_ == kTim1) ? TIM1_BASE
-		: (kTimerNum_ == kTim2) ? TIM2_BASE
-		: (kTimerNum_ == kTim3) ? TIM3_BASE
-		: (kTimerNum_ == kTim4) ? TIM4_BASE
-		: 0;
-	static constexpr Dma::Itf DmaInstance_ = Dma::Itf::k1;
+	static constexpr uintptr_t kTimerBase_ = (uintptr_t)kTimerNum;
+	// 
+	static constexpr bool kIsValid_ = kTimerNum_ != kTimInvalid;
+	// Advanced timer
+	static constexpr bool IsAdvanced()
+	{
+		return IS_TIM_ADVANCED_INSTANCE(kTimerNum_);
+	}
+	// Has CC1 module
+	static constexpr bool HasCC1()
+	{
+		return IS_TIM_CC1_INSTANCE(kTimerNum_);
+	}
+	// Has CC2 module
+	static constexpr bool HasCC2()
+	{
+		return IS_TIM_CC2_INSTANCE(kTimerNum_);
+	}
+	// Has CC3 module
+	static constexpr bool HasCC3()
+	{
+		return IS_TIM_CC3_INSTANCE(kTimerNum_);
+	}
+	// Has CC4 module
+	static constexpr bool HasCC4()
+	{
+		return IS_TIM_CC4_INSTANCE(kTimerNum_);
+	}
+	// Has ETR Mode 1 clock
+	static constexpr bool HasEtrMode1()
+	{
+		return IS_TIM_CLOCKSOURCE_ETRMODE1_INSTANCE(kTimerNum_);
+	}
+	// Has ETR Mode 2 clock
+	static constexpr bool HasEtrMode2()
+	{
+		return IS_TIM_CLOCKSOURCE_ETRMODE2_INSTANCE(kTimerNum_);
+	}
+	// Has TIx clock inputs
+	static constexpr bool HasTIx()
+	{
+		return IS_TIM_CLOCKSOURCE_TIX_INSTANCE(kTimerNum_);
+	}
+	// Has ITRx inputs
+	static constexpr bool HasITRx()
+	{
+		return IS_TIM_CLOCKSOURCE_ITRX_INSTANCE(kTimerNum_);
+	}
+	// Has OCxREF clear feature
+	static constexpr bool HasOCxRefClear()
+	{
+		return IS_TIM_OCXREF_CLEAR_INSTANCE(kTimerNum_);
+	}
+	// Can select counting mode
+	static constexpr bool HasCounterModeSelect()
+	{
+		return IS_TIM_COUNTER_MODE_SELECT_INSTANCE(kTimerNum_);
+	}
+	// Can select counting mode
+	static constexpr bool HasRepetitionCounter()
+	{
+		return IS_TIM_REPETITION_COUNTER_INSTANCE(kTimerNum_);
+	}
+	// Basic timer
+	static constexpr bool kIsBasicTimer_ = 
+		(HasCC1() | HasCC2() | HasCC3() | HasCC4()) == false
+		;
+	static constexpr Dma::Itf DmaInstance_ = 
+#ifdef DMA2_BASE
+		(kTimerNum_ == kTim5) ? Dma::Itf::k2
+		: (kTimerNum_ == kTim6) ? Dma::Itf::k2
+		: (kTimerNum_ == kTim7) ? Dma::Itf::k2
+		: Dma::Itf::k1
+#else
+		Dma::Itf::k1
+#endif
+		;
 	// Timer update DMA channel
 	static constexpr Dma::Chan DmaCh_ =
-		(kTimerNum_ == kTim1) ? Dma::Chan::k5
+		(kTimerNum_ == kTimInvalid) ? Dma::Chan::kNone
+		: (kTimerNum_ == kTim1) ? Dma::Chan::k5
 		: (kTimerNum_ == kTim2) ? Dma::Chan::k2
 		: (kTimerNum_ == kTim3) ? Dma::Chan::k3
 		: (kTimerNum_ == kTim4) ? Dma::Chan::k7
+#ifdef DMA2_BASE
+		: (kTimerNum_ == kTim5) ? Dma::Chan::k2
+		: (kTimerNum_ == kTim6) ? Dma::Chan::k3
+		: (kTimerNum_ == kTim7) ? Dma::Chan::k4
+#endif
 		: Dma::Chan::kNone;
 	// Timer trigger DMA channel
 	static constexpr Dma::Chan DmaChTrigger_ =
-		(kTimerNum_ == kTim1) ? Dma::Chan::k4
+		(kTimerNum_ == kTimInvalid) ? Dma::Chan::kNone
+		: (kTimerNum_ == kTim1) ? Dma::Chan::k4
 		: (kTimerNum_ == kTim3) ? Dma::Chan::k6
+#ifdef DMA2_BASE
+		: (kTimerNum_ == kTim5) ? Dma::Chan::k1
+#endif
 		: Dma::Chan::kNone;
 	/// Timer having BDTR register
 	static constexpr bool kHasBdtr = (kTimerNum_ == kTim1);
+	
+	static constexpr bool IsRepetitionCount()
+	{
+		return IS_TIM_REPETITION_COUNTER_INSTANCE(kTimerNum_);
+	}
 
 	ALWAYS_INLINE static TIM_TypeDef *GetDevice()
 	{
-		static_assert(kTimerBase_ != 0, "Invalid timer instance selected");
+		static_assert(kIsValid_, "Invalid timer instance selected");
 		return (TIM_TypeDef *)kTimerBase_;
 	}
 
@@ -291,6 +518,8 @@ public:
 		(kUsesInput1) ? TIM_CCER_CC1E_Msk | TIM_CCER_CC1P_Msk | TIM_CCER_CC1NE_Msk | TIM_CCER_CC1NP_Msk
 		: (kUsesInput2) ? TIM_CCER_CC2E_Msk | TIM_CCER_CC2P_Msk | TIM_CCER_CC2NE_Msk | TIM_CCER_CC2NP_Msk
 		: 0;
+	
+	static_assert(!BASE::kIsBasicTimer_, "External clock is not available on Basic Timers");
 
 	ALWAYS_INLINE static void Setup()
 	{
@@ -298,6 +527,12 @@ public:
 		static_assert(kInputPrescaler_ == 1 || kInputPrescaler_ == 2 || kInputPrescaler_ == 4 || kInputPrescaler_ == 8, "Invalid prescaler value. Possible values are 1,2,4 or 8.");
 		// Validate filter
 		static_assert(kFilter < 16, "Invalid ETRP filter value. Only values between 0 and 15 are allowed.");
+		// ETR Mode 1 is supported?
+		static_assert(BASE::HasEtrMode1(), "Timer does not support external clock mode 1");
+		// ETR Mode 2 is supported?
+		static_assert(BASE::HasEtrMode2() | (kExtIn_ != ExtClk::kETR && kExtIn_ != ExtClk::kETRN), "Timer does not support external clock mode 2");
+		// TIx inputs
+		static_assert(BASE::HasTIx() | (kExtIn_ < ExtClk::kTI1F_ED), "Timer does not has external clock inputs");
 
 		TIM_TypeDef* timer = BASE::GetDevice();
 		// Use a local variable so the code optimizer condenses all logic to a single constant
@@ -412,7 +647,7 @@ public:
 	static constexpr uint32_t kPrescaler_ = kPrescaler;
 	static constexpr uint32_t kTS_ =
 		// TIM1
-#if 0
+#if TIM5_BASE
 		kSlaveTimer == kTim1 && kMasterTimer == kTim5 ? 0 :
 #endif
 		kSlaveTimer == kTim1 && kMasterTimer == kTim2 ? TIM_SMCR_TS_0 :
@@ -420,7 +655,7 @@ public:
 		kSlaveTimer == kTim1 && kMasterTimer == kTim4 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
 		// TIM2
 		kSlaveTimer == kTim2 && kMasterTimer == kTim1 ? 0 :
-#if 0
+#if TIM8_BASE
 		kSlaveTimer == kTim2 && kMasterTimer == kTim8 ? TIM_SMCR_TS_0 :
 #endif
 		kSlaveTimer == kTim2 && kMasterTimer == kTim3 ? TIM_SMCR_TS_1 :
@@ -428,7 +663,7 @@ public:
 		// TIM3
 		kSlaveTimer == kTim3 && kMasterTimer == kTim1 ? 0 :
 		kSlaveTimer == kTim3 && kMasterTimer == kTim2 ? TIM_SMCR_TS_0 :
-#if 0
+#if TIM5_BASE
 		kSlaveTimer == kTim3 && kMasterTimer == kTim5 ? TIM_SMCR_TS_1 :
 #endif
 		kSlaveTimer == kTim3 && kMasterTimer == kTim4 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
@@ -436,7 +671,7 @@ public:
 		kSlaveTimer == kTim4 && kMasterTimer == kTim1 ? 0 :
 		kSlaveTimer == kTim4 && kMasterTimer == kTim2 ? TIM_SMCR_TS_0 :
 		kSlaveTimer == kTim4 && kMasterTimer == kTim3 ? TIM_SMCR_TS_1 :
-#if 0
+#if TIM8_BASE
 		kSlaveTimer == kTim4 && kMasterTimer == kTim8 ? TIM_SMCR_TS_0 | TIM_SMCR_TS_1 :
 		// TIM5
 		kSlaveTimer == kTim5 && kMasterTimer == kTim2 ? 0 :
@@ -468,6 +703,10 @@ public:
 	{
 		// Validate prescaler
 		static_assert(kTS_ < TIM_SMCR_TS_2, "Master/Slave combination not supported by hardware");
+		// ETR Mode 1 is supported?
+		static_assert(BASE::HasEtrMode1(), "Timer does not support external clock mode 1");
+		// ITRx inputs
+		static_assert(BASE::HasITRx(), "Timer does not support inyternal triggers");
 
 		BASE::GetDevice()->SMCR = kTS_ | kSMS_;
 		// Master timer trigger generation
@@ -513,26 +752,125 @@ public:
 		// Enable clock
 		switch (BASE::kTimerNum_)
 		{
+#ifdef TIM1_BASE
 		case kTim1:
 			RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
 			RCC->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
 			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
 			break;
+#endif
+#ifdef TIM2_BASE
 		case kTim2:
 			RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 			RCC->APB1RSTR |= RCC_APB1RSTR_TIM2RST;
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM2RST;
 			break;
+#endif
+#ifdef TIM3_BASE
 		case kTim3:
 			RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 			RCC->APB1RSTR |= RCC_APB1RSTR_TIM3RST;
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM3RST;
 			break;
+#endif
+#ifdef TIM4_BASE
 		case kTim4:
 			RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
 			RCC->APB1RSTR |= RCC_APB1RSTR_TIM4RST;
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM4RST;
 			break;
+#endif
+#ifdef TIM5_BASE
+		case kTim5:
+			RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
+			RCC->APB1RSTR |= RCC_APB1RSTR_TIM5RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM5RST;
+			break;
+#endif
+#ifdef TIM6_BASE
+		case kTim6:
+			RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+			RCC->APB1RSTR |= RCC_APB1RSTR_TIM6RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM6RST;
+			break;
+#endif
+#ifdef TIM7_BASE
+		case kTim7:
+			RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+			RCC->APB1RSTR |= RCC_APB1RSTR_TIM7RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM7RST;
+			break;
+#endif
+#ifdef TIM8_BASE
+		case kTim8:
+			RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
+			RCC->APB2RSTR |= RCC_APB2RSTR_TIM8RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM8RST;
+			break;
+#endif
+#ifdef TIM9_BASE
+		case kTim9:
+			RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;
+			RCC->APB2RSTR |= RCC_APB2RSTR_TIM9RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM9RST;
+			break;
+#endif
+#ifdef TIM10_BASE
+		case kTim10:
+			RCC->APB2ENR |= RCC_APB2ENR_TIM10EN;
+			RCC->APB2RSTR |= RCC_APB2RSTR_TIM10RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM10RST;
+			break;
+#endif
+#ifdef TIM11_BASE
+		case kTim11:
+			RCC->APB2ENR |= RCC_APB2ENR_TIM11EN;
+			RCC->APB2RSTR |= RCC_APB2RSTR_TIM11RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM11RST;
+			break;
+#endif
+#ifdef TIM12_BASE
+		case kTim12:
+			RCC->APB1ENR |= RCC_APB1ENR_TIM12EN;
+			RCC->APB1RSTR |= RCC_APB1RSTR_TIM12RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM12RST;
+			break;
+#endif
+#ifdef TIM13_BASE
+		case kTim13:
+			RCC->APB1ENR |= RCC_APB1ENR_TIM13EN;
+			RCC->APB1RSTR |= RCC_APB1RSTR_TIM13RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM13RST;
+			break;
+#endif
+#ifdef TIM14_BASE
+		case kTim14:
+			RCC->APB1ENR |= RCC_APB1ENR_TIM14EN;
+			RCC->APB1RSTR |= RCC_APB1RSTR_TIM14RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_TIM14RST;
+			break;
+#endif
+#ifdef TIM15_BASE
+		case kTim15:
+			RCC->APB2ENR |= RCC_APB2ENR_TIM15EN;
+			RCC->APB2RSTR |= RCC_APB2RSTR_TIM15RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM15RST;
+			break;
+#endif
+#ifdef TIM16_BASE
+		case kTim16:
+			RCC->APB2ENR |= RCC_APB2ENR_TIM16EN;
+			RCC->APB2RSTR |= RCC_APB2RSTR_TIM16RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM16RST;
+			break;
+#endif
+#ifdef TIM17_BASE
+		case kTim17:
+			RCC->APB2ENR |= RCC_APB2ENR_TIM17EN;
+			RCC->APB2RSTR |= RCC_APB2RSTR_TIM17RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM17RST;
+			break;
+#endif
 		}
 		TimeBase::Setup();
 		Setup();
@@ -541,6 +879,8 @@ public:
 	//! Performs timer setup
 	ALWAYS_INLINE static void Setup()
 	{
+		static_assert(BASE::HasCounterModeSelect() || (kTimerMode_ == Mode::kUpCounter), "Basic Timer supports only Mode::kUpCounter");
+		
 		TIM_TypeDef *timer = BASE::GetDevice();
 		// Compute CR1 register
 		uint32_t tmp = kBuffered ? TIM_CR1_ARPE : 0;
@@ -578,10 +918,57 @@ public:
 	{
 		switch (BASE::kTimerNum_)
 		{
+#ifdef TIM1_BASE
 		case kTim1: RCC->APB2ENR &= ~RCC_APB2ENR_TIM1EN; break;
+#endif
+#ifdef TIM2_BASE
 		case kTim2: RCC->APB1ENR &= ~RCC_APB1ENR_TIM2EN; break;
+#endif
+#ifdef TIM3_BASE
 		case kTim3: RCC->APB1ENR &= ~RCC_APB1ENR_TIM3EN; break;
+#endif
+#ifdef TIM4_BASE
 		case kTim4: RCC->APB1ENR &= ~RCC_APB1ENR_TIM4EN; break;
+#endif
+#ifdef TIM5_BASE
+		case kTim5: RCC->APB1ENR &= ~RCC_APB1ENR_TIM5EN; break;
+#endif
+#ifdef TIM6_BASE
+		case kTim6: RCC->APB1ENR &= ~RCC_APB1ENR_TIM6EN; break;
+#endif
+#ifdef TIM7_BASE
+		case kTim7: RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN; break;
+#endif
+#ifdef TIM8_BASE
+		case kTim8: RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN; break;
+#endif
+#ifdef TIM9_BASE
+		case kTim9: RCC->APB2ENR &= ~RCC_APB2ENR_TIM9EN; break;
+#endif
+#ifdef TIM10_BASE
+		case kTim10: RCC->APB2ENR &= ~RCC_APB2ENR_TIM10EN; break;
+#endif
+#ifdef TIM11_BASE
+		case kTim11: RCC->APB2ENR &= ~RCC_APB2ENR_TIM11EN; break;
+#endif
+#ifdef TIM12_BASE
+		case kTim12: RCC->APB1ENR &= ~RCC_APB1ENR_TIM12EN; break;
+#endif
+#ifdef TIM13_BASE
+		case kTim13: RCC->APB1ENR &= ~RCC_APB1ENR_TIM13EN; break;
+#endif
+#ifdef TIM14_BASE
+		case kTim14: RCC->APB1ENR &= ~RCC_APB1ENR_TIM14EN; break;
+#endif
+#ifdef TIM15_BASE
+		case kTim15: RCC->APB2ENR &= ~RCC_APB2ENR_TIM15EN; break;
+#endif
+#ifdef TIM16_BASE
+		case kTim16: RCC->APB2ENR &= ~RCC_APB2ENR_TIM16EN; break;
+#endif
+#ifdef TIM17_BASE
+		case kTim17: RCC->APB2ENR &= ~RCC_APB2ENR_TIM17EN; break;
+#endif
 		}
 	}
 
@@ -591,11 +978,57 @@ public:
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
 		{
-		case kTim1: NVIC_ClearPendingIRQ(TIM1_BRK_IRQn); NVIC_EnableIRQ(TIM1_BRK_IRQn);
-			NVIC_ClearPendingIRQ(TIM1_CC_IRQn); NVIC_EnableIRQ(TIM1_CC_IRQn); break;
+#ifdef TIM1_BASE
+		case kTim1: NVIC_ClearPendingIRQ(TIM1_UP_IRQn); NVIC_EnableIRQ(TIM1_UP_IRQn); break;
+#endif
+#ifdef TIM2_BASE
 		case kTim2: NVIC_ClearPendingIRQ(TIM2_IRQn); NVIC_EnableIRQ(TIM2_IRQn); break;
+#endif
+#ifdef TIM3_BASE
 		case kTim3: NVIC_ClearPendingIRQ(TIM3_IRQn); NVIC_EnableIRQ(TIM3_IRQn); break;
+#endif
+#ifdef TIM4_BASE
 		case kTim4: NVIC_ClearPendingIRQ(TIM4_IRQn); NVIC_EnableIRQ(TIM4_IRQn); break;
+#endif
+#ifdef TIM5_BASE
+		case kTim5: NVIC_ClearPendingIRQ(TIM5_IRQn); NVIC_EnableIRQ(TIM5_IRQn); break;
+#endif
+#ifdef TIM6_BASE
+		case kTim6: NVIC_ClearPendingIRQ(TIM6_IRQn); NVIC_EnableIRQ(TIM6_IRQn); break;
+#endif
+#ifdef TIM7_BASE
+		case kTim7: NVIC_ClearPendingIRQ(TIM7_IRQn); NVIC_EnableIRQ(TIM7_IRQn); break;
+#endif
+#ifdef TIM8_BASE
+		case kTim8: NVIC_ClearPendingIRQ(TIM8_UP_IRQn); NVIC_EnableIRQ(TIM8_UP_IRQn); break;
+#endif
+#ifdef TIM9_BASE
+		case kTim9: NVIC_ClearPendingIRQ(TIM9_IRQn); NVIC_EnableIRQ(TIM9_IRQn); break;
+#endif
+#ifdef TIM10_BASE
+		case kTim10: NVIC_ClearPendingIRQ(TIM10_IRQn); NVIC_EnableIRQ(TIM10_IRQn); break;
+#endif
+#ifdef TIM11_BASE
+		case kTim11: NVIC_ClearPendingIRQ(TIM11_IRQn); NVIC_EnableIRQ(TIM11_IRQn); break;
+#endif
+#ifdef TIM12_BASE
+		case kTim12: NVIC_ClearPendingIRQ(TIM12_IRQn); NVIC_EnableIRQ(TIM12_IRQn); break;
+#endif
+#ifdef TIM13_BASE
+		case kTim13: NVIC_ClearPendingIRQ(TIM13_IRQn); NVIC_EnableIRQ(TIM13_IRQn); break;
+#endif
+#ifdef TIM14_BASE
+		case kTim14: NVIC_ClearPendingIRQ(TIM14_IRQn); NVIC_EnableIRQ(TIM14_IRQn); break;
+#endif
+#ifdef TIM15_BASE
+		case kTim15: NVIC_ClearPendingIRQ(TIM1_BRK_TIM15_IRQn); NVIC_EnableIRQ(TIM1_BRK_TIM15_IRQn); break;
+#endif
+#ifdef TIM16_BASE
+		case kTim16: NVIC_ClearPendingIRQ(TIM1_UP_TIM16_IRQn); NVIC_EnableIRQ(TIM1_UP_TIM16_IRQn); break;
+#endif
+#ifdef TIM17_BASE
+		case kTim17: NVIC_ClearPendingIRQ(TIM1_TRG_COM_TIM17_IRQn); NVIC_EnableIRQ(TIM1_TRG_COM_TIM17_IRQn); break;
+#endif
 		}
 	}
 
@@ -605,11 +1038,57 @@ public:
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
 		{
-		case kTim1: NVIC_DisableIRQ(TIM1_BRK_IRQn);
-			NVIC_DisableIRQ(TIM1_CC_IRQn); break;
+#ifdef TIM1_BASE
+		case kTim1: NVIC_DisableIRQ(TIM1_UP_IRQn); break;
+#endif
+#ifdef TIM2_BASE
 		case kTim2: NVIC_DisableIRQ(TIM2_IRQn); break;
-		case kTim3:NVIC_DisableIRQ(TIM3_IRQn); break;
-		case kTim4:NVIC_DisableIRQ(TIM4_IRQn); break;
+#endif
+#ifdef TIM3_BASE
+		case kTim3: NVIC_DisableIRQ(TIM3_IRQn); break;
+#endif
+#ifdef TIM4_BASE
+		case kTim4: NVIC_DisableIRQ(TIM4_IRQn); break;
+#endif
+#ifdef TIM5_BASE
+		case kTim5: NVIC_DisableIRQ(TIM5_IRQn); break;
+#endif
+#ifdef TIM6_BASE
+		case kTim6: NVIC_DisableIRQ(TIM6_IRQn); break;
+#endif
+#ifdef TIM7_BASE
+		case kTim7: NVIC_DisableIRQ(TIM7_IRQn); break;
+#endif
+#ifdef TIM8_BASE
+		case kTim8: NVIC_DisableIRQ(TIM8_UP_IRQn); break;
+#endif
+#ifdef TIM9_BASE
+		case kTim9: NVIC_DisableIRQ(TIM9_IRQn); break;
+#endif
+#ifdef TIM10_BASE
+		case kTim10: NVIC_DisableIRQ(TIM10_IRQn); break;
+#endif
+#ifdef TIM11_BASE
+		case kTim11: NVIC_DisableIRQ(TIM11_IRQn); break;
+#endif
+#ifdef TIM12_BASE
+		case kTim12: NVIC_DisableIRQ(TIM12_IRQn); break;
+#endif
+#ifdef TIM13_BASE
+		case kTim13: NVIC_DisableIRQ(TIM13_IRQn); break;
+#endif
+#ifdef TIM14_BASE
+		case kTim14: NVIC_DisableIRQ(TIM14_IRQn); break;
+#endif
+#ifdef TIM15_BASE
+		case kTim15: NVIC_DisableIRQ(TIM1_BRK_TIM15_IRQn); break;
+#endif
+#ifdef TIM16_BASE
+		case kTim16: NVIC_DisableIRQ(TIM1_UP_TIM16_IRQn); break;
+#endif
+#ifdef TIM17_BASE
+		case kTim17: NVIC_DisableIRQ(TIM1_TRG_COM_TIM17_IRQn); break;
+#endif
 		}
 	}
 
@@ -660,6 +1139,7 @@ public:
 
 	ALWAYS_INLINE static void StartRepetition(const uint8_t rep)
 	{
+		static_assert(BASE::HasRepetitionCounter());
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		timer_->RCR = rep-1;
 		timer_->EGR = TIM_EGR_UG;		// UG Event
@@ -668,6 +1148,7 @@ public:
 
 	ALWAYS_INLINE static void StartRepetition(const TypCnt cnt, const uint8_t rep)
 	{
+		static_assert(BASE::HasRepetitionCounter());
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		timer_->ARR = cnt;
 		timer_->RCR = rep-1;
@@ -773,21 +1254,47 @@ public:
 	static constexpr Channel kChannelNum_ = kChannelNum;
 	static constexpr Dma::Itf DmaInstance_ = Dma::Itf::k1;
 	static constexpr Dma::Chan DmaCh_
-		= BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k1 ? Dma::Chan::k2
+		= BASE::kTimerNum_ == kTimInvalid ? Dma::Chan::kNone
+#ifdef TIM1_BASE
+		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k1 ? Dma::Chan::k2
 		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k2 ? Dma::Chan::k3
 		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k3 ? Dma::Chan::k6
 		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k4 ? Dma::Chan::k4
+#endif
+#ifdef TIM2_BASE
 		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k1 ? Dma::Chan::k5
 		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k2 ? Dma::Chan::k7
 		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k3 ? Dma::Chan::k1
 		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k4 ? Dma::Chan::k7
+#endif
+#ifdef TIM3_BASE
 		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k1 ? Dma::Chan::k6
 		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k3 ? Dma::Chan::k2
 		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k4 ? Dma::Chan::k3
+#endif
+#ifdef TIM4_BASE
 		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k1 ? Dma::Chan::k1
 		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k2 ? Dma::Chan::k4
 		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k3 ? Dma::Chan::k5
-		: Dma::Chan::kNone;	// default; Not all combinations are possible
+#endif
+#ifdef TIM5_BASE
+		: BASE::kTimerNum_ == kTim5 && kChannelNum_ == Channel::k1 ? Dma::Chan::k5
+		: BASE::kTimerNum_ == kTim5 && kChannelNum_ == Channel::k2 ? Dma::Chan::k4
+		: BASE::kTimerNum_ == kTim5 && kChannelNum_ == Channel::k3 ? Dma::Chan::k2
+		: BASE::kTimerNum_ == kTim5 && kChannelNum_ == Channel::k4 ? Dma::Chan::k1
+#endif
+#ifdef TIM8_BASE
+		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k1 ? Dma::Chan::k3
+		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k2 ? Dma::Chan::k5
+		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k3 ? Dma::Chan::k1
+		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k4 ? Dma::Chan::k2
+#endif
+		: Dma::Chan::kNone; // default; Not all combinations are possible
+	
+	static_assert(kChannelNum_ != Channel::k1 || BASE::HasCC1(), "Basic timer does not feature CC1 module");
+	static_assert(kChannelNum_ != Channel::k2 || BASE::HasCC2(), "Basic timer does not feature CC2 module");
+	static_assert(kChannelNum_ != Channel::k3 || BASE::HasCC3(), "Basic timer does not feature CC3 module");
+	static_assert(kChannelNum_ != Channel::k4 || BASE::HasCC4(), "Basic timer does not feature CC4 module");
 
 	ALWAYS_INLINE static volatile void* GetCcrAddress()
 	{
@@ -1242,12 +1749,12 @@ public:
 					(kOut == Output::kEnabled) ? TIM_CCER_CC1E
 					: (kOut == Output::kInverted) ? TIM_CCER_CC1E | TIM_CCER_CC1P
 					: 0
-					) |
+				) |
 				(
 					(kOutN == Output::kEnabled) ? TIM_CCER_CC1NE
 					: (kOutN == Output::kInverted) ? TIM_CCER_CC1NE | TIM_CCER_CC1NP
 					: 0
-					)
+				)
 				;
 			tmpccer = (tmpccer & ~kCcer_Mask) | tmp;
 			break;
@@ -1358,6 +1865,59 @@ public:
 		}
 	}
 };
+
+
+#ifdef TIM1_BASE
+#	pragma pop_macro("TIM1")
+#endif
+#ifdef TIM2_BASE
+#	pragma pop_macro("TIM2")
+#endif
+#ifdef TIM3_BASE
+#	pragma pop_macro("TIM3")
+#endif
+#ifdef TIM4_BASE
+#	pragma pop_macro("TIM4")
+#endif
+#ifdef TIM5_BASE
+#	pragma pop_macro("TIM5")
+#endif
+#ifdef TIM6_BASE
+#	pragma pop_macro("TIM6")
+#endif
+#ifdef TIM7_BASE
+#	pragma pop_macro("TIM7")
+#endif
+#ifdef TIM8_BASE
+#	pragma pop_macro("TIM8")
+#endif
+#ifdef TIM9_BASE
+#	pragma pop_macro("TIM9")
+#endif
+#ifdef TIM10_BASE
+#	pragma pop_macro("TIM10")
+#endif
+#ifdef TIM11_BASE
+#	pragma pop_macro("TIM11")
+#endif
+#ifdef TIM12_BASE
+#	pragma pop_macro("TIM12")
+#endif
+#ifdef TIM13_BASE
+#	pragma pop_macro("TIM13")
+#endif
+#ifdef TIM14_BASE
+#	pragma pop_macro("TIM14")
+#endif
+#ifdef TIM15_BASE
+#	pragma pop_macro("TIM15")
+#endif
+#ifdef TIM16_BASE
+#	pragma pop_macro("TIM16")
+#endif
+#ifdef TIM17_BASE
+#	pragma pop_macro("TIM17")
+#endif
 
 
 }	// namespace Timer
