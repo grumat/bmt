@@ -495,7 +495,7 @@ template <
 	, const uint32_t kReload = 0
 	, const bool kBuffered = true
 >
-class TimerTemplate : public AnyTimer_<TimeBase::kTimerNum_>
+class AnyTimer : public AnyTimer_<TimeBase::kTimerNum_>
 {
 public:
 	typedef AnyTimer_<TimeBase::kTimerNum_> BASE;
@@ -727,10 +727,10 @@ public:
 template <
 	typename TimeBase
 >
-class DelayTimerTemplate : public TimerTemplate<TimeBase, Mode::kSingleShotDown>
+class DelayTimerTemplate : public AnyTimer<TimeBase, Mode::kSingleShotDown>
 {
 public:
-	typedef TimerTemplate<TimeBase, Mode::kSingleShotDown> Base;
+	typedef AnyTimer<TimeBase, Mode::kSingleShotDown> Base;
 	// An rough overhead based on CPU speed for the us tick
 	static constexpr uint32_t kOverhead_ = (70 / (Base::kPrescaler_ + 1));
 
@@ -766,7 +766,7 @@ template <
 	const Unit kTimerNum
 	, const Channel kChannelNum
 >
-class AnyTimerChannel_ : public AnyTimer_<kTimerNum>
+class AnyChannel_ : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
@@ -997,10 +997,10 @@ template <
 	, const int kFilter = 0
 	, const int kPrescaler = 0
 >
-class TimerInputChannel : public AnyTimerChannel_<kTimerNum, kChannelNum>
+class AnyInputChannel : public AnyChannel_<kTimerNum, kChannelNum>
 {
 public:
-	typedef AnyTimerChannel_<kTimerNum, kChannelNum> BASE;
+	typedef AnyChannel_<kTimerNum, kChannelNum> BASE;
 	static constexpr int kNumber_ = (int)kChannelNum;		///< Timer channel number
 	static constexpr InputCapture kInputSrc_ = kInputSrc;	///< Selectable Input Source
 	static constexpr int kShift4_ = 4 * kNumber_;			///< Bit shift for CCER register
@@ -1172,7 +1172,7 @@ public:
 };
 
 
-class UnusedTimerChannel
+class UnusedChannel
 {
 public:
 	static constexpr int kNumber_ = -1;
@@ -1190,10 +1190,10 @@ template <
 	, const bool kFastEnable = false
 	, const bool kClearOnEtrf = false
 >
-class TimerOutputChannel : public AnyTimerChannel_<TimType::kTimerNum_, kChannelNum>
+class AnyOutputChannel : public AnyChannel_<TimType::kTimerNum_, kChannelNum>
 {
 public:
-	typedef AnyTimerChannel_<TimType::kTimerNum_, kChannelNum> BASE;
+	typedef AnyChannel_<TimType::kTimerNum_, kChannelNum> BASE;
 	static constexpr uint16_t kCcmr_Mask =
 		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCMR1_CC1S_Msk | TIM_CCMR1_OC1FE_Msk | TIM_CCMR1_OC1PE_Msk | TIM_CCMR1_OC1M_Msk | TIM_CCMR1_OC1CE_Msk
 		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCMR1_CC2S_Msk | TIM_CCMR1_OC2FE_Msk | TIM_CCMR1_OC2PE_Msk | TIM_CCMR1_OC2M_Msk | TIM_CCMR1_OC2CE_Msk
