@@ -727,7 +727,7 @@ public:
 template <
 	typename TimeBase
 >
-class DelayTimerTemplate : public AnyTimer<TimeBase, Mode::kSingleShotDown>
+class AnyTimerDelay : public AnyTimer<TimeBase, Mode::kSingleShotDown>
 {
 public:
 	typedef AnyTimer<TimeBase, Mode::kSingleShotDown> Base;

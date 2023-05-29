@@ -1208,7 +1208,7 @@ public:
 template <
 	typename TimeBase
 >
-class DelayTimerTemplate : public AnyTimer<TimeBase, Mode::kSingleShotDown>
+class AnyTimerDelay : public AnyTimer<TimeBase, Mode::kSingleShotDown>
 {
 public:
 	typedef AnyTimer<TimeBase, Mode::kSingleShotDown> Base;
@@ -1227,7 +1227,6 @@ public:
 		TIM_TypeDef *timer_ = (TIM_TypeDef *)Base::kTimerBase_;
 		return ((timer_->CR1 & TIM_CR1_CEN) == 0);
 	}
-
 
 protected:
 	// NO_INLINE ensure a function call and a stable overhead
