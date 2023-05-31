@@ -439,7 +439,6 @@ class InternalClock : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
-	static constexpr uint32_t kFrequency_ = SysClk::kFrequency_;
 	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
@@ -463,10 +462,15 @@ public:
 		: SysClk::kApb1TimerClock_
 		;
 	static constexpr double kTimerTick_ = kMicroSecs / 1000000.0;
+	static constexpr uint32_t kFrequency_ = 1000000UL / kMicroSecs;
 	static constexpr uint32_t kPrescaler_raw_ = (uint32_t)(kTimerTick_ * kClkTick + 0.5);
 	static constexpr uint32_t kPrescaler_ = kPrescaler_raw_ > 0 ? kPrescaler_raw_ - 1 : 0;
 
-	ALWAYS_INLINE static void Setup() {}
+	ALWAYS_INLINE static void Setup()
+	{
+		TIM_TypeDef *timer = BASE::GetDevice();
+		timer->SMCR = 0;
+	}
 };
 
 
@@ -480,7 +484,7 @@ class InternalClock_Hz : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
-	static constexpr uint32_t kFrequency_ = SysClk::kFrequency_;
+	static constexpr uint32_t kFrequency_ = kMHz;
 	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
@@ -488,7 +492,11 @@ public:
 	static constexpr uint32_t kPrescaler_raw_ = (uint32_t)((kClkTick + kMHz/2) / kMHz);
 	static constexpr uint32_t kPrescaler_ = kPrescaler_raw_ > 0 ? kPrescaler_raw_ - 1 : 0;
 
-	ALWAYS_INLINE static void Setup() {}
+	ALWAYS_INLINE static void Setup()
+	{
+		TIM_TypeDef *timer = BASE::GetDevice();
+		timer->SMCR = 0;
+	}
 };
 
 
@@ -740,11 +748,13 @@ public:
 	typedef AnyTimer_<TimeBase::kTimerNum_> BASE;
 	typedef uint16_t TypCnt;
 	static constexpr uint32_t kPrescaler_ = TimeBase::kPrescaler_;
+	static constexpr uint32_t kFrequency_ = TimeBase::kFrequency_;
 	static constexpr Mode kTimerMode_ = kTimerMode;
 	static constexpr uint32_t kCr1Mask = TIM_CR1_CEN_Msk | TIM_CR1_UDIS_Msk | TIM_CR1_URS_Msk
 		| TIM_CR1_OPM_Msk | TIM_CR1_DIR_Msk | TIM_CR1_CMS_Msk | TIM_CR1_ARPE_Msk
 		| TIM_CR1_CKD_Msk
 		;
+	static constexpr bool kBuffered_ = kBuffered;
 
 	ALWAYS_INLINE static void Init()
 	{
@@ -883,7 +893,7 @@ public:
 		
 		TIM_TypeDef *timer = BASE::GetDevice();
 		// Compute CR1 register
-		uint32_t tmp = kBuffered ? TIM_CR1_ARPE : 0;
+		uint32_t tmp = kBuffered_ ? TIM_CR1_ARPE : 0;
 		if (kTimerMode_ == Mode::kDownCounter)
 		{
 			tmp |= TIM_CR1_DIR;
@@ -1143,6 +1153,8 @@ public:
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		timer_->RCR = rep-1;
 		timer_->EGR = TIM_EGR_UG;		// UG Event
+		if(kBuffered_)
+			timer_->EGR = TIM_EGR_UG;	// UG Event
 		timer_->CR1 |= TIM_CR1_CEN;
 	}
 
@@ -1153,12 +1165,63 @@ public:
 		timer_->ARR = cnt;
 		timer_->RCR = rep-1;
 		timer_->EGR = TIM_EGR_UG;		// UG Event
+		if (kBuffered_)
+			timer_->EGR = TIM_EGR_UG;	// UG Event
 		timer_->CR1 |= TIM_CR1_CEN;
 	}
 
 	ALWAYS_INLINE static TypCnt GetCounter() { return (BASE::GetDevice())->CNT; }
 
 	ALWAYS_INLINE static TypCnt DistanceOf(TypCnt start) { return GetCounter() - start; }
+
+// Time conversion
+public:
+	/// Conversion from ms to timer ticks
+	template<Msec kMS>
+	struct M2T
+	{
+		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kMS * kFrequency_) / 1000);
+	};
+	/// Conversion from us to timer ticks
+	template<Usec kUS>
+	struct U2T
+	{
+		static constexpr Ticks kTicks = (Ticks)(((uint64_t)kUS * kFrequency_) / 1000000);
+	};
+	/// Computes the total amount of ticks for the given milliseconds (low performance option when used with constants)
+	static constexpr Ticks ToTicks(Msec ms)
+	{
+		const uint32_t ticks = ((uint32_t)ms * (kFrequency_ / 1000));
+		return (Ticks)ticks;
+	}
+	/// Computes the total amount of ticks for the given milliseconds (low performance option when used with constants)
+	static constexpr Ticks ToTicks(Usec us)
+	{
+		const uint32_t ticks = ((uint32_t)us * (kFrequency_ / 1000000));
+		return (Ticks)ticks;
+	}
+
+// Compatibility layer with polling classes
+public:
+	ALWAYS_INLINE static Ticks GetRawValue()
+	{
+		return (Ticks)((BASE::GetDevice())->CNT & 0xffff);
+	}
+	/// Elapsed time in hardware ticks and updates t0 to new base time
+	ALWAYS_INLINE static Ticks GetElapsedTicksEx(Ticks &t0)
+	{
+		static_assert(kTimerMode_ == Mode::kUpCounter || kTimerMode_ == Mode::kDownCounter, "Only continuous timer can be polled");
+		Ticks tn = GetRawValue();
+		int32_t dif;
+		if(kTimerMode_ == Mode::kUpCounter)
+			dif = (uint32_t)tn - (uint32_t &)t0;	// up-counter
+		else
+			dif = (uint32_t &)t0 - (uint32_t)tn;	// down-counter
+		if (dif < 0)
+			dif += (BASE::GetDevice())->ARR;
+		t0 = tn;
+		return (Ticks)dif;
+	}
 
 // Services for One-Shot timers
 public:
@@ -1167,7 +1230,11 @@ public:
 	{
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		if (kTimerMode_ == Mode::kSingleShot || kTimerMode_ == Mode::kUpCounter)
+		{
 			timer_->CNT = 0;
+			if (kBuffered_)
+				timer_->EGR = TIM_EGR_UG;	// UG Event
+		}
 		timer_->EGR = TIM_EGR_UG;
 		timer_->CR1 |= TIM_CR1_CEN;
 	}
@@ -1178,7 +1245,11 @@ public:
 		TIM_TypeDef *timer_ = BASE::GetDevice();
 		timer_->ARR = ticks;
 		if (kTimerMode_ == Mode::kSingleShot || kTimerMode_ == Mode::kUpCounter)
+		{
 			timer_->CNT = 0;
+			if (kBuffered_)
+				timer_->EGR = TIM_EGR_UG;	// UG Event
+		}
 		timer_->EGR = TIM_EGR_UG;
 		timer_->CR1 |= TIM_CR1_CEN;
 	}
@@ -1208,10 +1279,10 @@ public:
 template <
 	typename TimeBase
 >
-class AnyTimerDelay : public AnyTimer<TimeBase, Mode::kSingleShotDown>
+class AnyTimerDelay : public AnyTimer<TimeBase, Mode::kSingleShot>
 {
 public:
-	typedef AnyTimer<TimeBase, Mode::kSingleShotDown> Base;
+	typedef AnyTimer<TimeBase, Mode::kSingleShot> Base;
 	// An rough overhead based on CPU speed for the us tick
 	static constexpr uint32_t kOverhead_ = (70 / (Base::kPrescaler_ + 1));
 
@@ -1234,6 +1305,8 @@ protected:
 	{
 		TIM_TypeDef* timer_ = (TIM_TypeDef*)Base::kTimerBase_;
 		timer_->ARR = num;
+		if (Base::kBuffered_)
+			timer_->EGR = TIM_EGR_UG;	// update ARR
 		timer_->EGR = TIM_EGR_UG;
 		timer_->CR1 |= TIM_CR1_CEN;
 		// CEN is cleared automatically in one-pulse mode
