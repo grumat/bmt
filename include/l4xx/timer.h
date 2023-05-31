@@ -495,7 +495,7 @@ template <
 	, const uint32_t kReload = 0
 	, const bool kBuffered = true
 >
-class AnyTimer : public AnyTimer_<TimeBase::kTimerNum_>
+class Any : public AnyTimer_<TimeBase::kTimerNum_>
 {
 public:
 	typedef AnyTimer_<TimeBase::kTimerNum_> BASE;
@@ -727,10 +727,10 @@ public:
 template <
 	typename TimeBase
 >
-class AnyTimerDelay : public AnyTimer<TimeBase, Mode::kSingleShotDown>
+class AnyTimerDelay : public Any<TimeBase, Mode::kSingleShotDown>
 {
 public:
-	typedef AnyTimer<TimeBase, Mode::kSingleShotDown> Base;
+	typedef Any<TimeBase, Mode::kSingleShotDown> Base;
 	// An rough overhead based on CPU speed for the us tick
 	static constexpr uint32_t kOverhead_ = (70 / (Base::kPrescaler_ + 1));
 

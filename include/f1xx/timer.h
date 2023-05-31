@@ -444,6 +444,7 @@ public:
 		: SysClk::kApb1TimerClock_
 		;
 	static constexpr uint32_t kPrescaler_ = kPrescaler;
+	static constexpr uint32_t kFrequency_ = BASE::kFrequency_ / (kPrescaler_ + 1);
 };
 
 
@@ -742,7 +743,7 @@ template <
 	, const uint32_t kReload = 0
 	, const bool kBuffered = true
 >
-class AnyTimer : public AnyTimer_<TimeBase::kTimerNum_>
+class Any : public AnyTimer_<TimeBase::kTimerNum_>
 {
 public:
 	typedef AnyTimer_<TimeBase::kTimerNum_> BASE;
@@ -1279,10 +1280,10 @@ public:
 template <
 	typename TimeBase
 >
-class AnyTimerDelay : public AnyTimer<TimeBase, Mode::kSingleShot>
+class AnyTimerDelay : public Any<TimeBase, Mode::kSingleShot>
 {
 public:
-	typedef AnyTimer<TimeBase, Mode::kSingleShot> Base;
+	typedef Any<TimeBase, Mode::kSingleShot> Base;
 	// An rough overhead based on CPU speed for the us tick
 	static constexpr uint32_t kOverhead_ = (70 / (Base::kPrescaler_ + 1));
 
