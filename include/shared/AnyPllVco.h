@@ -175,7 +175,7 @@ public:
 			}
 		}
 		// Special case when Over/under-clocking
-		if (err_o == INFINITY)
+		if (err_o == (double)INFINITY)
 		{
 			if (fout_a > fq)
 				alt.err = (uint32_t)((100.0 * (fout_a - fq) / fq + 0.5) / x);
