@@ -159,13 +159,13 @@ public:
 					else if (fgood < kVcoOutMin_)
 						fgood = kVcoOutMin_;
 					// Error is computed as the deviation from specs
-					const double err =
+					const double err2 =
 						(fout >= fgood ? (fout - fgood) : (fgood - fout))
 						/ double(clk)
 						;
-					if (err < err_a)
+					if (err2 < err_a)
 					{
-						err_a = err;
+						err_a = err2;
 						alt.fin = uint32_t(fin + 0.5);
 						fout_a = alt.fout = uint32_t(fout + 0.5);
 						alt.n = n;
@@ -178,12 +178,12 @@ public:
 		if (err_o == INFINITY)
 		{
 			if (fout_a > fq)
-				alt.err = (100.0 * (fout_a - fq) / fq + 0.5) / x;
+				alt.err = (uint32_t)((100.0 * (fout_a - fq) / fq + 0.5) / x);
 			else
-				alt.err = (100.0 * (fq - fout_a) / fq + 0.5) / x;
+				alt.err = (uint32_t)((100.0 * (fq - fout_a) / fq + 0.5) / x);
 			return alt;
 		}
-		res.err = (100.0 * err_o + 0.5) / x;	// relative error
+		res.err = (uint32_t)((100.0 * err_o + 0.5) / x); // relative error
 		return res;
 	}
 };

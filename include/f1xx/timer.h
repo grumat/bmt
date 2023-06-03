@@ -316,10 +316,15 @@ public:
 	{
 		return IS_TIM_COUNTER_MODE_SELECT_INSTANCE(kTimerNum_);
 	}
-	// Can select counting mode
+	// Can repeat counter for given count
 	static constexpr bool HasRepetitionCounter()
 	{
 		return IS_TIM_REPETITION_COUNTER_INSTANCE(kTimerNum_);
+	}
+	// Supports Break feature
+	static constexpr bool HasBreakFeature()
+	{
+		return IS_TIM_BREAK_INSTANCE(kTimerNum_);
 	}
 	// Basic timer
 	static constexpr bool kIsBasicTimer_ = 
@@ -357,14 +362,7 @@ public:
 		: (kTimerNum_ == kTim5) ? Dma::Chan::k1
 #endif
 		: Dma::Chan::kNone;
-	/// Timer having BDTR register
-	static constexpr bool kHasBdtr = (kTimerNum_ == kTim1);
 	
-	static constexpr bool IsRepetitionCount()
-	{
-		return IS_TIM_REPETITION_COUNTER_INSTANCE(kTimerNum_);
-	}
-
 	ALWAYS_INLINE static TIM_TypeDef *GetDevice()
 	{
 		static_assert(kIsValid_, "Invalid timer instance selected");
@@ -759,7 +757,6 @@ public:
 
 	ALWAYS_INLINE static void Init()
 	{
-		TIM_TypeDef* timer = BASE::GetDevice();
 		// Enable clock
 		switch (BASE::kTimerNum_)
 		{
@@ -909,7 +906,7 @@ public:
 		}
 		timer->CR1 = (timer->CR1 & ~kCr1Mask) | tmp;
 		// Initialize BDTR
-		if (BASE::kHasBdtr)
+		if (BASE::HasBreakFeature())
 			timer->BDTR = 0;	// unsupported by this template
 		// Compute prescaler to obtain tick count value
 		constexpr uint32_t tmp2 = TimeBase::kPrescaler_;
@@ -1896,7 +1893,7 @@ public:
 			break;
 		}
 		// TIM1 has extra features
-		if (BASE::kHasBdtr)
+		if (BASE::HasBreakFeature())
 		{
 			static constexpr uint16_t kCr2Bits =
 				(BASE::kChannelNum_ == Channel::k1) ? TIM_CR2_OIS1 | TIM_CR2_OIS1N
@@ -1913,7 +1910,7 @@ public:
 		else
 			timer->CCMR2 = tmpccmr;
 		// Necessary to activate output (no break feature is activated)
-		if (BASE::kHasBdtr)
+		if (BASE::HasBreakFeature())
 			timer->BDTR = TIM_BDTR_MOE;
 		timer->CCER = tmpccer;
 	}

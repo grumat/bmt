@@ -254,7 +254,7 @@ public:
 class DummyEvent
 {
 public:
-	ALWAYS_INLINE DummyEvent(uintptr_t data = 0) {}
+	ALWAYS_INLINE DummyEvent(uintptr_t data = 0) { (void)data; }
 };
 
 

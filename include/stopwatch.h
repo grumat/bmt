@@ -111,8 +111,8 @@ template<
 			Wait();
 		}
 	private:
-		Ticks t1_;
 		Ticks t0_;
+		Ticks t1_;
 	};
 
 // A polled stopwatch with support for long milliseconds intervals

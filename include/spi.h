@@ -192,7 +192,6 @@ struct SpiTemplate
 		// Invalid SPI device selected
 		static_assert(kSpiBase_ != 0, "An invalid SPI device was selected");
 
-		volatile SPI_TypeDef *spi = GetDevice();
 		// Conditional compilation for specific peripheral
 		switch (kSpi)
 		{
@@ -458,7 +457,6 @@ struct SpiTemplate
 	/// Stops the device, turning clock off
 	ALWAYS_INLINE static void Stop()
 	{
-		volatile SPI_TypeDef*spi = GetDevice();
 		Disable();
 		switch (kSpi)
 		{
@@ -662,6 +660,7 @@ struct SpiTemplate
 			if (spi->SR & SPI_SR_RXNE)
 			{
 				uint8_t unused = spi->DR;
+				(void)unused;
 				--cnt2;
 			}
 		}
