@@ -7,7 +7,7 @@ namespace Dma
 
 /// Template class that describes a DMA configuration
 template <
-	typename kDmaID						///< The DMA resource identification
+	typename kDmaID						///< The DMA::AnyID<> resource identification
 	, const Dir kDir					///< Data direction for this channel
 	, const PtrPolicy kSrcPtr			///< Source Pointer behavior
 	, const PtrPolicy kDstPtr			///< Target Pointer behavior
@@ -17,6 +17,8 @@ template <
 class AnyChannel
 {
 public:
+	// A DMA::AnyID<> definition that identifies the DMA
+	typedef kDmaID DmaID_;
 	/// A constant with the DMA controller instance number
 	static constexpr Itf kDma_ = kDmaID::kItf_;
 	/// A constant with the DMA channel number
@@ -495,6 +497,8 @@ public:
 	}
 };
 
+
+typedef AnyID<Itf::k1, Chan::kNone> IdNone;
 
 #include "dma.inl"
 

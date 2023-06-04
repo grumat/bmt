@@ -203,8 +203,45 @@ enum class Output
 };
 
 
-template <
+template<
 	const Unit kTimerNum
+>
+struct DmaInfo
+{
+};
+
+#ifdef TIM1_BASE
+template<> struct DmaInfo<kTim1>
+{
+	typedef Dma::IdTim1Up Update;
+	typedef Dma::IdTim1Trig Trigger;
+};
+#endif	// TIM1_BASE
+#ifdef TIM2_BASE
+template<> struct DmaInfo<kTim2>
+{
+	typedef Dma::IdTim2Up Update;
+	typedef Dma::IdNone Trigger;
+};
+#endif	// TIM2_BASE
+#ifdef TIM3_BASE
+template<> struct DmaInfo<kTim3>
+{
+	typedef Dma::IdTim3Up Update;
+	typedef Dma::IdTim3Trig Trigger;
+};
+#endif	// TIM3_BASE
+#ifdef TIM4_BASE
+template<> struct DmaInfo<kTim4>
+{
+	typedef Dma::IdTim4Up Update;
+	typedef Dma::IdNone Trigger;
+};
+#endif	// TIM4_BASE
+
+
+template <
+const Unit kTimerNum
 >
 class AnyTimer_
 {
@@ -282,6 +319,7 @@ public:
 	static constexpr bool kIsBasicTimer_ = 
 		(HasCC1() | HasCC2() | HasCC3() | HasCC4()) == false
 		;
+	typedef DmaInfo<kTimerNum_> DmaInfo_;
 	static constexpr Dma::Itf DmaInstance_ = 
 #ifdef DMA2_BASE
 		(kTimerNum_ == kTim5) ? Dma::Itf::k2
@@ -327,7 +365,7 @@ public:
 
 	ALWAYS_INLINE static void EnableTriggerDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = GetDevice();
 			timer_->DIER |= TIM_DIER_TDE;
@@ -341,7 +379,7 @@ public:
 
 	ALWAYS_INLINE static void DisableTriggerDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = GetDevice();
 			timer_->DIER &= ~TIM_DIER_TDE;
@@ -355,7 +393,7 @@ public:
 
 	ALWAYS_INLINE static void EnableUpdateDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = GetDevice();
 			timer_->DIER |= TIM_DIER_UDE;
@@ -369,7 +407,7 @@ public:
 
 	ALWAYS_INLINE static void DisableUpdateDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = GetDevice();
 			timer_->DIER &= ~TIM_DIER_UDE;

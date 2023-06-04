@@ -251,8 +251,45 @@ enum class Output
 };
 
 
-template <
+template<
 	const Unit kTimerNum
+>
+struct DmaInfo
+{
+};
+
+#ifdef TIM1_BASE
+template<> struct DmaInfo<kTim1>
+{
+	typedef Dma::IdTim1Up Update;
+	typedef Dma::IdTim1Trig Trigger;
+};
+#endif	// TIM1_BASE
+#ifdef TIM2_BASE
+template<> struct DmaInfo<kTim2>
+{
+	typedef Dma::IdTim2Up Update;
+	typedef Dma::IdNone Trigger;
+};
+#endif	// TIM2_BASE
+#ifdef TIM3_BASE
+template<> struct DmaInfo<kTim3>
+{
+	typedef Dma::IdTim3Up Update;
+	typedef Dma::IdTim3Trig Trigger;
+};
+#endif	// TIM3_BASE
+#ifdef TIM4_BASE
+template<> struct DmaInfo<kTim4>
+{
+	typedef Dma::IdTim4Up Update;
+	typedef Dma::IdNone Trigger;
+};
+#endif	// TIM4_BASE
+
+
+template <
+const Unit kTimerNum
 >
 class AnyTimer_
 {
@@ -330,38 +367,7 @@ public:
 	static constexpr bool kIsBasicTimer_ = 
 		(HasCC1() | HasCC2() | HasCC3() | HasCC4()) == false
 		;
-	static constexpr Dma::Itf DmaInstance_ = 
-#ifdef DMA2_BASE
-		(kTimerNum_ == kTim5) ? Dma::Itf::k2
-		: (kTimerNum_ == kTim6) ? Dma::Itf::k2
-		: (kTimerNum_ == kTim7) ? Dma::Itf::k2
-		: Dma::Itf::k1
-#else
-		Dma::Itf::k1
-#endif
-		;
-	// Timer update DMA channel
-	static constexpr Dma::Chan DmaCh_ =
-		(kTimerNum_ == kTimInvalid) ? Dma::Chan::kNone
-		: (kTimerNum_ == kTim1) ? Dma::Chan::k5
-		: (kTimerNum_ == kTim2) ? Dma::Chan::k2
-		: (kTimerNum_ == kTim3) ? Dma::Chan::k3
-		: (kTimerNum_ == kTim4) ? Dma::Chan::k7
-#ifdef DMA2_BASE
-		: (kTimerNum_ == kTim5) ? Dma::Chan::k2
-		: (kTimerNum_ == kTim6) ? Dma::Chan::k3
-		: (kTimerNum_ == kTim7) ? Dma::Chan::k4
-#endif
-		: Dma::Chan::kNone;
-	// Timer trigger DMA channel
-	static constexpr Dma::Chan DmaChTrigger_ =
-		(kTimerNum_ == kTimInvalid) ? Dma::Chan::kNone
-		: (kTimerNum_ == kTim1) ? Dma::Chan::k4
-		: (kTimerNum_ == kTim3) ? Dma::Chan::k6
-#ifdef DMA2_BASE
-		: (kTimerNum_ == kTim5) ? Dma::Chan::k1
-#endif
-		: Dma::Chan::kNone;
+	typedef DmaInfo<kTimerNum_> DmaInfo_;
 	
 	ALWAYS_INLINE static TIM_TypeDef *GetDevice()
 	{
@@ -371,7 +377,7 @@ public:
 
 	ALWAYS_INLINE static void EnableTriggerDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = GetDevice();
 			timer_->DIER |= TIM_DIER_TDE;
@@ -385,7 +391,7 @@ public:
 
 	ALWAYS_INLINE static void DisableTriggerDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = GetDevice();
 			timer_->DIER &= ~TIM_DIER_TDE;
@@ -399,7 +405,7 @@ public:
 
 	ALWAYS_INLINE static void EnableUpdateDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = GetDevice();
 			timer_->DIER |= TIM_DIER_UDE;
@@ -413,7 +419,7 @@ public:
 
 	ALWAYS_INLINE static void DisableUpdateDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = GetDevice();
 			timer_->DIER &= ~TIM_DIER_UDE;
@@ -754,6 +760,7 @@ public:
 		| TIM_CR1_CKD_Msk
 		;
 	static constexpr bool kBuffered_ = kBuffered;
+	typedef DmaInfo<TimeBase::kTimerNum_> DmaInfo_;
 
 	ALWAYS_INLINE static void Init()
 	{
@@ -1360,6 +1367,8 @@ public:
 		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k4 ? Dma::Chan::k2
 #endif
 		: Dma::Chan::kNone; // default; Not all combinations are possible
+	
+	typedef DmaInfo<kTimerNum> DmaInfo_;
 	
 	static_assert(kChannelNum_ != Channel::k1 || BASE::HasCC1(), "Basic timer does not feature CC1 module");
 	static_assert(kChannelNum_ != Channel::k2 || BASE::HasCC2(), "Basic timer does not feature CC2 module");
