@@ -251,41 +251,7 @@ enum class Output
 };
 
 
-template<
-	const Unit kTimerNum
->
-struct DmaInfo
-{
-};
-
-#ifdef TIM1_BASE
-template<> struct DmaInfo<kTim1>
-{
-	typedef Dma::IdTim1Up Update;
-	typedef Dma::IdTim1Trig Trigger;
-};
-#endif	// TIM1_BASE
-#ifdef TIM2_BASE
-template<> struct DmaInfo<kTim2>
-{
-	typedef Dma::IdTim2Up Update;
-	typedef Dma::IdNone Trigger;
-};
-#endif	// TIM2_BASE
-#ifdef TIM3_BASE
-template<> struct DmaInfo<kTim3>
-{
-	typedef Dma::IdTim3Up Update;
-	typedef Dma::IdTim3Trig Trigger;
-};
-#endif	// TIM3_BASE
-#ifdef TIM4_BASE
-template<> struct DmaInfo<kTim4>
-{
-	typedef Dma::IdTim4Up Update;
-	typedef Dma::IdNone Trigger;
-};
-#endif	// TIM4_BASE
+#include "tim_dma_id.inl"
 
 
 template <
