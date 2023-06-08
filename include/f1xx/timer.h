@@ -333,8 +333,9 @@ public:
 	static constexpr bool kIsBasicTimer_ = 
 		(HasCC1() | HasCC2() | HasCC3() | HasCC4()) == false
 		;
+	// Type definition with TImer DMA info
 	typedef DmaInfo<kTimerNum_> DmaInfo_;
-	
+
 	ALWAYS_INLINE static TIM_TypeDef *GetDevice()
 	{
 		static_assert(kIsValid_, "Invalid timer instance selected");

@@ -285,43 +285,8 @@ public:
 	static constexpr bool kIsBasicTimer_ = 
 		(HasCC1() | HasCC2() | HasCC3() | HasCC4()) == false
 		;
+	// Type definition with TImer DMA info
 	typedef DmaInfo<kTimerNum_> DmaInfo_;
-	static constexpr Dma::Itf DmaInstance_ = 
-#ifdef DMA2_BASE
-		(kTimerNum_ == kTim5) ? Dma::Itf::k2
-		: (kTimerNum_ == kTim6) ? Dma::Itf::k2
-		: (kTimerNum_ == kTim7) ? Dma::Itf::k2
-		: (kTimerNum_ == kTim8) ? Dma::Itf::k2
-		: Dma::Itf::k1
-#else
-		Dma::Itf::k1
-#endif
-		;
-	// Timer update DMA channel
-	static constexpr Dma::Chan DmaCh_ =
-		(kTimerNum_ == kTimInvalid) ? Dma::Chan::kNone
-		: (kTimerNum_ == kTim1) ? Dma::Chan::k6
-		: (kTimerNum_ == kTim2) ? Dma::Chan::k2
-		: (kTimerNum_ == kTim3) ? Dma::Chan::k3
-		: (kTimerNum_ == kTim4) ? Dma::Chan::k7
-		: (kTimerNum_ == kTim15) ? Dma::Chan::k5
-		: (kTimerNum_ == kTim16) ? Dma::Chan::k3
-		: (kTimerNum_ == kTim17) ? Dma::Chan::k7
-#ifdef DMA2_BASE
-		: (kTimerNum_ == kTim5) ? Dma::Chan::k2
-		: (kTimerNum_ == kTim6) ? Dma::Chan::k4
-		: (kTimerNum_ == kTim7) ? Dma::Chan::k5
-		: (kTimerNum_ == kTim8) ? Dma::Chan::k1
-#endif
-		: Dma::Chan::kNone;
-	// Timer trigger DMA channel
-	static constexpr Dma::Chan DmaChTrigger_ =
-		(kTimerNum_ == kTim1) ? Dma::Chan::k4
-		: (kTimerNum_ == kTim3) ? Dma::Chan::k6
-		: (kTimerNum_ == kTim5) ? Dma::Chan::k1
-		: (kTimerNum_ == kTim8) ? Dma::Chan::k2
-		: (kTimerNum_ == kTim15) ? Dma::Chan::k5
-		: Dma::Chan::kNone;
 
 	ALWAYS_INLINE static TIM_TypeDef *GetDevice()
 	{
@@ -1252,44 +1217,9 @@ class AnyChannel_ : public AnyTimer_<kTimerNum>
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
 	static constexpr Channel kChannelNum_ = kChannelNum;
+	// Data type with DMA information about this timer channel
+	typedef DmaChInfo <kTimerNum, kChannelNum> DmaChInfo_;
 	static constexpr Dma::Itf DmaInstance_ = Dma::Itf::k1;
-	static constexpr Dma::Chan DmaCh_
-		= BASE::kTimerNum_ == kTimInvalid ? Dma::Chan::kNone
-#ifdef TIM1_BASE
-		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k1 ? Dma::Chan::k2
-		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k2 ? Dma::Chan::k3
-		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k3 ? Dma::Chan::k6
-		: BASE::kTimerNum_ == kTim1 && kChannelNum_ == Channel::k4 ? Dma::Chan::k4
-#endif
-#ifdef TIM2_BASE
-		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k1 ? Dma::Chan::k5
-		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k2 ? Dma::Chan::k7
-		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k3 ? Dma::Chan::k1
-		: BASE::kTimerNum_ == kTim2 && kChannelNum_ == Channel::k4 ? Dma::Chan::k7
-#endif
-#ifdef TIM3_BASE
-		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k1 ? Dma::Chan::k6
-		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k3 ? Dma::Chan::k2
-		: BASE::kTimerNum_ == kTim3 && kChannelNum_ == Channel::k4 ? Dma::Chan::k3
-#endif
-#ifdef TIM4_BASE
-		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k1 ? Dma::Chan::k1
-		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k2 ? Dma::Chan::k4
-		: BASE::kTimerNum_ == kTim4 && kChannelNum_ == Channel::k3 ? Dma::Chan::k5
-#endif
-#ifdef TIM5_BASE
-		: BASE::kTimerNum_ == kTim5 && kChannelNum_ == Channel::k1 ? Dma::Chan::k5
-		: BASE::kTimerNum_ == kTim5 && kChannelNum_ == Channel::k2 ? Dma::Chan::k4
-		: BASE::kTimerNum_ == kTim5 && kChannelNum_ == Channel::k3 ? Dma::Chan::k2
-		: BASE::kTimerNum_ == kTim5 && kChannelNum_ == Channel::k4 ? Dma::Chan::k1
-#endif
-#ifdef TIM8_BASE
-		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k1 ? Dma::Chan::k3
-		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k2 ? Dma::Chan::k5
-		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k3 ? Dma::Chan::k1
-		: BASE::kTimerNum_ == kTim8 && kChannelNum_ == Channel::k4 ? Dma::Chan::k2
-#endif
-		: Dma::Chan::kNone; // default; Not all combinations are possible
 	
 	static_assert(kChannelNum_ != Channel::k1 || BASE::HasCC1(), "Basic timer does not feature CC1 module");
 	static_assert(kChannelNum_ != Channel::k2 || BASE::HasCC2(), "Basic timer does not feature CC2 module");
@@ -1353,7 +1283,7 @@ public:
 
 	ALWAYS_INLINE static void EnableDma(void)
 	{
-		if (DmaCh_ != Dma::Chan::kNone)
+		if (DmaChInfo_::kChan_ != Dma::Chan::kNone)
 		{
 			TIM_TypeDef* timer_ = BASE::GetDevice();
 			switch (kChannelNum_)
