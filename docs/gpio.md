@@ -493,6 +493,66 @@ this class, covered on the next sub-topics.
 
 ## Available Methods
 
+A complete set of methods are provided to operate a GPIO pin, regardless 
+of it's initial state.
+
+### The `Io()` Method
+
+Returns a pointer to the `GPIO_TypeDef*` structure, which allows low 
+level access to the GPIO registers.
+
+### The `SetupPinMode()` Method
+
+This sets the pin mode according to template parameters. This is 
+restricted only to the pin mode (CRL and CRH registers).  
+Use the `Setup()` for the complete pin configuration.
+
+### The `Setup()` Method
+
+This method performs a complete setup for the GPIO pin, including mode, 
+mapping and output level.
+
+### The `Setup(mode, speed, pupd)` Method
+
+This method overrides the settings provided on the template creation 
+and sets a custom configuration.
+
+It is not recommended to use this method. Instead create another type 
+definition for the pin and call the standard `Enable()` method. There is 
+no instance for the data-type and thus no additional cost.
+
+### The `SetHigh()` Method
+
+This method set the GPIO pin to high level. Note that on earlier STM32 
+devices this may also affect the Pull-Up resistor for input pins.  
+This rule does not apply for modern versions of the STM32 series.
+
+### The `SetLow()` Method
+
+This method set the GPIO pin to low level. Note that on earlier STM32 
+devices this may also affect the Pull-Down polarity for input pins.  
+This rule does not apply for modern versions of the STM32 series.
+
+### The `Set(level)` Method
+
+This method sets the pin level according to given boolean argument. 
+
+### The `Get()` Method
+
+This method reads the current port state and returns as a boolean value.
+
+### The `IsHigh()` Method
+
+This method returns true if the pin read is in high state.
+
+### The `IsLow()` Method
+
+This method returns true if the pin read is in low state.
+
+### The `Toggle()` Method
+
+This method toggles the state of the GPIO output.
+
 
 ## Constants Defined For the Data-Type
 
@@ -521,6 +581,35 @@ A series of constants are defined to implement the pin functionality:
 | `kAfMask_`    | `uint32_t`        | Mask value for the **AFR** register   |
 
 > These values are probably of no use for most cases.
+
+
+## Example
+
+The classical LED blink application:
+
+```cpp
+using namespace Bmt::Gpio;
+
+//! LED is connected to PC13 on BluePill
+typedef AnyPin<Port::PC, 13, Mode::kOutput, Speed::kSlow> Led;
+
+/*
+This assumes that the PC13 was properly initialized 
+(see Bmt::Gpio::AnyPortSetup<> later on) 
+*/
+int main()
+{
+	while (true)
+	{
+		// A reasonable delay to see the LED blinking
+		for(volatile int i = 0; i < 250000; ++i)
+			__NOP();
+		// Toggle the LED
+		Led::Toggle();
+	}
+	return 0;
+}
+```
 
 
 # The `AnyPin<>` Template Class Specializations
@@ -685,6 +774,15 @@ class AnyOut : public Private::Implementation_<
 };
 ```
 
+For example, a valid configuration for the LED on a blue-pill is:
+
+```cpp
+using namespace Bmt::Gpio;
+
+//! LED is connected to PC13 on BluePill
+typedef AnyOut<Port::PC, 13, Speed::kSlow> Led;
+```
+
 
 ## The `AnyFastOut0<>` Template
 
@@ -781,6 +879,16 @@ class AnyAltOut : public Private::Implementation_<
 };
 ```
 
+For example, the **f1xx/gpio-types.h** file contains almost every 
+available function of this MCU model, ready to be used. Lets take the 
+definition of the SCK pin of the SPI1 peripheral. On the default 
+configuration, this pin is tied to the **PA5** pin.
+
+```cpp
+/// A default configuration to map SPI1 SCK on PA5 pin (master)
+typedef AnyAltOut<Port::PA, 5, AfSpi1_PA4_5_6_7> SPI1_SCK_PA5;
+```
+
 
 ## The `AnyAltOutPP<>` Template
 
@@ -832,22 +940,391 @@ class AnyAltOutOD : public AnyAltOut <
 ```
 
 
-## The `<>` Template
+## Special `Unchanged<>` and `Unused<>` Configurations
+
+The library defines two special base template classes that has a special 
+implementation and behavior. 
+
+The **`Unused<>`** template defines a pin behavior for unused pins. This 
+configuration will setup a pin as input and activates the pull-down 
+resistor to avoid undesired signal floating. The template alternatively 
+allows for a pull-up setting. 
+
+The **`Unchanged<>`** template defines a behavior for a pin that we does 
+not want to change. Pins of this type does not react to method calls like 
+`Set()` or `Get()` because implementation for them are empty.
+
+The main purpose of these classes is to participate in pin groups, as we 
+will see next and specify a consistent behavior when group commands are 
+issued.
+
+The table below illustrates behavior for the three possible pin 
+configurations when using the **bmt** library:
+
+| Method/Operation              | Normal Pin | `Unchanged<>` | `Unused<>` |
+|-------------------------------|:----------:|:-------------:|:----------:|
+| Initialization                |      Y     |       N       |     Y      |
+| Initialization of Pin Mapping |      Y     |       N       |     N      |
+| `SetupPinMode()`              |      Y     |       N       |     Y      |
+| `Setup()`                     |      Y     |       N       |     Y      |
+| `Setup(mode, speed, pupd)`    |      Y     |       N       |     N      |
+| `Set()`                       |      Y     |       N       |     Y      |
+| `SetHigh()`                   |      Y     |       N       |     Y      |
+| `SetLow()`                    |      Y     |       N       |     Y      |
+| `Get()`                       |      Y     |       N       |     Y      |
+| `IsHigh()`                    |      Y     |       N       |     Y      |
+| `IsLow()`                     |      Y     |       N       |     Y      |
+| `Toggle()`                    |      Y     |       N       |     Y      |
+
+The table shows that and `Unused<>` pin can react specifically to most 
+explicit commands, like normal pins, although it is not possible to change 
+mode and direction. So the effect of using these method calls are probably 
+useless for most use cases.
+
+`Unchanged<>` pins are literally void. Although it is possible to call 
+the pin methods they are compile to empty inline functions. This can be 
+useful to temporarily disable a specific pin definition for a test, 
+without the need to commenting all code places out.
+
+But the real purpose of these pins are the inter-operation with the 
+`AnyPinGroup<>` template covered next.
+
+
+# The `AnyPinGroup<>` Template
+
+This is a very powerful template class and is designed to combine 
+functionality from many GPIO pins into a single type definition. Then it 
+allows to configure the entire GPIO bus in a batch, regardless of pin 
+function, polarity or direction.
+
+This is the definition:
 
 ```cpp
+template <
+	const Port kPort					/// The GPIO port number
+	, typename Pin0 = Unchanged<0>		/// Definition for any pin, any order
+	, typename Pin1 = Unchanged<1>		/// Definition for any pin, any order
+	, typename Pin2 = Unchanged<2>		/// Definition for any pin, any order
+	, typename Pin3 = Unchanged<3>		/// Definition for any pin, any order
+	, typename Pin4 = Unchanged<4>		/// Definition for any pin, any order
+	, typename Pin5 = Unchanged<5>		/// Definition for any pin, any order
+	, typename Pin6 = Unchanged<6>		/// Definition for any pin, any order
+	, typename Pin7 = Unchanged<7>		/// Definition for any pin, any order
+	, typename Pin8 = Unchanged<8>		/// Definition for any pin, any order
+	, typename Pin9 = Unchanged<9>		/// Definition for any pin, any order
+	, typename Pin10 = Unchanged<10>	/// Definition for any pin, any order
+	, typename Pin11 = Unchanged<11>	/// Definition for any pin, any order
+	, typename Pin12 = Unchanged<12>	/// Definition for any pin, any order
+	, typename Pin13 = Unchanged<13>	/// Definition for any pin, any order
+	, typename Pin14 = Unchanged<14>	/// Definition for any pin, any order
+	, typename Pin15 = Unchanged<15>	/// Definition for any pin, any order
+	>
+class AnyPinGroup
+{
+	//...
+};
+```
+
+As you can see the template allows you to specify all 16 pin functions 
+for the specified GPIO port. 
+
+> Note that although the pin naming used suggests a pin sequence (Pin0, 
+> Pin1, ..., Pin15) it is not necessary to specify pins in ascending 
+> order. Though you cannot have a pin number clash, or the compiler will 
+> assert.  
+>  This requirement is different for the `AnyPortSetup<>` specialization 
+> covered later on this documentation.
+
+The template shown above defines default parameters as `Unchanged<>` for 
+all pins, so if you specify a group with still two pins, no effect will
+be caused for the other template slots.
+
+
+## Available Methods
+
+Now lets cover the methods available for this template.
+
+### The `Io()` Method
+
+Returns a pointer to the `GPIO_TypeDef*` structure, which allows low 
+level access to the GPIO registers.
+
+### The `Enable()` Method
+
+This method applies the group configuration to hardware registers.
+Note that it is assumed that the GPIO port was already initialized. 
+Later we will cover the `AnyPortSetup<>` template which is designed for 
+this operation. 
+
+### The `Disable()` Method
+
+Do not use. This method is deprecated and will be removed or refactoried. 
+
+
+## Example
+
+Lets say we want to control the SPI1 on a STM32F103 in master function, 
+we define the following data-type:
+
+```cpp
+using namespace Bmt::Gpio;
+// Note these template used ready-made definitions found on 'gpio-types.h'
+typedef AnyPinGroup<
+	Port::PA,
+	SPI1_NSS_PA4,
+	SPI1_SCK_PA5,
+	SPI1_MISO_PA6,
+	SPI1_MOSI_PA7
+> SpiOn;
+// Configuration to disable SPI1
+typedef AnyPinGroup<
+	Port::PA,
+	Unused<4, PuPd::kPullUp>,
+	Unused<5>,
+	Unused<6>,
+	Unused<7>,
+> SpiOff;
+
+void Test()
+{
+	//...
+
+	// Setup SPI device pins
+	SpiOn::Enable();
+
+	// TODO: now use the SPI device
+
+	//...
+
+	// Disable SPI1 after use (i.e. enables the *off* state of the SPI1)
+	SpiOff::Enable()
+}
+```
+
+Please observe that the concept of *group* here is a specific **state** 
+of the GPIO pins and the `Enable()` method is used to enter the state.
+
+
+# The `AnyPortSetup<>` Template
+
+This template is an override of the `AnyPinGroup<>` template class and is 
+designed for device initialization.
+
+The idea here is to *collect* all pin functionality of a firmware into a 
+single data-type so firmware initializes the entire ports a single time.
+
+Later you can define groups to control specific pins like the previous 
+example, but the first time initialization is obligatory, since internal 
+clock signals are initialized here.
+
+The following restriction applies to this template class:
+- Pin definitions have to be ordered or a compilation error happens
+- Call the `Init()` method to apply the entire GPIO configuration, 
+including internal clock settings.
+- Pins like the JTAG/SWD bus have to be initialized as `Unused<>` for a 
+feasible Debug session.
+
+## Example
+
+As example, the following code-snippet was taken from the 
+`03-gpio-lcd1602` example. It initializes the GPIO bus to drive a 
+standard LCD1602 using the following connections:
+
+| Pin  | Function                        |
+|------|---------------------------------|
+| PA1  | LCD1602 RS pin                  |
+| PA2  | LCD1602 RW pin                  |
+| PA3  | LCD1602 EN pin                  |
+| PA4  | LCD1602 D4 pin                  |
+| PA5  | LCD1602 D5 pin                  |
+| PA6  | LCD1602 D6 pin                  |
+| PA7  | LCD1602 D7 pin                  |
+| PA13 | Unchanged for SWD/JTAG function |
+| PA14 | Unchanged for SWD/JTAG function |
+| PA15 | Unchanged for SWD/JTAG function |
+| PC13 | Red LED (blue-pill board)       |
+| PC14 | XTAL function                   |
+| PC15 | XTAL function                   |
+
+All other pins are unused and configured as inputs.
+
+This is the type definitions for this example:
+
+```cpp
+// A data-type to setup the Port A GPIO
+typedef Gpio::AnyPortSetup<
+	Gpio::Port::PA,
+	Gpio::Unused<0>,					// unused pin (input + pull-down)
+	Gpio::AnyOut<Gpio::Port::PA, 1>,	// LCD1602 RS pin
+	Gpio::AnyOut<Gpio::Port::PA, 2>,	// LCD1602 RW pin
+	Gpio::AnyOut<Gpio::Port::PA, 3>,	// LCD1602 EN pin
+	Gpio::AnyOut<Gpio::Port::PA, 4>,	// LCD1602 D4 pin
+	Gpio::AnyOut<Gpio::Port::PA, 5>,	// LCD1602 D5 pin
+	Gpio::AnyOut<Gpio::Port::PA, 6>,	// LCD1602 D6 pin
+	Gpio::AnyOut<Gpio::Port::PA, 7>,	// LCD1602 D7 pin
+	Gpio::Unused<8>,					// unused pin (input + pull-down)
+	Gpio::Unused<9>,					// unused pin (input + pull-down)
+	Gpio::Unused<10>,					// unused pin (input + pull-down)
+	Gpio::Unused<11>,					// unused pin (input + pull-down)
+	Gpio::Unused<12>,					// unused pin (input + pull-down)
+	Gpio::Unchanged<13>,				// unchanged pin used for debugger
+	Gpio::Unchanged<14>,				// unchanged pin used for debugger
+	Gpio::Unchanged<15>					// unchanged pin used for debugger
+> InitPA;
+
+// Port B is entirely unused
+typedef Gpio::AnyPortSetup <
+	Gpio::Port::PB
+> InitPB;
+
+//! LED is connected to PC13 on BluePill
+typedef Gpio::AnyOut<Gpio::Port::PC, 13> Led;
+typedef Gpio::AnyPortSetup <
+	Gpio::Port::PC,
+	Gpio::Unused<0>,		// unused pin (input + pull-down)
+	Gpio::Unused<1>,		// unused pin (input + pull-down)
+	Gpio::Unused<2>,		// unused pin (input + pull-down)
+	Gpio::Unused<3>,		// unused pin (input + pull-down)
+	Gpio::Unused<4>,		// unused pin (input + pull-down)
+	Gpio::Unused<5>,		// unused pin (input + pull-down)
+	Gpio::Unused<6>,		// unused pin (input + pull-down)
+	Gpio::Unused<7>,		// unused pin (input + pull-down)
+	Gpio::Unused<8>,		// unused pin (input + pull-down)
+	Gpio::Unused<9>,		// unused pin (input + pull-down)
+	Gpio::Unused<10>,		// unused pin (input + pull-down)
+	Gpio::Unused<11>,		// unused pin (input + pull-down)
+	Gpio::Unused<12>,		// unused pin (input + pull-down)
+	Led,					// LED on PC13
+	Gpio::Unchanged<14>,
+	Gpio::Unchanged<15>
+> InitPC;
+```
+
+The hardware initialization happens as usual in the `SystemInit()` 
+function, that the firmware developer has to provide:
+
+```cpp
+/*
+This function is required by STM32 startup file and called during
+initial startup.
+*/
+extern "C" void SystemInit()
+{
+	// Reset clock system before starting program
+	System::Init();
+	// Initialize Port A, B and C
+	InitPA::Init();
+	InitPB::Init();
+	InitPC::Init();
+
+	//... initialize other stuff as needed
+}
 ```
 
 
+# The `AnyCounter<>` Template Class
 
+Using a similar concept as the `AnyPinGroup<>` template class, the 
+`AnyCounter<>` template class implements a useful functionality.
 
-For example,
-the **f1xx/gpio-types.h** file contains almost every available function 
-of this MCU model, ready to be used. Lets take the definition of the SCK 
-pin of the SPI1 peripheral. On the default configuration, this pin is 
-tied to the PA5 pin.
+This class is able to group up to 4 pins to implement a 4-bit bus.
+It handles values in the range of 0 to 15 to set the state of all pins at 
+once.
 
 ```cpp
-/// A default configuration to map SPI1 SCK on PA5 pin (master)
-typedef AnyAltOut<Port::PA, 5, AfSpi1_PA4_5_6_7> SPI1_SCK_PA5;
+// Up to 4 bits that can enumerates a binary sequence out to GPIO lines
+template <
+	typename Bit0							/// Definition for bit 0
+	, typename Bit1							/// Definition for bit 1
+	, typename Bit2 = Gpio::Unchanged<2>	/// Definition for bit 2
+	, typename Bit3 = Gpio::Unchanged<3>	/// Definition for bit 3
+>
+class AnyCounter
+{
+	//...
+};
 ```
 
+While it is recommended to work with sequential pins because of code 
+performance you are allowed to define the pins in any desired order, as 
+long as sharing the same GPIO port.  
+Write performance is not severely affected by bit order, but read 
+performance will suffer a lot.
+
+The following methods are provided:
+- `Write()`: Write a vale out into the specified bus.
+- `WriteComplement()`: Writes the value into the specified bus using the 
+inverted polarity.
+- `Read()`: Reads the value on the specified bus. Bit values are 
+organized properly to form a value between 0 and 15, according to the 
+order defined in the template arguments.
+
+> You are allowed to reuse this class for buses with 2 or 3 bits also.
+
+
+## Example
+
+Following the same example referred with the LCD1602 you can define two pin 
+groups for input and output of the D4-D7 pins;
+
+```cpp
+using namespace Bmt::Gpio;
+// Definition for each bus bit
+typedef AnyOut<Gpio::Port::PA, 4> LCD1602_D4;
+typedef AnyOut<Gpio::Port::PA, 5> LCD1602_D5;
+typedef AnyOut<Gpio::Port::PA, 6> LCD1602_D6;
+typedef AnyOut<Gpio::Port::PA, 7> LCD1602_D7;
+// Bus configuration for output
+typedef AnyPinGroup<
+	Port::PA,
+	LCD1602_D4,						// LCD1602 D4 pin configured as output
+	LCD1602_D5,						// LCD1602 D5 pin configured as output
+	LCD1602_D6,						// LCD1602 D6 pin configured as output
+	LCD1602_D7						// LCD1602 D7 pin configured as output
+> LcdOut;
+// Bus configuration for input
+typedef AnyPinGroup<
+	Port::PA,
+	AnyIn<Gpio::Port::PA, 4>,		// LCD1602 D4 pin configured as input
+	AnyIn<Gpio::Port::PA, 5>,		// LCD1602 D5 pin configured as input
+	AnyIn<Gpio::Port::PA, 6>,		// LCD1602 D6 pin configured as input
+	AnyIn<Gpio::Port::PA, 7>		// LCD1602 D7 pin configured as input
+> LcdIn;
+// Access to the 4 bits as a counter
+typedef AnyCounter<
+	LCD1602_D4,
+	LCD1602_D5,
+	LCD1602_D6,
+	LCD1602_D7
+> LcdBus;
+```
+
+A write routine could look like this:
+
+```cpp
+void Write(uint8_t v)
+{
+	// Sets bus to the output direction
+	LcdOut::Enable();
+	// Write value to the output
+	LcdBus::Write(v);
+}
+```
+
+A read routine would roughly look like this:
+
+```cpp
+uint8_t Read()
+{
+	// Sets bus to the input direction
+	LcdIn::Enable();
+	// Read value on the bus and returns
+	return LcdBus::Read();
+}
+```
+
+> Please make sure that a digital bus requires that specific control 
+> lines are set/reset, so that the peripheral knows how to deal with the 
+> information present on a bus. Also make that when inverting bus 
+> direction the proper control lines are also configured to avoid bus 
+> collision.
