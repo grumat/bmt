@@ -124,7 +124,7 @@ public:
 		;
 
 	/// Access to the peripheral memory space
-	constexpr static volatile GPIO_TypeDef* Io() { return (volatile GPIO_TypeDef*)kPortBase_; }
+	constexpr static volatile GPIO_TypeDef& Io() { return *(volatile GPIO_TypeDef*)kPortBase_; }
 
 	// Pull resistors are not allowed
 	static_assert(kMode_ != Mode::kAnalog || kPuPd_ == PuPd::kFloating, "Pull-up/down not allowed in Analog mode");
@@ -179,17 +179,17 @@ public:
 														: 0b0000
 				)
 				;
-			volatile GPIO_TypeDef* port = Io();
+			volatile GPIO_TypeDef& port = Io();
 			/// Pin number defines if CRL or CRH is used
 			if (kPin < 8)
 			{
 				const uint32_t crl = cr_bits << (kPin << 2);
-				port->CRL = (port->CRL & kCRL_Mask_) | crl;
+				port.CRL = (port.CRL & kCRL_Mask_) | crl;
 			}
 			else
 			{
 				const uint32_t crh = cr_bits << ((kPin - 8) << 2);
-				port->CRH = (port->CRH & kCRH_Mask_) | crh;
+				port.CRH = (port.CRH & kCRH_Mask_) | crh;
 			}
 			if (is_input && pupd == PuPd::kPullUp)
 				Set(true);
@@ -203,8 +203,8 @@ public:
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
-			volatile GPIO_TypeDef* port = Io();
-			port->BSRR = kBitValue_;
+			volatile GPIO_TypeDef &port = Io();
+			port.BSRR = kBitValue_;
 		}
 	};
 
@@ -213,8 +213,8 @@ public:
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
-			volatile GPIO_TypeDef* port = Io();
-			port->BRR = kBitValue_;
+			volatile GPIO_TypeDef& port = Io();
+			port.BRR = kBitValue_;
 		}
 	}
 
@@ -232,8 +232,8 @@ public:
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
-			volatile GPIO_TypeDef* port = Io();
-			return (port->IDR & kBitValue_) != 0;
+			volatile GPIO_TypeDef &port = Io();
+			return (port.IDR & kBitValue_) != 0;
 		}
 		else
 			return false;
@@ -244,8 +244,8 @@ public:
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			return (port->IDR & kBitValue_) != 0;
+			volatile GPIO_TypeDef &port = Io();
+			return (port.IDR & kBitValue_) != 0;
 		}
 		else
 			return false;	// an unused pin always returns false here
@@ -256,8 +256,8 @@ public:
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			return (port->IDR & kBitValue_) == 0;
+			volatile GPIO_TypeDef &port = Io();
+			return (port.IDR & kBitValue_) == 0;
 		}
 		else
 			return false;	// an unused pin always returns false here
@@ -268,8 +268,8 @@ public:
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			port->ODR ^= kBitValue_;
+			volatile GPIO_TypeDef &port = Io();
+			port.ODR ^= kBitValue_;
 		}
 	}
 };

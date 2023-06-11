@@ -155,26 +155,26 @@ public:
 	static constexpr uint32_t kAFRH_Mask_ = Map::kAFRH_Mask_;
 
 	/// Access to the peripheral memory space
-	constexpr static volatile GPIO_TypeDef *Io() { return (volatile GPIO_TypeDef *)kPortBase_; }
+	constexpr static volatile GPIO_TypeDef &Io() { return *(volatile GPIO_TypeDef *)kPortBase_; }
 
 	/// Apply default configuration for the pin.
 	constexpr static void SetupPinMode(void)
 	{
-		volatile GPIO_TypeDef *port = Io();
+		volatile GPIO_TypeDef &port = Io();
 		if (kMODER_Mask_ != ~0UL)
-			port->MODER = (port->MODER & kMODER_Mask_) | kMODER_;
+			port.MODER = (port.MODER & kMODER_Mask_) | kMODER_;
 		if (kOTYPER_Mask_ != (uint16_t)~0UL)
-			port->OTYPER = (port->OTYPER & kOTYPER_Mask_) | kOTYPER_;
+			port.OTYPER = (port.OTYPER & kOTYPER_Mask_) | kOTYPER_;
 		if (kOSPEEDR_Mask_ != ~0UL)
-			port->OSPEEDR = (port->OSPEEDR & kOSPEEDR_Mask_) | kOSPEEDR_;
+			port.OSPEEDR = (port.OSPEEDR & kOSPEEDR_Mask_) | kOSPEEDR_;
 		if (kPUPDR_Mask_ != ~0UL)
-			port->PUPDR = (port->PUPDR & kPUPDR_Mask_) | kPUPDR_;
+			port.PUPDR = (port.PUPDR & kPUPDR_Mask_) | kPUPDR_;
 	}
 	// Selected alternate function does not match pin. Functionality will break!
 	static_assert(Map::kNoRemap_ || (Map::kPort_ == kPort_ && Map::kPin_ == kPin_), "pin remapping applies to a different pin");
 	// Input pin cannot set a pin speed
 	static_assert(!kIsInput_ || kSpeed_ == Speed::kInput, "Cannot select a speed for input pin");
-	// Pull resistors are not allowed
+	// Pull resitor not allowed in Analog mode
 	static_assert(kMode_ != Mode::kAnalog || kPuPd_ == PuPd::kFloating, "Pull-up/down not allowed in Analog mode");
 
 	/// Apply default configuration for the pin.
@@ -184,14 +184,14 @@ public:
 		Map::Enable();
 		if (kODR_Mask_ != (uint16_t)~0UL)
 		{
-			volatile GPIO_TypeDef* port = Io();
-			port->ODR = (port->PUPDR & kODR_Mask_) | kODR_;
+			volatile GPIO_TypeDef &port = Io();
+			port.ODR = (port.ODR & kODR_Mask_) | kODR_;
 		}
 	}
 	/// Apply a custom configuration to the pin
 	constexpr static void Setup(Mode mode, Speed speed, PuPd pupd)
 	{
-		volatile GPIO_TypeDef *port = Io();
+		volatile GPIO_TypeDef &port = Io();
 		const bool is_input = mode == Mode::kInput || mode == Mode::kAnalog;
 		/// Value for MODER without offset
 		const uint8_t moder_bits =
@@ -206,7 +206,7 @@ public:
 		const uint32_t moder = (uint32_t)moder_bits << (kPin << 1);
 		/// Mask value for MODER hardware register
 		const uint32_t moder_mask = ~(0b11UL << (kPin << 1));
-		port->MODER = (port->MODER & moder_mask) | moder;
+		port.MODER = (port.MODER & moder_mask) | moder;
 		//
 		if (!is_input)
 		{
@@ -220,7 +220,7 @@ public:
 				;
 			/// Mask for OTYPER hardware register
 			const uint32_t otyper_mask = ~(1UL << kPin);
-			port->OTYPER = (port->OTYPER & otyper_mask) | otyper;
+			port.OTYPER = (port.OTYPER & otyper_mask) | otyper;
 			//
 			/// Value for OSPEEDR hardware register (no offset)
 			const uint32_t ospeedr_bits =
@@ -233,7 +233,7 @@ public:
 			const uint32_t ospeedr = ospeedr_bits << (kPin << 1);
 			/// Mask value for OSPEEDR hardware register
 			const uint32_t ospeedr_mask = ~(0b11UL << (kPin << 1));
-			port->OSPEEDR = (port->OSPEEDR & ospeedr_mask) | ospeedr;
+			port.OSPEEDR = (port.OSPEEDR & ospeedr_mask) | ospeedr;
 		}
 		/// Constant value for PUPD hardware register (no offset)
 		const uint32_t pupdr_bits =
@@ -246,7 +246,7 @@ public:
 		const uint32_t pupdr = pupdr_bits << (kPin << 1);
 		/// Constant mask for MODER hardware register
 		const uint32_t pupdr_mask = ~(0b11UL << (kPin << 1));
-		port->PUPDR = (port->PUPDR & pupdr_mask) | pupdr;
+		port.PUPDR = (port.PUPDR & pupdr_mask) | pupdr;
 	}
 
 	/// Sets pin up. The pin will be high as long as it is configured as GPIO output
@@ -254,8 +254,8 @@ public:
 	{
 		if (kBitValue_ != 0)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			port->BSRR = kBitValue_;
+			volatile GPIO_TypeDef &port = Io();
+			port.BSRR = kBitValue_;
 		}
 	};
 
@@ -264,8 +264,8 @@ public:
 	{
 		if (kBitValue_ != 0)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			port->BRR = kBitValue_;
+			volatile GPIO_TypeDef &port = Io();
+			port.BRR = kBitValue_;
 		}
 	}
 
@@ -283,8 +283,8 @@ public:
 	{
 		if (kBitValue_ != 0)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			return (port->IDR & kBitValue_) != 0;
+			volatile GPIO_TypeDef &port = Io();
+			return (port.IDR & kBitValue_) != 0;
 		}
 		else
 			return false;
@@ -295,8 +295,8 @@ public:
 	{
 		if (kBitValue_ != 0)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			return (port->IDR & kBitValue_) != 0;
+			volatile GPIO_TypeDef &port = Io();
+			return (port.IDR & kBitValue_) != 0;
 		}
 		else
 			return false;
@@ -307,8 +307,8 @@ public:
 	{
 		if (kBitValue_ != 0)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			return (port->IDR & kBitValue_) == 0;
+			volatile GPIO_TypeDef &port = Io();
+			return (port.IDR & kBitValue_) == 0;
 		}
 		else
 			return false;
@@ -319,8 +319,8 @@ public:
 	{
 		if (kBitValue_ != 0)
 		{
-			volatile GPIO_TypeDef *port = Io();
-			port->ODR ^= kBitValue_;
+			volatile GPIO_TypeDef &port = Io();
+			port.ODR ^= kBitValue_;
 		}
 	}
 };
