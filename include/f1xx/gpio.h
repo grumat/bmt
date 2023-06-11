@@ -495,7 +495,7 @@ class AnyFastOut1 : public AnyOut<
 };
 
 
-//! Template for output pins
+//! Template for open drain output pins
 template<
 	const Port kPort						///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port

@@ -147,14 +147,25 @@ using namespace Bmt;
 // The HSE clock has a 8MHz crystal soldered on the board
 typedef Clocks::AnyHse<8000000UL> HSE;
 
-void main()
+// STM32 startup files call this in the early firmware initialization 
+// before the C library is initialized. Do not trust static objects or 
+// variables in this stage.
+extern "C" void SystemInit()
 {
+	// Reset clock system before starting program
+	System::Init();
+	
     // ... Init other stuff ...
 
     // Starts the crystal
     HSE::Init();
 
     // ... etc ...
+}
+
+void main()
+{
+	// here start your custom firmware, after C library is iniitalized
 }
 ```
 

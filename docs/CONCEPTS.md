@@ -10,8 +10,8 @@ to raw constants known to the compiler.
 By calling `Init()` or `Setup()` a minimal set of instructions are used 
 to apply your model (i.e. specification) into the hardware registers.
 This approach has the advantage that you are working with data-models 
-in a more abstract way. And the template definition follows the hierarchy 
-of your hardware.
+in a more abstract way. And the template definition forces inter-relation 
+of dependant templates, following the hierarchy of your hardware.
 
 
 ## Template Data Models, an Example
@@ -33,20 +33,33 @@ following form:
 <div hidden>
 ```
 @startuml clock_tree
-object LSE
-LSE : freq = 32768
-object MSI
-MSI : freq = 48 MHz
-MSI : sync = true
-object PLL
-PLL : /M = 3
-PLL : xN = 10
-PLL : /R = 2
-object SYSCLK
-SYSCLK : freq = 80 MHz
+object LSE {
+	freq = 32768
+}
+object MSI {
+	freq = 48 MHz
+	sync = true
+}
+object PLL {
+	/M = 3
+	xN = 10
+	/R = 2
+}
+map "Clock Tree" as SYSCLK {
+	SYSCLK => 80 MHz
+	HCLK => 80 MHz
+	APB1 => 40 MHz
+	APB2 => 80 MHz
+}
 LSE -> MSI :  trims
 MSI -> PLL : sources
 PLL -> SYSCLK : generates
+object SysTick
+object TIMx
+object USARTx
+SYSCLK --> SysTick
+SYSCLK --> TIMx
+SYSCLK --> USARTx
 @enduml
 ```
 </div>
