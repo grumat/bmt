@@ -2,7 +2,7 @@
 
 #include "irq.h"
 
-#if DMAMUX_BASE
+#if DMAMUX1_BASE
 	// Latest DMA specification: a flexible DMAMUX is present
 #	define OPT_DMA_VERSION	3
 #elif defined(DMA1_CSELR_BASE) || defined(DMA2_CSELR_BASE)
@@ -116,10 +116,14 @@ enum class Prio
 
 #if defined(STM32L4)
 #	include "l4xx/dma.h"
+#	include "l4xx/dma-cfgs.h"
 #elif defined(STM32G4)
 #	include "g4xx/dma.h"
+#	include "g4xx/dmamux.h"
+#	include "g4xx/dma-cfgs.h"
 #elif defined(STM32F1)
 #	include "f1xx/dma.h"
+#	include "f1xx/dma-cfgs.h"
 #else
 #	error Unsupported target MCU
 #endif

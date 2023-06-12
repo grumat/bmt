@@ -511,10 +511,5 @@ public:
 };
 
 
-typedef AnyID<Itf::k1, Chan::kNone, PerifSel::k0> IdNone;
-
-#include "dma.inl"
-
-
 }	// namespace Dma
 }	// namespace Bmt

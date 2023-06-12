@@ -964,13 +964,13 @@ public:
 		case kTim5: NVIC_ClearPendingIRQ(TIM5_IRQn); NVIC_EnableIRQ(TIM5_IRQn); break;
 #endif
 #ifdef TIM6_BASE
-		case kTim6: NVIC_ClearPendingIRQ(TIM6_IRQn); NVIC_EnableIRQ(TIM6_IRQn); break;
+		case kTim6: NVIC_ClearPendingIRQ(TIM6_DAC_IRQn); NVIC_EnableIRQ(TIM6_DAC_IRQn); break;
 #endif
 #ifdef TIM7_BASE
 		case kTim7: NVIC_ClearPendingIRQ(TIM7_IRQn); NVIC_EnableIRQ(TIM7_IRQn); break;
 #endif
 #ifdef TIM8_BASE
-		case kTim8: NVIC_ClearPendingIRQ(TIM8_IRQn); NVIC_EnableIRQ(TIM8_IRQn); break;
+		case kTim8: NVIC_ClearPendingIRQ(TIM8_UP_IRQn); NVIC_EnableIRQ(TIM8_UP_IRQn); break;
 #endif
 #ifdef TIM15_BASE
 		case kTim15: NVIC_ClearPendingIRQ(TIM1_BRK_TIM15_IRQn); NVIC_EnableIRQ(TIM1_BRK_TIM15_IRQn); break;
@@ -1006,7 +1006,7 @@ public:
 		case kTim5: NVIC_DisableIRQ(TIM5_IRQn); break;
 #endif
 #ifdef TIM6_BASE
-		case kTim6: NVIC_DisableIRQ(TIM6_IRQn); break;
+		case kTim6: NVIC_DisableIRQ(TIM6_DAC_IRQn); break;
 #endif
 #ifdef TIM7_BASE
 		case kTim7: NVIC_DisableIRQ(TIM7_IRQn); break;

@@ -1,3 +1,12 @@
+#pragma once
+
+namespace Bmt
+{
+namespace Dma
+{
+
+typedef AnyID<Itf::k1, Chan::kNone> IdNone;
+
 #ifdef ADC1_BASE
 /// A template class to map ADC1 to DMA channel
 typedef AnyID<Itf::k1, Chan::k1> IdAdc1;
@@ -48,6 +57,13 @@ typedef AnyID<Itf::k2, Chan::k2> IdI2s3Tx;
 typedef AnyID<Itf::k2, Chan::k4> IdSdio;
 #endif	// SDIO_BASE
 
+#ifdef SPI_BASE
+/// A template class to map SPI RX to DMA channel
+typedef AnyID<Itf::k2, Chan::k1> IdSpiRx;
+/// A template class to map SPI TX to DMA channel
+typedef AnyID<Itf::k2, Chan::k2> IdSpiTx;
+#endif	// SPI_BASE
+
 #ifdef SPI1_BASE
 /// A template class to map SPI1 RX to DMA channel
 typedef AnyID<Itf::k1, Chan::k2> IdSpi1Rx;
@@ -68,38 +84,6 @@ typedef AnyID<Itf::k2, Chan::k1> IdSpi3Rx;
 /// A template class to map SPI3 TX to DMA channel
 typedef AnyID<Itf::k2, Chan::k2> IdSpi3Tx;
 #endif	// SPI3_BASE
-
-#ifdef SPI_BASE
-/// A template class to map SPI RX to DMA channel
-typedef AnyID<Itf::k2, Chan::k1> IdSpiRx;
-/// A template class to map SPI TX to DMA channel
-typedef AnyID<Itf::k2, Chan::k2> IdSpiTx;
-#endif	// SPI_BASE
-
-#ifdef TIM15_BASE
-/// A template class to map TIM15 CH1 to DMA channel
-typedef AnyID<Itf::k1, Chan::k5> IdTim15Ch1;
-/// A template class to map TIM15 COM to DMA channel
-typedef AnyID<Itf::k1, Chan::k5> IdTim15Com;
-/// A template class to map TIM15 TRIG to DMA channel
-typedef AnyID<Itf::k1, Chan::k5> IdTim15Trig;
-/// A template class to map TIM15 UP to DMA channel
-typedef AnyID<Itf::k1, Chan::k5> IdTim15Up;
-#endif	// TIM15_BASE
-
-#ifdef TIM16_BASE
-/// A template class to map TIM16 CH1 to DMA channel
-typedef AnyID<Itf::k1, Chan::k6> IdTim16Ch1;
-/// A template class to map TIM16 UP to DMA channel
-typedef AnyID<Itf::k1, Chan::k6> IdTim16Up;
-#endif	// TIM16_BASE
-
-#ifdef TIM17_BASE
-/// A template class to map TIM17 CH1 to DMA channel
-typedef AnyID<Itf::k1, Chan::k7> IdTim17Ch1;
-/// A template class to map TIM17 UP to DMA channel
-typedef AnyID<Itf::k1, Chan::k7> IdTim17Up;
-#endif	// TIM17_BASE
 
 #ifdef TIM1_BASE
 /// A template class to map TIM1 CH1 to DMA channel
@@ -196,6 +180,31 @@ typedef AnyID<Itf::k2, Chan::k2> IdTim8Trig;
 /// A template class to map TIM8 UP to DMA channel
 typedef AnyID<Itf::k2, Chan::k1> IdTim8Up;
 #endif	// TIM8_BASE
+
+#ifdef TIM15_BASE
+/// A template class to map TIM15 CH1 to DMA channel
+typedef AnyID<Itf::k1, Chan::k5> IdTim15Ch1;
+/// A template class to map TIM15 COM to DMA channel
+typedef AnyID<Itf::k1, Chan::k5> IdTim15Com;
+/// A template class to map TIM15 TRIG to DMA channel
+typedef AnyID<Itf::k1, Chan::k5> IdTim15Trig;
+/// A template class to map TIM15 UP to DMA channel
+typedef AnyID<Itf::k1, Chan::k5> IdTim15Up;
+#endif	// TIM15_BASE
+
+#ifdef TIM16_BASE
+/// A template class to map TIM16 CH1 to DMA channel
+typedef AnyID<Itf::k1, Chan::k6> IdTim16Ch1;
+/// A template class to map TIM16 UP to DMA channel
+typedef AnyID<Itf::k1, Chan::k6> IdTim16Up;
+#endif	// TIM16_BASE
+
+#ifdef TIM17_BASE
+/// A template class to map TIM17 CH1 to DMA channel
+typedef AnyID<Itf::k1, Chan::k7> IdTim17Ch1;
+/// A template class to map TIM17 UP to DMA channel
+typedef AnyID<Itf::k1, Chan::k7> IdTim17Up;
+#endif	// TIM17_BASE
 
 #ifdef UART4_BASE
 /// A template class to map UART4 RX to DMA channel
@@ -455,6 +464,40 @@ class AnySdio : public AnyChannel <
 { };
 #endif	// SDIO_BASE
 
+#ifdef SPI_BASE
+/// A template class to configure SPI RX with DMA transfer
+template<
+	const Dir kDir = Dir::kPerToMemCircular
+	, const PtrPolicy kSrcPtr = PtrPolicy::kBytePtr
+	, const PtrPolicy kDstPtr = PtrPolicy::kBytePtrInc
+	, const Prio kPrio = Prio::kMedium
+>
+class AnySpiRx : public AnyChannel <
+	IdSpiRx
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+
+/// A template class to configure SPI TX with DMA transfer
+template<
+	const Dir kDir = Dir::kMemToPerCircular
+	, const PtrPolicy kSrcPtr = PtrPolicy::kBytePtrInc
+	, const PtrPolicy kDstPtr = PtrPolicy::kBytePtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnySpiTx : public AnyChannel <
+	IdSpiTx
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+#endif	// SPI_BASE
+
 #ifdef SPI1_BASE
 /// A template class to configure SPI1 RX with DMA transfer
 template<
@@ -540,192 +583,22 @@ class AnySpi3Rx : public AnyChannel <
 >
 { };
 
-
-/// A template class for SPI2 TX transfers of bytes using DMA
-template<
-	const bool kCircular = true
-	, const PtrPolicy kSrcPtr = PtrPolicy::kBytePtrInc
-	, const PtrPolicy kDstPtr = PtrPolicy::kBytePtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnySpi3Tx : public AnyChannel <
-	Itf::k2,
-	Chan::k2,
-	kCircular ? Dir::kMemToPerCircular : Dir::kMemToPer,
-	kSrcPtr,
-	kDstPtr,
-	kPrio
->
-{ };
-#endif
-
-#ifdef SPI_BASE
-/// A template class to configure SPI RX with DMA transfer
-template<
-	const Dir kDir = Dir::kPerToMemCircular
-	, const PtrPolicy kSrcPtr = PtrPolicy::kBytePtr
-	, const PtrPolicy kDstPtr = PtrPolicy::kBytePtrInc
-	, const Prio kPrio = Prio::kMedium
->
-class AnySpiRx : public AnyChannel <
-	IdSpiRx
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-
-/// A template class to configure SPI TX with DMA transfer
+/// A template class to configure SPI3 TX with DMA transfer
 template<
 	const Dir kDir = Dir::kMemToPerCircular
 	, const PtrPolicy kSrcPtr = PtrPolicy::kBytePtrInc
 	, const PtrPolicy kDstPtr = PtrPolicy::kBytePtr
 	, const Prio kPrio = Prio::kMedium
 >
-class AnySpiTx : public AnyChannel <
-	IdSpiTx
+class AnySpi3Tx : public AnyChannel <
+	IdSpi3Tx
 	, kDir
 	, kSrcPtr
 	, kDstPtr
 	, kPrio
 >
 { };
-#endif	// SPI_BASE
-
-#ifdef TIM15_BASE
-/// A template class to configure TIM15 CH1 with DMA transfer
-template<
-	const Dir kDir
-	, const PtrPolicy kSrcPtr
-	, const PtrPolicy kDstPtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnyTim15Ch1 : public AnyChannel <
-	IdTim15Ch1
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-
-/// A template class to configure TIM15 COM with DMA transfer
-template<
-	const Dir kDir
-	, const PtrPolicy kSrcPtr
-	, const PtrPolicy kDstPtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnyTim15Com : public AnyChannel <
-	IdTim15Com
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-
-/// A template class to configure TIM15 TRIG with DMA transfer
-template<
-	const Dir kDir
-	, const PtrPolicy kSrcPtr
-	, const PtrPolicy kDstPtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnyTim15Trig : public AnyChannel <
-	IdTim15Trig
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-
-/// A template class to configure TIM15 UP with DMA transfer
-template<
-	const Dir kDir
-	, const PtrPolicy kSrcPtr
-	, const PtrPolicy kDstPtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnyTim15Up : public AnyChannel <
-	IdTim15Up
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-#endif	// TIM15_BASE
-
-#ifdef TIM16_BASE
-/// A template class to configure TIM16 CH1 with DMA transfer
-template<
-	const Dir kDir
-	, const PtrPolicy kSrcPtr
-	, const PtrPolicy kDstPtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnyTim16Ch1 : public AnyChannel <
-	IdTim16Ch1
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-
-/// A template class to configure TIM16 UP with DMA transfer
-template<
-	const Dir kDir
-	, const PtrPolicy kSrcPtr
-	, const PtrPolicy kDstPtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnyTim16Up : public AnyChannel <
-	IdTim16Up
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-#endif	// TIM16_BASE
-
-#ifdef TIM17_BASE
-/// A template class to configure TIM17 CH1 with DMA transfer
-template<
-	const Dir kDir
-	, const PtrPolicy kSrcPtr
-	, const PtrPolicy kDstPtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnyTim17Ch1 : public AnyChannel <
-	IdTim17Ch1
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-
-/// A template class to configure TIM17 UP with DMA transfer
-template<
-	const Dir kDir
-	, const PtrPolicy kSrcPtr
-	, const PtrPolicy kDstPtr
-	, const Prio kPrio = Prio::kMedium
->
-class AnyTim17Up : public AnyChannel <
-	IdTim17Up
-	, kDir
-	, kSrcPtr
-	, kDstPtr
-	, kPrio
->
-{ };
-#endif	// TIM17_BASE
+#endif	// SPI3_BASE
 
 #ifdef TIM1_BASE
 /// A template class to configure TIM1 CH1 with DMA transfer
@@ -1319,6 +1192,140 @@ class AnyTim8Up : public AnyChannel <
 { };
 #endif	// TIM8_BASE
 
+#ifdef TIM15_BASE
+/// A template class to configure TIM15 CH1 with DMA transfer
+template<
+	const Dir kDir
+	, const PtrPolicy kSrcPtr
+	, const PtrPolicy kDstPtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnyTim15Ch1 : public AnyChannel <
+	IdTim15Ch1
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+
+/// A template class to configure TIM15 COM with DMA transfer
+template<
+	const Dir kDir
+	, const PtrPolicy kSrcPtr
+	, const PtrPolicy kDstPtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnyTim15Com : public AnyChannel <
+	IdTim15Com
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+
+/// A template class to configure TIM15 TRIG with DMA transfer
+template<
+	const Dir kDir
+	, const PtrPolicy kSrcPtr
+	, const PtrPolicy kDstPtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnyTim15Trig : public AnyChannel <
+	IdTim15Trig
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+
+/// A template class to configure TIM15 UP with DMA transfer
+template<
+	const Dir kDir
+	, const PtrPolicy kSrcPtr
+	, const PtrPolicy kDstPtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnyTim15Up : public AnyChannel <
+	IdTim15Up
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+#endif	// TIM15_BASE
+
+#ifdef TIM16_BASE
+/// A template class to configure TIM16 CH1 with DMA transfer
+template<
+	const Dir kDir
+	, const PtrPolicy kSrcPtr
+	, const PtrPolicy kDstPtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnyTim16Ch1 : public AnyChannel <
+	IdTim16Ch1
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+
+/// A template class to configure TIM16 UP with DMA transfer
+template<
+	const Dir kDir
+	, const PtrPolicy kSrcPtr
+	, const PtrPolicy kDstPtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnyTim16Up : public AnyChannel <
+	IdTim16Up
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+#endif	// TIM16_BASE
+
+#ifdef TIM17_BASE
+/// A template class to configure TIM17 CH1 with DMA transfer
+template<
+	const Dir kDir
+	, const PtrPolicy kSrcPtr
+	, const PtrPolicy kDstPtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnyTim17Ch1 : public AnyChannel <
+	IdTim17Ch1
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+
+/// A template class to configure TIM17 UP with DMA transfer
+template<
+	const Dir kDir
+	, const PtrPolicy kSrcPtr
+	, const PtrPolicy kDstPtr
+	, const Prio kPrio = Prio::kMedium
+>
+class AnyTim17Up : public AnyChannel <
+	IdTim17Up
+	, kDir
+	, kSrcPtr
+	, kDstPtr
+	, kPrio
+>
+{ };
+#endif	// TIM17_BASE
+
 #ifdef UART4_BASE
 /// A template class to configure UART4 RX with DMA transfer
 template<
@@ -1484,3 +1491,7 @@ class AnyUsart3Tx : public AnyChannel <
 { };
 #endif	// USART3_BASE
 
+
+
+}	// namespace Dma
+}	// namespace Bmt

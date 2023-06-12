@@ -9,6 +9,7 @@ import sys
 import re
 import csv
 
+#FORMAT="F1"
 FORMAT="L4"
 
 if FORMAT == "F1":
@@ -273,6 +274,28 @@ class Generator:
 		self.fh.write(">\n")
 		self.fh.write("{ };\n")
 
+	def MakeDmaHeader(self):
+		self.fh.write("""#pragma once
+
+namespace Bmt
+{
+namespace Dma
+{
+
+""")
+		if FORMAT == "L4":
+			self.fh.write("typedef AnyID<Itf::k1, Chan::kNone, PerifSel::k0> IdNone;\n\n")
+		else:
+			self.fh.write("typedef AnyID<Itf::k1, Chan::kNone> IdNone;\n\n")
+
+
+	def MakeDmaFooter(self):
+		self.fh.write("""
+
+}	// namespace Dma
+}	// namespace Bmt
+""")
+
 	def MakeTimDmaHeader(self):
 		self.fh.write("""
 // Generic template for the DMA configuration for a given timer
@@ -298,10 +321,12 @@ struct DmaChInfo : Dma::IdNone
 };
 
 """)
+		
 	def MakeTimDmaFooter(self):
 		self.fh.write("""
 
 """)
+		
 	def MakeTimDma(self, td : TimDma):
 		self.Begin(td.tim.Macro())
 		self.fh.write("// Template specialization for DMA settings of TIM{0}>\n".format(td.tim.unit))
@@ -333,6 +358,7 @@ struct DmaChInfo : Dma::IdNone
 def PrintNames(trigs : list, insts : list):
 	with open(os.path.splitext(FILE)[0] + ".h", 'wt') as fh:
 		g = Generator(fh)
+		g.MakeDmaHeader()
 		for n in insts:
 			for t in trigs:
 				if n == t.SortName():
@@ -346,6 +372,7 @@ def PrintNames(trigs : list, insts : list):
 					g.MakeTrigger(t)
 					break
 		g.Flush()
+		g.MakeDmaFooter()
 
 
 def MakeTimDmaId(trigs : list, insts : list):

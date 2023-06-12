@@ -1,3 +1,12 @@
+#pragma once
+
+namespace Bmt
+{
+namespace Dma
+{
+
+typedef AnyID<Itf::k1, Chan::kNone, PerifSel::k0> IdNone;
+
 #ifdef ADC1_BASE
 /// A template class to map ADC1 to DMA channel
 typedef AnyID<Itf::k1, Chan::k1, PerifSel::k0> IdAdc1;
@@ -2278,3 +2287,7 @@ class AnyUsart3Tx : public AnyChannel <
 { };
 #endif	// USART3_BASE
 
+
+
+}	// namespace Dma
+}	// namespace Bmt
