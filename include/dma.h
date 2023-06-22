@@ -53,26 +53,24 @@ enum class PerifSel : uint8_t
 	k6,			///< DMA request selection 0b0110
 	k7,			///< DMA request selection 0b0111
 };
+#elif OPT_DMA_VERSION == 3
+enum class PerifSel : uint8_t;
 #endif
 
 /// Key specifying a DMA channel selection for any served peripheral
 template <
 	Itf kItf
-#if OPT_DMA_VERSION < 3
 	, Chan kChan
-#endif
-#if OPT_DMA_VERSION == 2
+#if OPT_DMA_VERSION >= 2
 	, PerifSel kChSel
 #endif
 > struct AnyID
 {
 	// Interface
 	static constexpr Itf kItf_ = kItf;
-#if OPT_DMA_VERSION < 3
 	// Channel to be used
 	static constexpr Chan kChan_ = kChan;
-#endif
-#if OPT_DMA_VERSION == 2
+#if OPT_DMA_VERSION >= 2
 	// Channel selection
 	static constexpr PerifSel kChSel_ = kChSel;
 #endif

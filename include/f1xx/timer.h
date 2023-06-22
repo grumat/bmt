@@ -253,7 +253,7 @@ enum class Output
 
 
 template <
-const Unit kTimerNum
+	const Unit kTimerNum
 >
 class AnyTimer_
 {
@@ -331,7 +331,7 @@ public:
 	static constexpr bool kIsBasicTimer_ = 
 		(HasCC1() | HasCC2() | HasCC3() | HasCC4()) == false
 		;
-	// Type definition with TImer DMA info
+	// Type definition with Timer DMA info
 	typedef DmaInfo<kTimerNum_> DmaInfo_;
 
 	ALWAYS_INLINE static TIM_TypeDef *GetDevice()
@@ -480,8 +480,9 @@ template <
 	const Unit kTimerNum
 	, const ExtClk kExtIn
 	, const uint32_t kFreq = 1000000	// this value has no effect, but helps interacting with template
-	, const uint32_t kPrescaler = 1
+	, const uint32_t kPrescaler = 0		// Value for PSC register
 	, const uint32_t kFilter = 0		// a value between 0 and 15 (see docs)
+	, const uint32_t kEtrPrescaler = 1	// ETR max frequency is 1/4 of timer clock. Use this if necessary.
 >
 class ExternalClock : public AnyTimer_<kTimerNum>
 {
@@ -489,8 +490,8 @@ public:
 	typedef AnyTimer_<kTimerNum> BASE;
 	static constexpr ExtClk kExtIn_ = kExtIn;
 	static constexpr uint32_t kFrequency_ = kFreq;
-	static constexpr uint32_t kPrescaler_ = 0;
-	static constexpr uint32_t kInputPrescaler_ = kPrescaler;
+	static constexpr uint32_t kPrescaler_ = kPrescaler;
+	static constexpr uint32_t kEtrPrescaler_ = kEtrPrescaler;
 	static constexpr bool kUsesInput1 = (kExtIn == ExtClk::kTI1F_ED || kExtIn == ExtClk::kTI1FP1);
 	static constexpr bool kUsesInput2 = (kExtIn == ExtClk::kTI2FP2);
 	static constexpr uint16_t kSmcr_Mask = TIM_SMCR_MSM_Msk;
@@ -508,7 +509,7 @@ public:
 	ALWAYS_INLINE static void Setup()
 	{
 		// Validate prescaler
-		static_assert(kInputPrescaler_ == 1 || kInputPrescaler_ == 2 || kInputPrescaler_ == 4 || kInputPrescaler_ == 8, "Invalid prescaler value. Possible values are 1,2,4 or 8.");
+		static_assert(kEtrPrescaler_ == 1 || kEtrPrescaler_ == 2 || kEtrPrescaler_ == 4 || kEtrPrescaler_ == 8, "Invalid prescaler value. Possible values are 1,2,4 or 8.");
 		// Validate filter
 		static_assert(kFilter < 16, "Invalid ETRP filter value. Only values between 0 and 15 are allowed.");
 		// ETR Mode 1 is supported?
@@ -531,7 +532,7 @@ public:
 		case ExtClk::kETRN:
 			// Apply mode 2 bit
 			tmp |= TIM_SMCR_ECE;
-			switch (kInputPrescaler_)
+			switch (kEtrPrescaler_)
 			{
 			case 2:
 				tmp |= TIM_SMCR_ETPS_0;
@@ -567,24 +568,8 @@ public:
 		// Setup CCMR1 register
 		if (kUsesInput1 || kUsesInput2)
 		{
-			tmp = 0;
-			switch (kInputPrescaler_)
-			{
-			case 2:
-				tmp |= kUsesInput1 ? TIM_CCMR1_IC1PSC_0 : TIM_CCMR1_IC2PSC_0;
-				break;
-			case 4:
-				tmp |= kUsesInput1 ? TIM_CCMR1_IC1PSC_1 : TIM_CCMR1_IC2PSC_1;
-				break;
-			case 8:
-				tmp |= kUsesInput1 ? TIM_CCMR1_IC1PSC_0 | TIM_CCMR1_IC1PSC_1
-					: TIM_CCMR1_IC2PSC_0 | TIM_CCMR1_IC2PSC_1;
-				break;
-			default:
-				break;
-			}
 			// Always use this setting as input
-			tmp |= kUsesInput1 ? TIM_CCMR1_CC1S_0 : TIM_CCMR1_CC2S_1;
+			tmp = kUsesInput1 ? TIM_CCMR1_CC1S_0 : TIM_CCMR1_CC2S_1;
 			timer->CCMR1 = (timer->CCMR1 & ~kCcmr_Mask) | tmp;
 
 			// Setup CCER register
@@ -1299,6 +1284,7 @@ class AnyChannel_ : public AnyTimer_<kTimerNum>
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
 	static constexpr Channel kChannelNum_ = kChannelNum;
+	// Data type with DMA information about this timer channel
 	typedef DmaChInfo <kTimerNum, kChannelNum> DmaChInfo_;
 	
 	static_assert(kChannelNum_ != Channel::k1 || BASE::HasCC1(), "Basic timer does not feature CC1 module");
