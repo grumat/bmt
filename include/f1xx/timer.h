@@ -1,7 +1,5 @@
 #pragma once
 
-#include "dma.h"
-
 namespace Bmt
 {
 namespace Timer
@@ -410,12 +408,18 @@ class InternalClock : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
-	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == kTim1)
+	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
 	static constexpr uint32_t kPrescaler_ = kPrescaler;
 	static constexpr uint32_t kFrequency_ = BASE::kFrequency_ / (kPrescaler_ + 1);
+
+	ALWAYS_INLINE static void Setup()
+	{
+		TIM_TypeDef *timer = BASE::GetDevice();
+		timer->SMCR = 0;
+	}
 };
 
 
@@ -429,13 +433,13 @@ class InternalClock_us : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
-	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == kTim1)
+	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
 	static constexpr double kTimerTick_ = kMicroSecs / 1000000.0;
 	static constexpr uint32_t kFrequency_ = 1000000UL / kMicroSecs;
-	static constexpr uint32_t kPrescaler_raw_ = (uint32_t)(kTimerTick_ * kClkTick + 0.5);
+	static constexpr uint32_t kPrescaler_raw_ = (uint32_t)(kTimerTick_ * kClkTick_ + 0.5);
 	static constexpr uint32_t kPrescaler_ = kPrescaler_raw_ > 0 ? kPrescaler_raw_ - 1 : 0;
 
 	ALWAYS_INLINE static void Setup()
@@ -457,11 +461,11 @@ class InternalClock_Hz : public AnyTimer_<kTimerNum>
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
 	static constexpr uint32_t kFrequency_ = kMHz;
-	static constexpr uint32_t kClkTick = (BASE::kTimerNum_ == kTim1)
+	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
-	static constexpr uint32_t kPrescaler_raw_ = (uint32_t)((kClkTick + kMHz/2) / kMHz);
+	static constexpr uint32_t kPrescaler_raw_ = (uint32_t)((kClkTick_ + kMHz/2) / kMHz);
 	static constexpr uint32_t kPrescaler_ = kPrescaler_raw_ > 0 ? kPrescaler_raw_ - 1 : 0;
 
 	ALWAYS_INLINE static void Setup()

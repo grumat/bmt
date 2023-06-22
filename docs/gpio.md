@@ -493,12 +493,14 @@ this class, covered on the next sub-topics.
 
 ## Available Methods
 
-A complete set of methods are provided to operate a GPIO pin, regardless 
-of it's initial state.
+All basic operations common to a GPIO are provided by the `AnyPin<>` 
+data-type. Note that all methods are static, so no instance is required 
+(Actually the instances are implemented as hardware registers inside the
+chip design).
 
 ### The `Io()` Method
 
-Returns a pointer to the `GPIO_TypeDef*` structure, which allows low 
+Returns a reference to the `GPIO_TypeDef` structure, which allows for low 
 level access to the GPIO registers.
 
 ### The `SetupPinMode()` Method
@@ -1323,8 +1325,8 @@ uint8_t Read()
 }
 ```
 
-> Please make sure that a digital bus requires that specific control 
-> lines are set/reset, so that the peripheral knows how to deal with the 
-> information present on a bus. Also make that when inverting bus 
-> direction the proper control lines are also configured to avoid bus 
-> collision.
+> This example is a very rough approach on how a data bus would operate. 
+> A digital bus requires specific control lines to be set/reset, so that 
+> the peripheral knows how to deal with the information present on a bus. 
+> Inverting bus direction requires management of proper control lines to 
+> avoid bus collision.
