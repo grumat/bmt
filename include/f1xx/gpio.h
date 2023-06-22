@@ -135,11 +135,11 @@ public:
 	{
 		if (kImpl != Impl::kUnchanged)
 		{
-			volatile GPIO_TypeDef* port = Io();
+			volatile GPIO_TypeDef &port = Io();
 			if (kCRL_Mask_ != ~0UL)
-				port->CRL = (port->CRL & kCRL_Mask_) | kCRL_;
+				port.CRL = (port.CRL & kCRL_Mask_) | kCRL_;
 			if (kCRH_Mask_ != ~0UL)
-				port->CRH = (port->CRH & kCRH_Mask_) | kCRH_;
+				port.CRH = (port.CRH & kCRH_Mask_) | kCRH_;
 		}
 	}
 	/// Apply default configuration for the pin.
