@@ -645,8 +645,9 @@ template <
 	const Unit kTimerNum
 	, const ExtClk kExtIn
 	, const uint32_t kFreq = 1000000	// this value has no effect
-	, const uint32_t kPrescaler = 1
+	, const uint32_t kPrescaler = 0		// Value for PSC register
 	, const uint32_t kFilter = 0		// a value between 0 and 15 (see docs)
+	, const uint32_t kEtrPrescaler = 1	// ETR max frequency is 1/4 of timer clock.
 >
 class ExternalClock : public AnyTimer_<kTimerNum>
 {
@@ -669,16 +670,21 @@ This argument is not used internally, but it is propagated through the
 **`kFrequency_`** static member, which could be used by the developer 
 when glueing this data type with others, facilitating cooperation between 
 software parts.
-- **`kPrescaler`**: This parameter programs the prescaler, which is only 
-available in the **ETR** input. **TIMx_CH1** and **TIMx_CH2** also have 
-built-ins prescaler, but these affects the capture function, not the 
-signal path deviated to the clock input.
+- **`kPrescaler`**: This parameter programs the timer prescaler, which 
+divides the clock frequency. ote that this value is 0-based, which means 
+that 0 divides by 1, a value of 1 divides by 2 and so on. This prescaler 
+is common to all clock sources.
 - **`kFilter`**: This parameter allows you to reduce noise caused by the 
 clock input line. You specify a value between 0 (off) and 15, which 
 indicates the amount of bus clock cycles (APB1 or APB2, depending on the 
 timer unit) to be sampled to recognize a state change on the input line, 
 filtering out transition noise in the external clock. This causes a delay 
 between the input edge and the final clock edge.
+- **`kEtrPrescaler`**: This parameter programs the **ETR** input 
+prescaler. The hardware requires that the maximal **ETR** clock is 
+**1/4** of the timer bus frequency. Through this parameter you can divide 
+the input frequency by **1**, **2**, **4** or **8**, before it enters the 
+counter circuit. 
 
 
 ### External Clock Input Signal (`kExtIn`)
@@ -717,7 +723,11 @@ together {
 		Filter
 	]
 	rectangle tim [
-		TImer Block
+		Timer Block
+		----
+		Prescaler
+		Counter
+		Capture/Compare
 	]
 }
 together {
@@ -749,7 +759,8 @@ ch1 -[hidden]-> ch2
 
 > Please note that only the **ETR** input allows to specify a prescaler 
 > for the input clock. This prescaler works independently of the timer 
-> prescaler, which cannot be managed by this implementation.
+> prescaler. Use this prescaler if the frequency of the ETR signal is 
+> more than **1/4** of the timer bus clock value.
 >
 > Note that **CH1** is the only input that allows counting for each input 
 > edge, which will double the frequency.
@@ -770,4 +781,11 @@ typedef Timer::ExternalClock<
 // A timer counting up to 100
 typedef Timer::Any<Clk1, Mode::kUpCounter, 100> MyTimer;
 ```
+
+
+## The `MasterSlaveTimers<>` Clock Source
+
+
+# Timer Device (`Any<>`)
+
 
