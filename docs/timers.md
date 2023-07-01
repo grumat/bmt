@@ -44,6 +44,15 @@ ext --o any
 ms --o any
 any -- ch_in
 any -- ch_out
+hide clk members
+hide i_pre members
+hide i_us members
+hide i_hz members
+hide ext members
+hide ms members
+hide any members
+hide ch_in members
+hide ch_out members
 @enduml
 ```
 </div>
@@ -784,6 +793,122 @@ typedef Timer::Any<Clk1, Mode::kUpCounter, 100> MyTimer;
 
 
 ## The `MasterSlaveTimers<>` Clock Source
+
+This template establishes a Master/Slave relation between two timers.  
+The following parameters are configurable:
+- The master timer that will source events
+- The slave timer that will be triggered by master events
+- The source of event on the master that will be directed to the slave timer
+- The effect of the master trigger on the slave
+
+> Note this template data-type configures the slave timer. The master 
+> timer shall be configured with any other previously discussed source. 
+
+![images/timer-master-slave-clock.svg](images/timer-master-slave-clock.svg)
+
+<div hidden>
+```raw
+@startuml timer-master-slave-clock
+namespace Bmt <<Frame>> {
+	namespace Timer #EEFFEE {
+		circle "Prescaler" as pre
+		enum SlaveMode {
+			kMasterIsClock
+			kResetCnt
+			kGatedMode
+			kStartMode
+		}
+		enum MasterMode {
+			kUpdate
+			kEnable
+			kComparePulse
+			kCompare1
+			kCompare2
+			kCompare3
+			kCompare4
+		}
+		enum "Unit" as Unit2 {
+			kTim1
+			kTim2
+			kTim3
+			kTim4
+		}
+		enum Unit {
+			kTim1
+			kTim2
+			kTim3
+			kTim4
+		}
+		class "MasterSlaveTimers<>" as i_pre {
+			{static} kMasterTimer_
+			{static} kPrescaler_
+			Setup()
+		}
+		class "Any<>" as any
+	}
+}
+SlaveMode --o i_pre
+MasterMode --o i_pre
+Unit --o i_pre
+Unit2 --o i_pre
+pre --> i_pre
+i_pre --> any
+hide SlaveMode methods
+hide MasterMode methods
+hide Unit methods
+hide Unit2 methods
+hide any members
+@enduml
+```
+</div>
+
+The template declaration is shown below:
+
+```cpp
+template <
+	const Unit kMasterTimer				///< Master timer
+	, const Unit kSlaveTimer			///< Slave timer
+	, const MasterMode kMasterMode		///< Master timer mode
+		= MasterMode::kUpdate
+	, const SlaveMode kSlaveMode		///< Master used as clock source
+		= SlaveMode::kMasterIsClock
+	, const uint32_t kPrescaler = 0		///< Optional prescaler
+>
+class MasterSlaveTimers : public AnyTimer_<kSlaveTimer>
+{
+	//...
+}
+```
+
+
+### Template Parameters
+
+The template parameters are described as follows:
+- **`kMasterTimer`:** This parameter allows you to specify the timer used 
+as clock source for the slave timer. The `Setup()` method will change the 
+hardware register so that the timer works in master mode. Other specific 
+master settings are not affected.
+- **`kSlaveTimer`:** This parameter specifies the timer that will be used 
+as slave. The `Setup()` method will perform the necessary settings 
+required to set this timer unit as a slave from the specified master.  
+Please note that not all master/slave combinations are possible, since 
+hardware implementation specifies a subset of possible options.
+- **`kMasterMode`:** This parameter specifies the mode that the master 
+timer will run. One of the following values is possible:
+  - **`MasterMode::kUpdate`:** Sends trigger to slave on every update event
+  - **`MasterMode::kEnable`:** Sends trigger to slave when master is enabled
+  - **`MasterMode::kComparePulse`:** Positive pulse on CC1IF
+  - **`MasterMode::kCompare1`:** OC1REF used as trigger output
+  - **`MasterMode::kCompare2`:** OC2REF used as trigger output
+  - **`MasterMode::kCompare3`:** OC3REF used as trigger output
+  - **`MasterMode::kCompare4`:** OC4REF used as trigger output
+- **`SlaveMode`:** This parameter specifies the mode for the slave timer.  
+One of the following values are possible:
+  - **`SlaveMode::kMasterIsClock`:** Triggers from master are used to generate clock
+  - **`SlaveMode::kResetCnt`:** Trigger from master clears the slave counter
+  - **`SlaveMode::kGatedMode`:** High triggers from master enables/gates the slave counter clock
+  - **`SlaveMode::kStartMode`:** Counter start when master triggers. Only start is controlled
+- **`kPrescaler`:** This parameter sets the value of the **PSC** hardware register.
 
 
 # Timer Device (`Any<>`)
