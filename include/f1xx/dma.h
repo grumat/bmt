@@ -353,7 +353,7 @@ public:
 	ALWAYS_INLINE static uint16_t GetTransferCount()
 	{
 		DMA_Channel_TypeDef *dma = GetDevice();
-		return dma->CNDTR;
+		return (uint16_t)dma->CNDTR;
 	}
 
 	/// Sets the source pointer address
@@ -500,3 +500,4 @@ public:
 
 }	// namespace Dma
 }	// namespace Bmt
+

@@ -190,7 +190,7 @@ public:
 	/// Effective APB2 clock frequency (a constant)
 	static constexpr uint32_t kApb2Clock_ = kAhbClock_ / uint32_t(kApb2Prs);
 	/// Effective clock for timer connected to APB2
-	static constexpr uint32_t kApb2TimerClock_ = (kApb1Prs == ApbPrscl::k1) ? kApb2Clock_ : 2 * kApb2Clock_;
+	static constexpr uint32_t kApb2TimerClock_ = (kApb2Prs == ApbPrscl::k1) ? kApb2Clock_ : 2 * kApb2Clock_;
 	/// Flag indicating that clock used during boot has to be turned off
 	static const bool kHsiRcOff_ = (kOpts & SysClkOpts::kNoHsiOff) == SysClkOpts::kDefault;
 	/// Clock output mode

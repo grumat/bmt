@@ -296,8 +296,8 @@ public:
 	{
 		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
 		{
-			TIM_TypeDef* timer_ = GetDevice();
-			timer_->DIER |= TIM_DIER_TDE;
+			TIM_TypeDef* timer = GetDevice();
+			timer->DIER |= TIM_DIER_TDE;
 		}
 		else
 		{
@@ -310,8 +310,8 @@ public:
 	{
 		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
 		{
-			TIM_TypeDef* timer_ = GetDevice();
-			timer_->DIER &= ~TIM_DIER_TDE;
+			TIM_TypeDef* timer = GetDevice();
+			timer->DIER &= ~TIM_DIER_TDE;
 		}
 		else
 		{
@@ -324,8 +324,8 @@ public:
 	{
 		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
 		{
-			TIM_TypeDef* timer_ = GetDevice();
-			timer_->DIER |= TIM_DIER_UDE;
+			TIM_TypeDef* timer = GetDevice();
+			timer->DIER |= TIM_DIER_UDE;
 		}
 		else
 		{
@@ -338,8 +338,8 @@ public:
 	{
 		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
 		{
-			TIM_TypeDef* timer_ = GetDevice();
-			timer_->DIER &= ~TIM_DIER_UDE;
+			TIM_TypeDef* timer = GetDevice();
+			timer->DIER &= ~TIM_DIER_UDE;
 		}
 		else
 		{
@@ -406,18 +406,18 @@ public:
 template <
 	const Unit kTimerNum
 	, typename SysClk
-	, const uint32_t kMHz = 1000000
+	, const uint32_t kHz = 1000000
 >
 class InternalClock_Hz : public AnyTimer_<kTimerNum>
 {
 public:
 	typedef AnyTimer_<kTimerNum> BASE;
-	static constexpr uint32_t kFrequency_ = kMHz;
+	static constexpr uint32_t kFrequency_ = kHz;
 	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
-	static constexpr uint32_t kPrescaler_raw_ = (uint32_t)((kClkTick_ + kMHz/2) / kMHz);
+	static constexpr uint32_t kPrescaler_raw_ = (uint32_t)((kClkTick_ + kHz/2) / kHz);
 	static constexpr uint32_t kPrescaler_ = kPrescaler_raw_ > 0 ? kPrescaler_raw_ - 1 : 0;
 
 	ALWAYS_INLINE static void Setup()
@@ -903,7 +903,7 @@ public:
 	//! Enables interrupt masks
 	ALWAYS_INLINE static void EnableIrq(void)
 	{
-		TIM_TypeDef *timer_ = BASE::GetDevice();
+		TIM_TypeDef *timer = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
 		{
 #ifdef TIM1_BASE
@@ -945,7 +945,7 @@ public:
 	//! Disables interrupts
 	ALWAYS_INLINE static void DisableIrq(void)
 	{
-		TIM_TypeDef *timer_ = BASE::GetDevice();
+		TIM_TypeDef *timer = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
 		{
 #ifdef TIM1_BASE
@@ -987,30 +987,30 @@ public:
 	/// Enable "update" DMA
 	ALWAYS_INLINE static void EnableUpdateDma(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
-		timer_->DIER |= TIM_DIER_UDE;
+		TIM_TypeDef* timer = BASE::GetDevice();
+		timer->DIER |= TIM_DIER_UDE;
 		// Main Timer Interrupt settings controlled by timer device
 	}
 	/// Disable "update" DMA
 	ALWAYS_INLINE static void DisableUpdateDma(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
-		timer_->DIER &= ~TIM_DIER_UDE_Msk;
+		TIM_TypeDef* timer = BASE::GetDevice();
+		timer->DIER &= ~TIM_DIER_UDE_Msk;
 		// Main Timer Interrupt settings controlled by timer device
 	}
 
 	/// Enable "trigger" DMA
 	ALWAYS_INLINE static void EnableTriggerDma(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
-		timer_->DIER |= TIM_DIER_TDE;
+		TIM_TypeDef* timer = BASE::GetDevice();
+		timer->DIER |= TIM_DIER_TDE;
 		// Main Timer Interrupt settings controlled by timer device
 	}
 	/// Disable "trigger" DMA
 	ALWAYS_INLINE static void DisableTriggerDma(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
-		timer_->DIER &= ~TIM_DIER_TDE_Msk;
+		TIM_TypeDef* timer = BASE::GetDevice();
+		timer->DIER &= ~TIM_DIER_TDE_Msk;
 		// Main Timer Interrupt settings controlled by timer device
 	}
 
@@ -1019,6 +1019,8 @@ public:
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->CNT = 0;
+		if (kBuffered_)
+			timer->EGR = TIM_EGR_UG;	// UG Event
 		timer->CR1 |= TIM_CR1_CEN;
 	}
 
@@ -1032,27 +1034,27 @@ public:
 	ALWAYS_INLINE static void StartRepetition(const uint8_t rep)
 	{
 		static_assert(BASE::HasRepetitionCounter());
-		TIM_TypeDef *timer_ = BASE::GetDevice();
-		timer_->RCR = rep-1;
-		timer_->EGR = TIM_EGR_UG;		// UG Event
+		TIM_TypeDef *timer = BASE::GetDevice();
+		timer->RCR = rep-1;
+		timer->EGR = TIM_EGR_UG;		// UG Event
 		if(kBuffered_)
-			timer_->EGR = TIM_EGR_UG;	// UG Event
-		timer_->CR1 |= TIM_CR1_CEN;
+			timer->EGR = TIM_EGR_UG;	// UG Event
+		timer->CR1 |= TIM_CR1_CEN;
 	}
 
 	ALWAYS_INLINE static void StartRepetition(const TypCnt cnt, const uint8_t rep)
 	{
 		static_assert(BASE::HasRepetitionCounter());
-		TIM_TypeDef *timer_ = BASE::GetDevice();
-		timer_->ARR = cnt;
-		timer_->RCR = rep-1;
-		timer_->EGR = TIM_EGR_UG;		// UG Event
+		TIM_TypeDef *timer = BASE::GetDevice();
+		timer->ARR = cnt;
+		timer->RCR = rep-1;
+		timer->EGR = TIM_EGR_UG;		// UG Event
 		if (kBuffered_)
-			timer_->EGR = TIM_EGR_UG;	// UG Event
-		timer_->CR1 |= TIM_CR1_CEN;
+			timer->EGR = TIM_EGR_UG;	// UG Event
+		timer->CR1 |= TIM_CR1_CEN;
 	}
 
-	ALWAYS_INLINE static TypCnt GetCounter() { return (BASE::GetDevice())->CNT; }
+	ALWAYS_INLINE static TypCnt GetCounter() { return (TypCnt)(BASE::GetDevice())->CNT; }
 
 	ALWAYS_INLINE static TypCnt DistanceOf(TypCnt start) { return GetCounter() - start; }
 
@@ -1110,38 +1112,38 @@ public:
 	//! Enable timer in single shot mode, using default tick count
 	ALWAYS_INLINE static void StartShot()
 	{
-		TIM_TypeDef *timer_ = BASE::GetDevice();
+		TIM_TypeDef *timer = BASE::GetDevice();
 		if (kTimerMode_ == Mode::kSingleShot || kTimerMode_ == Mode::kUpCounter)
 		{
-			timer_->CNT = 0;
+			timer->CNT = 0;
 			if (kBuffered_)
-				timer_->EGR = TIM_EGR_UG;	// UG Event
+				timer->EGR = TIM_EGR_UG;	// UG Event
 		}
-		timer_->EGR = TIM_EGR_UG;
-		timer_->CR1 |= TIM_CR1_CEN;
+		timer->EGR = TIM_EGR_UG;
+		timer->CR1 |= TIM_CR1_CEN;
 	}
 
 	//! Enable timer in single shot mode, specifying the total number of ticks
 	ALWAYS_INLINE static void StartShot(const TypCnt ticks)
 	{
-		TIM_TypeDef *timer_ = BASE::GetDevice();
-		timer_->ARR = ticks;
+		TIM_TypeDef *timer = BASE::GetDevice();
+		timer->ARR = ticks;
 		if (kTimerMode_ == Mode::kSingleShot || kTimerMode_ == Mode::kUpCounter)
 		{
-			timer_->CNT = 0;
+			timer->CNT = 0;
 			if (kBuffered_)
-				timer_->EGR = TIM_EGR_UG;	// UG Event
+				timer->EGR = TIM_EGR_UG;	// UG Event
 		}
-		timer_->EGR = TIM_EGR_UG;
-		timer_->CR1 |= TIM_CR1_CEN;
+		timer->EGR = TIM_EGR_UG;
+		timer->CR1 |= TIM_CR1_CEN;
 	}
 
 	//! In single shot mode timer will turn off automatically
 	ALWAYS_INLINE static void WaitForAutoStop()
 	{
-		TIM_TypeDef *timer_ = BASE::GetDevice();
+		TIM_TypeDef *timer = BASE::GetDevice();
 		// CEN is cleared automatically in one-pulse mode
-		while ((timer_->CR1 & TIM_CR1_CEN) != 0)
+		while ((timer->CR1 & TIM_CR1_CEN) != 0)
 		{
 		}
 	}
@@ -1177,20 +1179,20 @@ public:
 	}
 	ALWAYS_INLINE static bool HasElapsed()
 	{
-		TIM_TypeDef *timer_ = (TIM_TypeDef *)Base::kTimerBase_;
-		return ((timer_->CR1 & TIM_CR1_CEN) == 0);
+		TIM_TypeDef *timer = (TIM_TypeDef *)Base::kTimerBase_;
+		return ((timer->CR1 & TIM_CR1_CEN) == 0);
 	}
 
 protected:
 	// NO_INLINE ensure a function call and a stable overhead
 	static void Delay_(const uint16_t num) NO_INLINE
 	{
-		TIM_TypeDef* timer_ = (TIM_TypeDef*)Base::kTimerBase_;
-		timer_->ARR = num;
+		TIM_TypeDef* timer = (TIM_TypeDef*)Base::kTimerBase_;
+		timer->ARR = num;
 		if (Base::kBuffered_)
-			timer_->EGR = TIM_EGR_UG;	// update ARR
-		timer_->EGR = TIM_EGR_UG;
-		timer_->CR1 |= TIM_CR1_CEN;
+			timer->EGR = TIM_EGR_UG;	// update ARR
+		timer->EGR = TIM_EGR_UG;
+		timer->CR1 |= TIM_CR1_CEN;
 		// CEN is cleared automatically in one-pulse mode
 		Base::WaitForAutoStop();
 	}
@@ -1230,20 +1232,20 @@ public:
 
 	ALWAYS_INLINE static void EnableIrq(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
+		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (BASE::kChannelNum_)
 		{
 		case Channel::k1:
-			timer_->DIER |= TIM_DIER_CC1IE;
+			timer->DIER |= TIM_DIER_CC1IE;
 			break;
 		case Channel::k2:
-			timer_->DIER |= TIM_DIER_CC2IE;
+			timer->DIER |= TIM_DIER_CC2IE;
 			break;
 		case Channel::k3:
-			timer_->DIER |= TIM_DIER_CC3IE;
+			timer->DIER |= TIM_DIER_CC3IE;
 			break;
 		case Channel::k4:
-			timer_->DIER |= TIM_DIER_CC4IE;
+			timer->DIER |= TIM_DIER_CC4IE;
 			break;
 		}
 		// Main Timer Interrupt settings controlled by timer device
@@ -1251,20 +1253,20 @@ public:
 
 	ALWAYS_INLINE static void DisableIrq(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
+		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
 		case Channel::k1:
-			timer_->DIER &= ~TIM_DIER_CC1IE;
+			timer->DIER &= ~TIM_DIER_CC1IE;
 			break;
 		case Channel::k2:
-			timer_->DIER &= ~TIM_DIER_CC2IE;
+			timer->DIER &= ~TIM_DIER_CC2IE;
 			break;
 		case Channel::k3:
-			timer_->DIER &= ~TIM_DIER_CC3IE;
+			timer->DIER &= ~TIM_DIER_CC3IE;
 			break;
 		case Channel::k4:
-			timer_->DIER &= ~TIM_DIER_CC4IE;
+			timer->DIER &= ~TIM_DIER_CC4IE;
 			break;
 		}
 		// Main Timer Interrupt settings controlled by timer device
@@ -1274,20 +1276,20 @@ public:
 	{
 		if (DmaChInfo_::kChan_ != Dma::Chan::kNone)
 		{
-			TIM_TypeDef* timer_ = BASE::GetDevice();
+			TIM_TypeDef* timer = BASE::GetDevice();
 			switch (kChannelNum_)
 			{
 			case Channel::k1:
-				timer_->DIER |= TIM_DIER_CC1DE;
+				timer->DIER |= TIM_DIER_CC1DE;
 				break;
 			case Channel::k2:
-				timer_->DIER |= TIM_DIER_CC2DE;
+				timer->DIER |= TIM_DIER_CC2DE;
 				break;
 			case Channel::k3:
-				timer_->DIER |= TIM_DIER_CC3DE;
+				timer->DIER |= TIM_DIER_CC3DE;
 				break;
 			case Channel::k4:
-				timer_->DIER |= TIM_DIER_CC4DE;
+				timer->DIER |= TIM_DIER_CC4DE;
 				break;
 			}
 			// Main Timer Interrupt settings controlled by timer device
@@ -1301,20 +1303,20 @@ public:
 
 	ALWAYS_INLINE static void DisableDma(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
+		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
 		{
 		case Channel::k1:
-			timer_->DIER &= ~TIM_DIER_CC1DE;
+			timer->DIER &= ~TIM_DIER_CC1DE;
 			break;
 		case Channel::k2:
-			timer_->DIER &= ~TIM_DIER_CC2DE;
+			timer->DIER &= ~TIM_DIER_CC2DE;
 			break;
 		case Channel::k3:
-			timer_->DIER &= ~TIM_DIER_CC3DE;
+			timer->DIER &= ~TIM_DIER_CC3DE;
 			break;
 		case Channel::k4:
-			timer_->DIER &= ~TIM_DIER_CC4DE;
+			timer->DIER &= ~TIM_DIER_CC4DE;
 			break;
 		}
 		// Main Timer Interrupt settings controlled by timer device
@@ -1461,61 +1463,61 @@ public:
 		static_assert(kPrescaler_ == 0 || kPrescaler_ == 2 || kPrescaler_ == 4 || kPrescaler_ == 8, "Unsupported prescaler value");
 		static_assert(kFilter_ < 16, "Filter parameter must be a value between 0 and 15");
 
-		TIM_TypeDef* timer_ = BASE::GetDevice();
+		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
 		{
 		case Channel::k1:
-			timer_->CCR1 = 0;
-			timer_->CCMR1 = kICxF | kICxPSC | kCCxS;
+			timer->CCR1 = 0;
+			timer->CCMR1 = kICxF | kICxPSC | kCCxS;
 			break;
 		case Channel::k2:
-			timer_->CCR2 = 0;
-			timer_->CCMR1 = kICxF | kICxPSC | kCCxS;
+			timer->CCR2 = 0;
+			timer->CCMR1 = kICxF | kICxPSC | kCCxS;
 			break;
 		case Channel::k3:
-			timer_->CCR3 = 0;
-			timer_->CCMR2 = kICxF | kICxPSC | kCCxS;
+			timer->CCR3 = 0;
+			timer->CCMR2 = kICxF | kICxPSC | kCCxS;
 			break;
 		case Channel::k4:
-			timer_->CCR4 = 0;
-			timer_->CCMR2 = kICxF | kICxPSC | kCCxS;
+			timer->CCR4 = 0;
+			timer->CCMR2 = kICxF | kICxPSC | kCCxS;
 			break;
 		}
-		uint32_t tmp = timer_->CCER & ~(0xf << kShift4_);
+		uint32_t tmp = timer->CCER & ~(0xf << kShift4_);
 		tmp |= kCCx;
-		timer_->CCER = tmp;
+		timer->CCER = tmp;
 	}
 
 	/// Enables capture register
 	ALWAYS_INLINE static void Enable(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
-		timer_->CCER |= (TIM_CCER_CC1E << kShift4_);
+		TIM_TypeDef* timer = BASE::GetDevice();
+		timer->CCER |= (TIM_CCER_CC1E << kShift4_);
 	}
 
 	/// Disables capture register
 	ALWAYS_INLINE static void Disable(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
-		timer_->CCER &= ~(TIM_CCER_CC1E << kShift4_);
+		TIM_TypeDef* timer = BASE::GetDevice();
+		timer->CCER &= ~(TIM_CCER_CC1E << kShift4_);
 	}
 
 	ALWAYS_INLINE static void EnableIrq(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
+		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
 		{
 		case Channel::k1:
-			timer_->DIER |= TIM_DIER_CC1IE;
+			timer->DIER |= TIM_DIER_CC1IE;
 			break;
 		case Channel::k2:
-			timer_->DIER |= TIM_DIER_CC2IE;
+			timer->DIER |= TIM_DIER_CC2IE;
 			break;
 		case Channel::k3:
-			timer_->DIER |= TIM_DIER_CC3IE;
+			timer->DIER |= TIM_DIER_CC3IE;
 			break;
 		case Channel::k4:
-			timer_->DIER |= TIM_DIER_CC4IE;
+			timer->DIER |= TIM_DIER_CC4IE;
 			break;
 		}
 		// Main Timer Interrupt settings controlled by timer device
@@ -1523,20 +1525,20 @@ public:
 
 	ALWAYS_INLINE static void DisableIrq(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
+		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
 		{
 		case Channel::k1:
-			timer_->DIER &= ~TIM_DIER_CC1IE;
+			timer->DIER &= ~TIM_DIER_CC1IE;
 			break;
 		case Channel::k2:
-			timer_->DIER &= ~TIM_DIER_CC2IE;
+			timer->DIER &= ~TIM_DIER_CC2IE;
 			break;
 		case Channel::k3:
-			timer_->DIER &= ~TIM_DIER_CC3IE;
+			timer->DIER &= ~TIM_DIER_CC3IE;
 			break;
 		case Channel::k4:
-			timer_->DIER &= ~TIM_DIER_CC4IE;
+			timer->DIER &= ~TIM_DIER_CC4IE;
 			break;
 		}
 		// Main Timer Interrupt settings controlled by timer device
@@ -1544,20 +1546,20 @@ public:
 
 	ALWAYS_INLINE static void EnableDma(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
+		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
 		{
 		case Channel::k1:
-			timer_->DIER |= TIM_DIER_CC1DE;
+			timer->DIER |= TIM_DIER_CC1DE;
 			break;
 		case Channel::k2:
-			timer_->DIER |= TIM_DIER_CC2DE;
+			timer->DIER |= TIM_DIER_CC2DE;
 			break;
 		case Channel::k3:
-			timer_->DIER |= TIM_DIER_CC3DE;
+			timer->DIER |= TIM_DIER_CC3DE;
 			break;
 		case Channel::k4:
-			timer_->DIER |= TIM_DIER_CC4DE;
+			timer->DIER |= TIM_DIER_CC4DE;
 			break;
 		}
 		// Main Timer Interrupt settings controlled by timer device
@@ -1565,20 +1567,20 @@ public:
 
 	ALWAYS_INLINE static void DisableDma(void)
 	{
-		TIM_TypeDef* timer_ = BASE::GetDevice();
+		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
 		{
 		case Channel::k1:
-			timer_->DIER &= ~TIM_DIER_CC1DE;
+			timer->DIER &= ~TIM_DIER_CC1DE;
 			break;
 		case Channel::k2:
-			timer_->DIER &= ~TIM_DIER_CC2DE;
+			timer->DIER &= ~TIM_DIER_CC2DE;
 			break;
 		case Channel::k3:
-			timer_->DIER &= ~TIM_DIER_CC3DE;
+			timer->DIER &= ~TIM_DIER_CC3DE;
 			break;
 		case Channel::k4:
-			timer_->DIER &= ~TIM_DIER_CC4DE;
+			timer->DIER &= ~TIM_DIER_CC4DE;
 			break;
 		}
 		// Main Timer Interrupt settings controlled by timer device
@@ -1620,19 +1622,19 @@ class AnyOutputChannel : public AnyChannel_<TimType::kTimerNum_, kChannelNum>
 {
 public:
 	typedef AnyChannel_<TimType::kTimerNum_, kChannelNum> BASE;
-	static constexpr uint16_t kCcmr_Mask =
+	static constexpr uint32_t kCcmr_Mask =
 		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCMR1_CC1S_Msk | TIM_CCMR1_OC1FE_Msk | TIM_CCMR1_OC1PE_Msk | TIM_CCMR1_OC1M_Msk | TIM_CCMR1_OC1CE_Msk
 		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCMR1_CC2S_Msk | TIM_CCMR1_OC2FE_Msk | TIM_CCMR1_OC2PE_Msk | TIM_CCMR1_OC2M_Msk | TIM_CCMR1_OC2CE_Msk
 		: (BASE::kChannelNum_ == Channel::k3) ? TIM_CCMR2_CC3S_Msk | TIM_CCMR2_OC3FE_Msk | TIM_CCMR2_OC3PE_Msk | TIM_CCMR2_OC3M_Msk | TIM_CCMR2_OC3CE_Msk
 		: (BASE::kChannelNum_ == Channel::k4) ? TIM_CCMR2_CC4S_Msk | TIM_CCMR2_OC4FE_Msk | TIM_CCMR2_OC4PE_Msk | TIM_CCMR2_OC4M_Msk | TIM_CCMR2_OC4CE_Msk
 		: 0;
-	static constexpr uint16_t kCcer_Mask =
+	static constexpr uint32_t kCcer_Mask =
 		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCER_CC1E_Msk | TIM_CCER_CC1P_Msk | TIM_CCER_CC1NE_Msk | TIM_CCER_CC1NP_Msk
 		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCER_CC2E_Msk | TIM_CCER_CC2P_Msk | TIM_CCER_CC2NE_Msk | TIM_CCER_CC2NP_Msk
 		: (BASE::kChannelNum_ == Channel::k3) ? TIM_CCER_CC3E_Msk | TIM_CCER_CC3P_Msk | TIM_CCER_CC3NE_Msk | TIM_CCER_CC3NP_Msk
 		: (BASE::kChannelNum_ == Channel::k4) ? TIM_CCER_CC4E_Msk | TIM_CCER_CC4P_Msk
 		: 0;
-	static constexpr uint16_t kCCxE =
+	static constexpr uint32_t kCCxE =
 		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCER_CC1E
 		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCER_CC2E
 		: (BASE::kChannelNum_ == Channel::k3) ? TIM_CCER_CC3E
