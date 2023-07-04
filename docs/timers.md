@@ -911,6 +911,178 @@ One of the following values are possible:
 - **`kPrescaler`:** This parameter sets the value of the **PSC** hardware register.
 
 
-# Timer Device (`Any<>`)
+# Timer Counter (`Any<>`)
+
+This class is the core of a STM32 timer, which consist of a prescaler, 
+counter, reload value and eventually a repetition counter (for advanced 
+timer units).
+
+![images/timer-counter-unit.svg](images/timer-counter-unit.svg)
+
+<div hidden>
+```raw
+@startuml timer-counter-unit
+rectangle arr [
+	Reload Value
+]
+rectangle rep [
+	Repetition Counter
+	<i>Present on advanced timer units</i>
+]
+rectangle cnt [
+	Counter
+]
+rectangle pre [
+	Prescaler
+	<i>Divides clock frequency</i>
+]
+circle "Clock" as clk
+circle "Update" as upd
+rep -left--> cnt
+arr --> cnt
+cnt -right-> rep
+pre -right-> cnt
+clk -right-> pre
+arr -right-> upd
+@enduml
+```
+</div>
+
+Once a clock is defined a prescaler is applied to divide the clock 
+frequency. This elements are controlled by the input clock classes 
+covered before. 
+
+When the timer is enable it starts to increment the **counter**. When the 
+counter value reaches the **Reload Value** an **update** is triggered and 
+counter restarts.
+
+If the timer direction is to decrement counter, then behavior is a bit 
+different: Counter is decremented down to zero and the **reload value** 
+is used to restart counting.
+
+**Update** events a triggered whenever the timer restarts, independent of 
+the count direction. This events can trigger an interrupt, a DMA action 
+or a flag that can be read by software.
+
+Advanced timers provide an additional counter that limits the number of 
+timer cycles. This is called **Repetition Counter**.
+
+A timer instance can be attached to capture or compare channels, provided 
+by the hardware. For instance, more classes are provided for these 
+channels and will be covered later. 
+
+The template class definition follows:
+
+```cpp
+template <
+	typename TimeBase
+	, const Mode kTimerMode = Mode::kUpCounter
+	, const uint32_t kReload = 0
+	, const bool kBuffered = true
+>
+class Any : public AnyTimer_<TimeBase::kTimerNum_>
+{
+	//...
+}
+```
+
+
+## The `Any<>` Template Parameters
+
+The template parameters are the following:
+- **`TimeBase`**: This is the clock input responsible to provide a valid 
+clock source and a prescaler value.
+- **`kTimerMode`**: This is the timer mode and can be one of the 
+following options:
+  - **`Mode::kUpCounter`**: This is an up counter which reloads when the 
+  reload value is reached.
+  - **`Mode::kDownCounter`**: This is a down counter which reloads when 
+  the counter reaches zero.
+  - **`Mode::kSingleShot`**: This is an up counter that works in a single 
+  shot. The timer stops when the programmed count is reached.
+  - **`Mode::kSingleShotDown`**: This is a down counter that works in a 
+  single shot. The timer stops when the counter reaches zero.
+- **`kReload`**: This is the desired count value, subtracted by 1 and 
+used as reload value when timer counter overflows.
+- **`kBuffered`**: Hardware registers have shadow buffers which are 
+transferred only on an update event. This is very important feature 
+depending on the type of application. For example if you want to update 
+the reload register with a new value, counter is probably in an unknown 
+value, which could cause an undefined state in your timer logic. By 
+activating the intermediate buffer, the new reload value is applied on 
+a controlled counter state (i.e. when it restarts).
+
+
+## The `Any<>` Members
+
+A series of members are defined for this template class:
+- **`TypCnt`**: Either a **`uint16_t`** or **`uint32_t`** data-type 
+specifying the counter resolution.
+- **`kPrescaler_`**: A constant value and copy of the prescaler value 
+computed by the clock source.
+- **`kFrequency_`**: A constant value and copy of the frequency value 
+computed by the clock source.
+- **`kTimerMode_`**: A constant value and copy of the **`kTimerMode`** 
+template parameter.
+- **`kBuffered_`**: A constant value and copy of the **`kBuffered`** 
+template parameter.
+- **`Init()`**: First time initialization of the timer hardware, 
+including:
+  - Activation of the clock line provided by the bus.
+  - Setup of the time base template
+  - Setup of the timer itself
+- **`Setup()`**: Configures the timer to operate in the desired mode, 
+including prescaler and auto-reload value.
+- **`Stop()`**: Disables timer completely by disconnecting the bus clock. 
+This is designed when entering low power state. After this call, the 
+timer will requite the call to Init for a complete initialization of the 
+hardware.
+- **`EnableIrq()`**: Enable the interrupt request when timer updates 
+(i.e. when restarting counter).
+- **`DisableIrq()`**: Disables the interrupt request.
+- **`EnableUpdateDma()`**: Enables the DMA request when timer update 
+occurs.
+- **`DisableUpdateDma()`**: Disables DMA request on timer update.
+- **`EnableTriggerDma()`**: Enables DMA request on timer trigger. Timer 
+trigger depends on external sources, like master/slave timers or 
+capturing digital signals.
+- **`DisableTriggerDma()`**: Disables the DMA for trigger event.
+- **`CounterStart()`**: Starts the timer counter.
+- **`CounterStop()`**: Stops the timer counter.
+- **`StartRepetition()`**: Starts the repetition counter, which repeats 
+the timer cycle for a specified count. This is only supported on advanced 
+timers. Old STM32 generations are limited to a 8-bit value while newer 
+generation has a 16-bit counter.
+- **`GetCounter()`**: Reads the current value of the counter.
+- **`DistanceOf()`**: Allows you to compute the amount of ticks has been 
+elapsed since a starting reference value.
+- **`M2T<>`**: A template class used to convert a constant value 
+expressed in milliseconds to timer ticks.
+- **`U2T<>`**: A template class used to convert a constant value 
+expressed in microseconds to timer ticks.
+- **`ToTicks()`**: Conversion from variable expressed in microseconds or 
+milliseconds to timer ticks. Also works with constants but performance is 
+subject to compiler optimization level.
+- **`GetRawValue()`**: Same as **`GetCounter()`**, but this is required 
+for compatibility with **stopwatch.h** classes like 
+**`MicroStopWatch<>`** and **`PolledStopWatch<>`**. 
+- **`GetElapsedTicksEx()`**: Compatibility layer with  **stopwatch.h** 
+classes.
+- **`StartShot()`**: Starts a single shot timer operation, optionally 
+setting the auto-reload value.
+- **`WaitForAutoStop()`**: Halts CPU and waits for timer to stop, when 
+configured in single shot mode.
+- **`IsTimerEnabled()`**: Checks if timer is enabled.
+
+
+# Timer as a Dedicated Delay Generator (`AnyTimerDelay<>`)
+
+This is a simple template class that can be used to generate delays using 
+a dedicated timer unit. It is a legacy component and should be avoided. 
+The library has probably better options to generate delays while sharing 
+a hardware resource with other functionality.
+
+
+
 
 
