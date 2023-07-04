@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{8e0d72b9-1ed2-405f-bfab-366b557ea866}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory).gitignore" />
+    <None Include="$(MSBuildThisFileDirectory)include\f1xx\tim_dma_id.inl" />
+    <None Include="$(MSBuildThisFileDirectory)include\l4xx\tim_dma_id.inl" />
+    <None Include="$(MSBuildThisFileDirectory)LICENSE" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\bmt.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\clocks.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\compiler.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\critical_section.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\delay.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\dma.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\exti.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\clocks.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\delay.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\dma-cfgs.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\dma.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\exti.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\gpio-types.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\gpio.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\pinremap.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\system.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\timer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\uart.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\fifo.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\clocks.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\delay.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\dma-cfgs.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\dma.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\dmamux.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\exti.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\gpio-types.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\gpio.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\pinremap.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\system.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\timer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\g4xx\uart.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\gpio-utils.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\gpio.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\irq.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\kits\lcd1602.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\clocks.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\delay.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\dma-cfgs.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\dma.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\exti.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\gpio-types.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\gpio.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\pinremap.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\system.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\timer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\l4xx\uart.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\mcu-system.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\otherlibs.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\pinremap.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\power.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyHse.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyHsi.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyLse.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyLsi.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyMsi.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyPllVco.4xx.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyPllVco.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\spi.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\stopwatch.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\stream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\systick.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\timer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\trace.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\uart.h" />
+  </ItemGroup>
+</Project>
