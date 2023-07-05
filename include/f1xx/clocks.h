@@ -93,7 +93,7 @@ public:
 	static constexpr Id kClockInput_ = ClockSource::kClockSource_;
 
 	/// Starts associated oscillator and then the PLL
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		// Makes sure that the source clock is supported by the PLL hardware
 		static_assert(kClockInput_ == Id::kHSE || kClockInput_ == Id::kHSI, "Cannot bind clock source in chain with the PLL. Only HSI and HSE are supported");
@@ -109,7 +109,7 @@ public:
 	}
 
 	/// Enables the PLL oscillator, assuming associated source was already started
-	constexpr static void Enable(void)
+	constexpr static void Enable()
 	{
 		// Work on register
 		uint32_t tmp = 0;
@@ -133,7 +133,7 @@ public:
 		while(!(RCC->CR & RCC_CR_PLLRDY)); 
 	}
 	/// Disables the PLL oscillator. You must ensure that associated peripherals are mapped elsewhere
-	constexpr static void Disable(void)
+	constexpr static void Disable()
 	{
 		RCC->CR &= ~RCC_CR_PLLON;
 	}
@@ -241,7 +241,7 @@ public:
 	typedef System::WaitState < kFrequency_, ClockSource::kClockSource_ == Id::kPLL> WaitState;
 
 	/// Starts associated oscillator, initializes clock tree prescalers and use oscillator for system clock
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		// Initialization clocks in chain for code simplicity
 		ClockSource::Init();
@@ -262,7 +262,7 @@ public:
 	}
 
 	/// Initializes clock tree prescalers, assuming associated source was already started
-	constexpr static void Enable(void)
+	constexpr static void Enable()
 	{
 		// System clock restricts sources
 		static_assert(

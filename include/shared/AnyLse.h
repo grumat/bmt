@@ -45,7 +45,7 @@ public:
 		while (!(RCC->BDCR & RCC_BDCR_LSERDY));
 	}
 	/// Disables the LSE oscillator. You must ensure that associated peripherals are mapped elsewhere
-	constexpr static void Disable(void)
+	constexpr static void Disable()
 	{
 		RCC->BDCR &= ~RCC_BDCR_LSEON;
 	}

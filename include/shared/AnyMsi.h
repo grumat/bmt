@@ -69,12 +69,12 @@ public:
 	static_assert(kFrequency_ > 1, "Hardware does not supports specified frequency");
 	
 	/// Starts MSI oscillator
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		Enable();
 	}
 	/// Enables the MSI oscillator
-	constexpr static void Enable(void)
+	constexpr static void Enable()
 	{
 		// MSIRANGE can be modified when MSI is OFF or when MSI is ready
 		if (RCC->CR & RCC_CR_MSION)
@@ -99,7 +99,7 @@ public:
 		while (!(RCC->CR & RCC_CR_MSIRDY));
 	}
 	/// Disables the MSI oscillator. You must ensure that associated peripherals are mapped elsewhere
-	constexpr static void Disable(void)
+	constexpr static void Disable()
 	{
 		RCC->CR &= ~(RCC_CR_MSION_Msk | RCC_CR_MSIPLLEN_Msk);
 	}

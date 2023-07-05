@@ -541,7 +541,7 @@ struct SpiTemplate
 	}
 
 	/// Checks if busy bit is active
-	ALWAYS_INLINE static bool IsBusy(void)
+	ALWAYS_INLINE static bool IsBusy()
 	{
 		volatile SPI_TypeDef*spi = GetDevice();
 		return spi->SR & SPI_SR_BSY;

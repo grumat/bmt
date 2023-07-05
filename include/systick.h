@@ -4,7 +4,7 @@
 #include "exti.h"
 
 /// Application defined `tick handler` defined on the App
-extern "C" void SysTick_Handler(void);
+extern "C" void SysTick_Handler();
 
 namespace Bmt
 {
@@ -46,7 +46,7 @@ public:
 	static inline volatile uint32_t soft_tick_;
 
 	/// Initialize the tick timer
-	ALWAYS_INLINE static void Init(void)
+	ALWAYS_INLINE static void Init()
 	{
 		soft_tick_ = 0;
 		SysTick->LOAD = kReload_;
@@ -54,12 +54,12 @@ public:
 		EnableIRQ();
 	}
 	/// Enables the ISR driven by the timer interrupt request
-	ALWAYS_INLINE static void EnableIRQ(void)
+	ALWAYS_INLINE static void EnableIRQ()
 	{
 		SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
 	}
 	/// Disables timer interrupt request
-	ALWAYS_INLINE static void DisableIRQ(void)
+	ALWAYS_INLINE static void DisableIRQ()
 	{
 		SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
 	}
@@ -138,7 +138,7 @@ public:
 
 protected:
 	/// ISR can access this class
-	friend void SysTick_Handler(void);
+	friend void SysTick_Handler();
 	/// Simple tick counter is implemented here
 	ALWAYS_INLINE static void Handler()
 	{
@@ -206,7 +206,7 @@ public:
 	static inline volatile uint32_t soft_tick_;
 
 	/// Initialize the timer
-	ALWAYS_INLINE static void Init(void)
+	ALWAYS_INLINE static void Init()
 	{
 		// A soft timer shall be slower as the tick timer
 		static_assert(kSoftFreq < kFrequency, "Soft timer shall be slower than the hardware timer that drives it");
@@ -217,7 +217,7 @@ protected:
 	/// Counter for the soft timer
 	static inline uint32_t soft_counter_;
 	/// Tick handler has full access this class
-	friend void SysTick_Handler(void);
+	friend void SysTick_Handler();
 	/// This implements the ISR Handler
 	ALWAYS_INLINE static void Handler()
 	{
@@ -263,7 +263,7 @@ public:
 
 
 	/// Initialize the tick timer
-	ALWAYS_INLINE static void Init(void)
+	ALWAYS_INLINE static void Init()
 	{
 		SysTick->LOAD = 0x00FFFFFF;
 		SysTick->CTRL = SysTick_CTRL_ENABLE_Msk;		// CPU/8

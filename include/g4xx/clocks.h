@@ -259,7 +259,7 @@ public:
 		);
 
 	/// Starts associated oscillator, initializes clock tree prescalers and use oscillator for system clock
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		// Initialization clocks in chain for code simplicity
 		ClockSource::Init();
@@ -275,7 +275,7 @@ public:
 	}
 
 	/// Initializes clock tree prescalers, assuming associated source was already started
-	constexpr static void Enable(void)
+	constexpr static void Enable()
 	{
 		// Before switching to a faster clock, impose compatible wait state to avoid crash
 		if ((kOpts & SysClkOpts::kFreqDown) == SysClkOpts::kDefault)
@@ -414,20 +414,20 @@ public:
 	/// Clock required by the USB peripheral
 	static constexpr uint32_t kUsbClock = 48000000UL;
 	/// Starts associated oscillator, initializes system clock prescalers and use oscillator for system clock
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		super::Init();
 		SetUsbClock();
 	}
 	/// Initializes clock tree prescalers, assuming associated source was already started
-	constexpr static void Enable(void)
+	constexpr static void Enable()
 	{
 		super::Enable();
 		SetUsbClock();
 	}
 protected:
 	/// Computes the USB clock
-	constexpr static void SetUsbClock(void)
+	constexpr static void SetUsbClock()
 	{
 		static_assert
 			(

@@ -27,13 +27,13 @@ struct AnyAFR
 	static constexpr bool kNoRemap = (CONF == 0x00000000UL) && (MASK == 0xFFFFFFFFUL);
 
 	/// Enables the alternate function
-	ALWAYS_INLINE static void Enable(void)
+	ALWAYS_INLINE static void Enable()
 	{
 		if (kNoRemap == false)
 			AFIO->MAPR = (AFIO->MAPR & kMask_) | kConf_;
 	}
 	/// Disables the alternate function
-	ALWAYS_INLINE static void Disable(void)
+	ALWAYS_INLINE static void Disable()
 	{
 		if (kNoRemap == false)
 			AFIO->MAPR = AFIO->MAPR & kMask_;
@@ -107,7 +107,7 @@ struct AnyAFR
 	constexpr static volatile GPIO_TypeDef *Io() { return (volatile GPIO_TypeDef *)kPortBase_; }
 
 	/// Enables the alternate function
-	ALWAYS_INLINE static void Enable(void)
+	ALWAYS_INLINE static void Enable()
 	{
 		if (kAFRL_Mask_ != ~0UL)
 		{
@@ -121,7 +121,7 @@ struct AnyAFR
 		}
 	}
 	/// Disables the alternate function (don't care)
-	ALWAYS_INLINE static void Disable(void)
+	ALWAYS_INLINE static void Disable()
 	{
 	}
 };

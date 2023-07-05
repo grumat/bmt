@@ -27,18 +27,18 @@ public:
 	static constexpr Id kClockInput_ = kClockSource_;
 
 	/// Starts LSI oscillator
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		Enable();
 	}
 	/// Enables the LSI oscillator
-	constexpr static void Enable(void)
+	constexpr static void Enable()
 	{
 		RCC->CSR |= RCC_CSR_LSION;
 		while (!(RCC->CSR & RCC_CSR_LSIRDY));
 	}
 	/// Disables the LSI oscillator. You must ensure that associated peripherals are mapped elsewhere
-	constexpr static void Disable(void)
+	constexpr static void Disable()
 	{
 		RCC->CSR &= ~RCC_CSR_LSION;
 	}

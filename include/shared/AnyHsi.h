@@ -27,20 +27,20 @@ public:
 	static constexpr Id kClockInput_ = kClockSource_;
 
 	/// Starts HSI16 oscillator
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		Enable();
 		// Apply calibration
 		Trim(kTrim);
 	}
 	/// Enables the HSI oscillator
-	constexpr static void Enable(void)
+	constexpr static void Enable()
 	{
 		RCC->CR |= RCC_CR_HSION;
 		while (!(RCC->CR & RCC_CR_HSIRDY));
 	}
 	/// Disables the HSI oscillator. You must ensure that associated peripherals are mapped elsewhere
-	constexpr static void Disable(void)
+	constexpr static void Disable()
 	{
 		RCC->CR &= ~RCC_CR_HSION;
 	}

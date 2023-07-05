@@ -95,7 +95,7 @@ public:
 	static constexpr Id kClockInput_ = ClockSource::kClockSource_;
 
 	/// Starts associated oscillator and then the PLL
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		// The '/R' divisor of the PLL (aka RCC_PLLCFGR.PLLR) has fixed options
 		static_assert(kPllFraction_.r == 2
@@ -130,7 +130,7 @@ public:
 	}
 
 	/// Enables the PLL oscillator, assuming associated source was already started
-	constexpr static void Enable(void)
+	constexpr static void Enable()
 	{
 		uint32_t tmp = 0;
 #if defined(RCC_PLLCFGR_PLLSRC_MSI)
@@ -214,7 +214,7 @@ public:
 		while (!(RCC->CR & RCC_CR_PLLRDY));
 	}
 	/// Disables the PLL oscillator. You must ensure that associated peripherals are mapped elsewhere
-	constexpr static void Disable(void)
+	constexpr static void Disable()
 	{
 		RCC->CR &= ~(RCC_CR_PLLON);
 		RCC->PLLCFGR & ~(RCC_PLLCFGR_PLLSRC_Msk);	// Disables clock chaining

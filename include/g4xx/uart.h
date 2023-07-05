@@ -105,7 +105,7 @@ public:
 	ALWAYS_INLINE static volatile USART_TypeDef &Io()	{ return *(volatile USART_TypeDef*)kUsartBase_; }
 
 	/// Initialize the object
-	ALWAYS_INLINE static void Init(void)
+	ALWAYS_INLINE static void Init()
 	{
 		static_assert(kUsartBase_ != 0, "Invalid USART device");
 		// Size of word is 7, 8 or 9
@@ -162,50 +162,50 @@ public:
 	}
 
 	/// Enable the peripheral by activating clock
-	ALWAYS_INLINE static void Enable(void)
+	ALWAYS_INLINE static void Enable()
 	{
 		(kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR1) |= kRccUsartFlag_;
 		volatile uint32_t delay = (kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR1) & kRccUsartFlag_;
 	}
 
 	/// Turns clock off, disabling the peripheral
-	ALWAYS_INLINE static void Disable(void)
+	ALWAYS_INLINE static void Disable()
 	{
 		(kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR1) &= ~kRccUsartFlag_;
 	}
 
 	/// Enables the TX interrupt
-	ALWAYS_INLINE static void EnableTxIrq(void)
+	ALWAYS_INLINE static void EnableTxIrq()
 	{
 		Io().CR1 |= USART_CR1_TXEIE;
 	}
 
 	/// Disables the TX interrupt
-	ALWAYS_INLINE static void DisableTxIrq(void)
+	ALWAYS_INLINE static void DisableTxIrq()
 	{
 		Io().CR1 &= ~USART_CR1_TXEIE;
 	}
 
 	/// Returns the transmit complete flag
-	ALWAYS_INLINE static bool TxComplete(void)
+	ALWAYS_INLINE static bool TxComplete()
 	{
 		return Io().ISR & USART_ISR_TC;
 	}
 
 	/// Enables the RX interrupt
-	ALWAYS_INLINE static void EnableRxIrq(void)
+	ALWAYS_INLINE static void EnableRxIrq()
 	{
 		Io().CR1 |= USART_CR1_RXNEIE;
 	}
 
 	/// Disables the RX interrupt
-	ALWAYS_INLINE static void DisableRxIrq(void)
+	ALWAYS_INLINE static void DisableRxIrq()
 	{
 		Io().CR1 &= ~USART_CR1_RXNEIE;
 	}
 
 	/// Clear RX interrupt flag, reenabling the input
-	ALWAYS_INLINE static void ClearRxIrq(void)
+	ALWAYS_INLINE static void ClearRxIrq()
 	{
 		Io().ISR &= ~USART_ISR_RXNE;
 	}
@@ -216,7 +216,7 @@ public:
 		return Io().ISR;
 	}
 	
-	ALWAYS_INLINE static uint16_t GetByte(void)
+	ALWAYS_INLINE static uint16_t GetByte()
 	{
 		switch (kWordLen_)
 		{
@@ -281,7 +281,7 @@ public:
 // Interface to the interrupt driver
 public:
 	/// Initialize object
-	ALWAYS_INLINE void Init(void)
+	ALWAYS_INLINE void Init()
 	{
 		m_BufIn.Reset();
 		m_BufOut.Reset();

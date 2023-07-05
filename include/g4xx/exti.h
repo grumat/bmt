@@ -139,10 +139,10 @@ public:
 	ALWAYS_INLINE static void ClearIrq()
 	{}
 	/// A placeholder (stripped out by compiler)
-	ALWAYS_INLINE static void SupendIrq(void)
+	ALWAYS_INLINE static void SupendIrq()
 	{}
 	/// A placeholder (stripped out by compiler)
-	ALWAYS_INLINE static void ResumeIrq(void)
+	ALWAYS_INLINE static void ResumeIrq()
 	{}
 	/// A placeholder (stripped out by compiler)
 	ALWAYS_INLINE static void SetEvent()
@@ -323,7 +323,7 @@ public:
 #endif
 	}
 	/// Disables IRQ on the EXTI peripheral
-	ALWAYS_INLINE static void EnableIrq(void)
+	ALWAYS_INLINE static void EnableIrq()
 	{
 		if (kExtiIntMask)
 			EXTI->IMR1 |= kExtiIntMask;
@@ -331,7 +331,7 @@ public:
 			EXTI->IMR2 |= kExtiIntMask2;
 	}
 	/// Disables IRQ on the EXTI peripheral
-	ALWAYS_INLINE static void DisableIrq(void)
+	ALWAYS_INLINE static void DisableIrq()
 	{
 		if (kExtiIntMask)
 			EXTI->IMR1 &= ~kExtiIntMask;
@@ -339,7 +339,7 @@ public:
 			EXTI->IMR2 &= ~kExtiIntMask2;
 	}
 	/// Suspends IRQ on the NVIC
-	ALWAYS_INLINE static void SupendIrq(void)
+	ALWAYS_INLINE static void SupendIrq()
 	{
 		// Apply constant mask value for Interrupt set-enable registers 0 on NVIC
 		if (kExtiNvicIntMask0)
@@ -349,7 +349,7 @@ public:
 			NVIC->ICER[1] |= kExtiNvicIntMask1;
 	}
 	/// Resumes IRQ on the NVIC
-	ALWAYS_INLINE static void ResumeIrq(void)
+	ALWAYS_INLINE static void ResumeIrq()
 	{
 		// Apply constant mask value for Interrupt set-enable registers 0 on NVIC
 		if (kExtiNvicIntMask0)
@@ -407,7 +407,7 @@ To reenable all interrupts of the joystick:
 
 A minimal interrupt handler routine is shown next:
 \code{.cpp}
-void EXTI9_5_IRQHandler(void)
+void EXTI9_5_IRQHandler()
 {
 	if (ButtonLeft::IsPending())
 	{
@@ -596,7 +596,7 @@ public:
 		;
 
 	/// Starts module clock and enables configuration
-	ALWAYS_INLINE static void Init(void)
+	ALWAYS_INLINE static void Init()
 	{
 #ifdef RCC_APB2ENR_AFIOEN
 		RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
@@ -605,7 +605,7 @@ public:
 		Enable();
 	}
 	/// Applies settings to an already initialized EXTI
-	ALWAYS_INLINE static void Enable(void)
+	ALWAYS_INLINE static void Enable()
 	{
 		// Apply constant on Rising trigger selection register
 		EXTI->RTSR1 = kExtiTriggerRising;
@@ -661,7 +661,7 @@ public:
 			NVIC->ICER[1] |= kExtiNvicIntMask1;
 	}
 	/// Disables IRQ on the EXTI peripheral
-	ALWAYS_INLINE static void EnableIrq(void)
+	ALWAYS_INLINE static void EnableIrq()
 	{
 		if (kExtiIntMask)
 			EXTI->IMR1 |= kExtiIntMask;
@@ -669,7 +669,7 @@ public:
 			EXTI->IMR2 |= kExtiIntMask2;
 	}
 	/// Disables IRQ on the EXTI peripheral
-	ALWAYS_INLINE static void DisableIrq(void)
+	ALWAYS_INLINE static void DisableIrq()
 	{
 		if (kExtiIntMask)
 			EXTI->IMR1 &= ~kExtiIntMask;
@@ -677,7 +677,7 @@ public:
 			EXTI->IMR2 &= ~kExtiIntMask2;
 	}
 	/// Clear IRQ pending flags
-	ALWAYS_INLINE static void ClearAllPendingFlags(void)
+	ALWAYS_INLINE static void ClearAllPendingFlags()
 	{
 		if (kExtiBitValue)
 			EXTI->PR1 = kExtiBitValue;
@@ -693,7 +693,7 @@ public:
 #endif
 	}
 	/// Suspends IRQ on the NVIC
-	ALWAYS_INLINE static void SupendIrqs(void)
+	ALWAYS_INLINE static void SupendIrqs()
 	{
 		// Apply constant mask value for Interrupt set-enable registers 0 on NVIC
 		if (kExtiNvicIntMask0)
@@ -703,7 +703,7 @@ public:
 			NVIC->ICER[1] |= kExtiNvicIntMask1;
 	}
 	/// Resumes IRQ on the NVIC
-	ALWAYS_INLINE static void ResumeIrqs(void)
+	ALWAYS_INLINE static void ResumeIrqs()
 	{
 		// Apply constant mask value for Interrupt set-enable registers 0 on NVIC
 		if (kExtiNvicIntMask0)

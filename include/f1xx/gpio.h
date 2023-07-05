@@ -199,7 +199,7 @@ public:
 	}
 
 	/// Sets pin up. The pin will be high as long as it is configured as GPIO output
-	constexpr static void SetHigh(void)
+	constexpr static void SetHigh()
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
@@ -209,7 +209,7 @@ public:
 	};
 
 	/// Sets pin down. The pin will be low as long as it is configured as GPIO output
-	constexpr static void SetLow(void)
+	constexpr static void SetLow()
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
@@ -228,7 +228,7 @@ public:
 	}
 
 	/// Reads current Pin electrical state
-	constexpr static bool Get(void)
+	constexpr static bool Get()
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
@@ -240,7 +240,7 @@ public:
 	}
 
 	/// Checks if current pin electrical state is high
-	constexpr static bool IsHigh(void)
+	constexpr static bool IsHigh()
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
@@ -252,7 +252,7 @@ public:
 	}
 	
 	/// Checks if current pin electrical state is low
-	constexpr static bool IsLow(void)
+	constexpr static bool IsLow()
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
@@ -264,7 +264,7 @@ public:
 	}
 
 	/// Toggles pin state
-	constexpr static void Toggle(void)
+	constexpr static void Toggle()
 	{
 		if (kODR_Mask_ != (uint16_t)~0U)
 		{
@@ -1060,7 +1060,7 @@ public:
 
 	/// Initialize to GPIO overwriting all previous configuration of the port
 	/// This means that Unchanged<> pins have the same behavior as Unused<>.
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		/*
 		** Note all constants (i.e. constexpr) are resolved at compile time and unused code is stripped

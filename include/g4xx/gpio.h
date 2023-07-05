@@ -158,7 +158,7 @@ public:
 	constexpr static volatile GPIO_TypeDef &Io() { return *(volatile GPIO_TypeDef *)kPortBase_; }
 
 	/// Apply default configuration for the pin.
-	constexpr static void SetupPinMode(void)
+	constexpr static void SetupPinMode()
 	{
 		volatile GPIO_TypeDef &port = Io();
 		if (kMODER_Mask_ != ~0UL)
@@ -178,7 +178,7 @@ public:
 	static_assert(kMode_ != Mode::kAnalog || kPuPd_ != PuPd::kPullUp, "Pull-up not allowed in Analog mode");
 
 	/// Apply default configuration for the pin.
-	constexpr static void Setup(void)
+	constexpr static void Setup()
 	{
 		SetupPinMode();
 		Map::Enable();
@@ -250,7 +250,7 @@ public:
 	}
 
 	/// Sets pin up. The pin will be high as long as it is configured as GPIO output
-	constexpr static void SetHigh(void)
+	constexpr static void SetHigh()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -260,7 +260,7 @@ public:
 	};
 
 	/// Sets pin down. The pin will be low as long as it is configured as GPIO output
-	constexpr static void SetLow(void)
+	constexpr static void SetLow()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -279,7 +279,7 @@ public:
 	}
 
 	/// Reads current Pin electrical state
-	constexpr static bool Get(void)
+	constexpr static bool Get()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -291,7 +291,7 @@ public:
 	}
 
 	/// Checks if current pin electrical state is high
-	constexpr static bool IsHigh(void)
+	constexpr static bool IsHigh()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -303,7 +303,7 @@ public:
 	}
 
 	/// Checks if current pin electrical state is low
-	constexpr static bool IsLow(void)
+	constexpr static bool IsLow()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -315,7 +315,7 @@ public:
 	}
 
 	/// Toggles pin state
-	constexpr static void Toggle(void)
+	constexpr static void Toggle()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -1168,7 +1168,7 @@ public:
 		);
 
 	/// Initialize to Port assuming the first use of all GPIO pins
-	constexpr static void Init(void)
+	constexpr static void Init()
 	{
 		SUPER::EnableClock();
 		SUPER::Enable();

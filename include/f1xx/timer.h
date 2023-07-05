@@ -340,7 +340,7 @@ public:
 		return (TIM_TypeDef *)kTimerBase_;
 	}
 
-	ALWAYS_INLINE static void EnableTriggerDma(void)
+	ALWAYS_INLINE static void EnableTriggerDma()
 	{
 		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
 		{
@@ -354,7 +354,7 @@ public:
 		}
 	}
 
-	ALWAYS_INLINE static void DisableTriggerDma(void)
+	ALWAYS_INLINE static void DisableTriggerDma()
 	{
 		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
 		{
@@ -368,7 +368,7 @@ public:
 		}
 	}
 
-	ALWAYS_INLINE static void EnableUpdateDma(void)
+	ALWAYS_INLINE static void EnableUpdateDma()
 	{
 		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
 		{
@@ -382,7 +382,7 @@ public:
 		}
 	}
 
-	ALWAYS_INLINE static void DisableUpdateDma(void)
+	ALWAYS_INLINE static void DisableUpdateDma()
 	{
 		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
 		{
@@ -943,7 +943,7 @@ public:
 	}
 
 	//! Enables interrupt masks
-	ALWAYS_INLINE static void EnableIrq(void)
+	ALWAYS_INLINE static void EnableIrq()
 	{
 		TIM_TypeDef *timer = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
@@ -1003,7 +1003,7 @@ public:
 	}
 
 	//! Disables interrupts
-	ALWAYS_INLINE static void DisableIrq(void)
+	ALWAYS_INLINE static void DisableIrq()
 	{
 		TIM_TypeDef *timer = BASE::GetDevice();
 		switch (BASE::kTimerNum_)
@@ -1063,14 +1063,14 @@ public:
 	}
 
 	/// Enable "update" DMA
-	ALWAYS_INLINE static void EnableUpdateDma(void)
+	ALWAYS_INLINE static void EnableUpdateDma()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->DIER |= TIM_DIER_UDE;
 		// Main Timer Interrupt settings controlled by timer device
 	}
 	/// Disable "update" DMA
-	ALWAYS_INLINE static void DisableUpdateDma(void)
+	ALWAYS_INLINE static void DisableUpdateDma()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->DIER &= ~TIM_DIER_UDE_Msk;
@@ -1078,14 +1078,14 @@ public:
 	}
 
 	/// Enable "trigger" DMA
-	ALWAYS_INLINE static void EnableTriggerDma(void)
+	ALWAYS_INLINE static void EnableTriggerDma()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->DIER |= TIM_DIER_TDE;
 		// Main Timer Interrupt settings controlled by timer device
 	}
 	/// Disable "trigger" DMA
-	ALWAYS_INLINE static void DisableTriggerDma(void)
+	ALWAYS_INLINE static void DisableTriggerDma()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->DIER &= ~TIM_DIER_TDE_Msk;
@@ -1093,7 +1093,7 @@ public:
 	}
 
 	//! Starts the counting
-	ALWAYS_INLINE static void CounterStart(void)
+	ALWAYS_INLINE static void CounterStart()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->CNT = 0;
@@ -1103,7 +1103,7 @@ public:
 	}
 
 	//! Stops timer
-	ALWAYS_INLINE static void CounterStop(void)
+	ALWAYS_INLINE static void CounterStop()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->CR1 &= ~TIM_CR1_CEN;
@@ -1307,7 +1307,7 @@ public:
 		return 0;
 	}
 
-	ALWAYS_INLINE static void EnableIrq(void)
+	ALWAYS_INLINE static void EnableIrq()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (BASE::kChannelNum_)
@@ -1328,7 +1328,7 @@ public:
 		// Main Timer Interrupt settings controlled by timer device
 	}
 
-	ALWAYS_INLINE static void DisableIrq(void)
+	ALWAYS_INLINE static void DisableIrq()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
@@ -1349,7 +1349,7 @@ public:
 		// Main Timer Interrupt settings controlled by timer device
 	}
 
-	ALWAYS_INLINE static void EnableDma(void)
+	ALWAYS_INLINE static void EnableDma()
 	{
 		if (DmaChInfo_::kChan_ != Dma::Chan::kNone)
 		{
@@ -1378,7 +1378,7 @@ public:
 		}
 	}
 
-	ALWAYS_INLINE static void DisableDma(void)
+	ALWAYS_INLINE static void DisableDma()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum_)
@@ -1534,7 +1534,7 @@ public:
 		kEdge_ == CaptureEdge::kFalling ? (TIM_CCER_CC1P) << kShift4_ : 0;
 
 	/// Enables input channel
-	ALWAYS_INLINE static void Setup(void)
+	ALWAYS_INLINE static void Setup()
 	{
 		static_assert(kCCxS != 0, "Selected channel (P2) does not support given channel input (P3)");
 		static_assert(kPrescaler_ == 0 || kPrescaler_ == 2 || kPrescaler_ == 4 || kPrescaler_ == 8, "Unsupported prescaler value");
@@ -1566,20 +1566,20 @@ public:
 	}
 
 	/// Enables capture register
-	ALWAYS_INLINE static void Enable(void)
+	ALWAYS_INLINE static void Enable()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->CCER |= (TIM_CCER_CC1E << kShift4_);
 	}
 
 	/// Disables capture register
-	ALWAYS_INLINE static void Disable(void)
+	ALWAYS_INLINE static void Disable()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		timer->CCER &= ~(TIM_CCER_CC1E << kShift4_);
 	}
 
-	ALWAYS_INLINE static void EnableIrq(void)
+	ALWAYS_INLINE static void EnableIrq()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
@@ -1600,7 +1600,7 @@ public:
 		// Main Timer Interrupt settings controlled by timer device
 	}
 
-	ALWAYS_INLINE static void DisableIrq(void)
+	ALWAYS_INLINE static void DisableIrq()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
@@ -1621,7 +1621,7 @@ public:
 		// Main Timer Interrupt settings controlled by timer device
 	}
 
-	ALWAYS_INLINE static void EnableDma(void)
+	ALWAYS_INLINE static void EnableDma()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
@@ -1642,7 +1642,7 @@ public:
 		// Main Timer Interrupt settings controlled by timer device
 	}
 
-	ALWAYS_INLINE static void DisableDma(void)
+	ALWAYS_INLINE static void DisableDma()
 	{
 		TIM_TypeDef* timer = BASE::GetDevice();
 		switch (kChannelNum)
