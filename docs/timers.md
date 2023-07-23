@@ -1075,14 +1075,379 @@ configured in single shot mode.
 - **`IsTimerEnabled()`**: Checks if timer is enabled.
 
 
+## Example
+
+The following example shows a timer counting 1,000,000 times a second, 
+and a counter overflowing after 1,000 counts. So, each millisecond an 
+update event occurs.
+
+```cpp
+// A data-type for the 8 MHz HSE clock
+typedef Clocks::AnyHse<> Hse;			// BluePill has a 8MHz XTAL
+// A data-type for the clock tree
+typedef Clocks::AnySycClk<Hse> SysClk;	// uses HSE for the clock tree
+
+// Computes the prescaler for 1 MHz counter speed (8MHz / 8)
+typedef InternalClock_Hz <kTim1, SysClk, 8000UL-1UL> Microsec;
+// Timer that overflows every 1 ms (1000Hz) [note: count is 0-base]
+typedef Timer::Any<Microsec, Mode::kUpCounter, 1000UL-1UL> OneMs;
+```
+
+To initialize this setup, crystal clock and timer shall be done 
+explicitly:
+
+```cpp
+extern "C" void SystemInit()
+{
+	// Reset clock system before starting program
+	System::Init();
+	// Starts desired clock
+	SysClk::Init();
+	// Initializes TIM1
+	OneMs::Init();
+}
+```
+
+Now the timer is configured, but still not enabled. To start continuously 
+counting, you need to call `CounterStart()`:
+
+```cpp
+void StartMyCounter()
+{
+	// Starts counting at 1 MHz
+	OneMs::CounterStart();
+}
+```
+
+You could handle an interrupt on every timer update (i.e. when the 
+counter overflows):
+
+```cpp
+void StartMyCounterAndInterrupt()
+{
+	// Eanble interrupt
+	OneMs::EnableIrq();
+	// Starts counting at 1 MHz
+	OneMs::CounterStart();
+}
+
+extern "C" void TIM1_UP_IRQHandler()
+{
+	// Do something during interrupt
+}
+```
+
+The following important things has to be observed for this case:
+- The name of the interrupt routines are reserved and could differs 
+between different MCU models.  
+The list of names are listed in the startup file, which is quite 
+difficult to be located. You should search for the interrupt table in the 
+startup file. On the STM32F103 (Blue-pill) the file is installed in the 
+following STM32CubeMX subfolder:
+  - `.\Repository\STM32Cube_FW_F1_V1.8.4\Drivers\CMSIS\Device\ST\STM32F1xx\Source\Templates\gcc\startup_stm32f103xb.s`
+  - If you are a lucky user of the VisualGDB, the startup file is not 
+  written in assembly language. It uses C and GCC extensions and the path 
+  is: `"C:\Users\Mathias\AppData\Local\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F1xxxx\StartupFiles\startup_stm32f103xg.c"`
+- The interrupt routine needs to be declared `extern "C"` so compiler 
+knows how to bind the function with the startup file.
+
+> Please note that the example **06-dma-pwm** available on the package 
+> illustrates the use of two timers, one producing a PWM, and the other 
+> controls a DMA to reprogram the PWM ratio. The PWM output is then 
+> coupled to a low-pass filter to produce an analog signal. The result is 
+> a ECG Simulator.
+
+
 # Timer as a Dedicated Delay Generator (`AnyTimerDelay<>`)
 
 This is a simple template class that can be used to generate delays using 
 a dedicated timer unit. It is a legacy component and should be avoided. 
-The library has probably better options to generate delays while sharing 
-a hardware resource with other functionality.
+
+It basically programs the timer in one shot mode. To make the delay it 
+starts the timer and halts the CPU until the timer stops again.
+
+> The library has probably better options to generate delays while 
+> sharing a hardware resource with other functionality.
 
 
+# Capturing Digital Signals (`AnyInputChannel<>`)
 
+Besides the simple counter of a timer, a very useful feature is to 
+capture the current counter value and store into a dedicated hardware 
+register. The capture action is triggered by an input signal. This 
+feature allows one to accurately measure time differences.
+
+This is the template declaration:
+
+```cpp
+template <
+	const Unit kTimerNum
+	, const Channel kChannelNum
+	, const InputCapture kInputSrc
+	, const CaptureEdge kEdge = CaptureEdge::kRising
+	, const int kFilter = 0
+	, const int kPrescaler = 0
+>
+class AnyInputChannel : public AnyChannel_<kTimerNum, kChannelNum>
+{
+	//...
+}
+```
+
+> This class is still under development.
+
+# Comparing Counter Values (`AnyOutputChannel<>`)
+
+A very common application of timers is to generate signals based on a 
+desired time period. Therefore, a register is used to compare a value 
+against the current count value and a signal is generated on a value 
+match. This signal could generate an IRQ or DMA and handled by software. 
+But you can also specify an output to a MCU pin to produce controlled 
+pulses on it. PWM generation is one of the most common application. 
+
+![images/timer-compare.svg](images/timer-compare.svg)
+
+<div hidden>
+```raw
+@startuml timer-compare
+together {
+	rectangle ccr_4 [
+		Compare 4
+	]
+	rectangle outc_4 [
+		Output Control
+	]
+	circle "CC4I" as cci_4
+	boundary "OC4" as oc_4
+	boundary "OC4N" as ocn_4
+	ccr_4 --> outc_4
+	outc_4 --> oc_4
+	outc_4 --> ocn_4
+	ccr_4 -up-> cci_4
+}
+together {
+	rectangle ccr_3 [
+		Compare 3
+	]
+	rectangle outc_3 [
+		Output Control
+	]
+	circle "CC3I" as cci_3
+	boundary "OC3" as oc_3
+	boundary "OC3N" as ocn_3
+	ccr_3 --> outc_3
+	outc_3 --> oc_3
+	outc_3 --> ocn_3
+	ccr_3 -up-> cci_3
+}
+together {
+	rectangle ccr_2 [
+		Compare 2
+	]
+	rectangle outc_2 [
+		Output Control
+	]
+	circle "CC2I" as cci_2
+	boundary "OC2" as oc_2
+	boundary "OC2N" as ocn_2
+	ccr_2 --> outc_2
+	outc_2 --> oc_2
+	outc_2 --> ocn_2
+	ccr_2 -up-> cci_2
+}
+together {
+	rectangle ccr_1 [
+		Compare 1
+	]
+	rectangle outc_1 [
+		Output Control
+	]
+	circle "CC1I" as cci_1
+	boundary "OC1" as oc_1
+	boundary "OC1N" as ocn_1
+	ccr_1 --> outc_1
+	outc_1 --> oc_1
+	outc_1 --> ocn_1
+	ccr_1 -up-> cci_1
+}
+rectangle cnt [
+	Counter
+]
+circle "clock" as clk
+circle "Update" as upd
+clk -right-> cnt
+cnt -[thickness=5]right- ccr_1
+ccr_1 -[thickness=5]right- ccr_2
+ccr_2 -[thickness=5]right- ccr_3
+ccr_3 -[thickness=5]right-> ccr_4
+cnt -up-> upd
+@enduml
+```
+</div>
+
+The picture shows the clock signal acting upon the counter. The 
+generation of this clock signal was covered before. The value of the 
+counter is compared against any of the compare units. A series of 
+possibilities are available:
+- Issue an interrupt or DMA when the value comparison matches
+- Produce an effect on one or both of the output pins
+
+> Output pins have lots of programmable behaviors.
+
+## Template Definition
+
+The `AnyOutputChannel<>` template definition is shown below: 
+
+```cpp
+/// Configures a timer channel as compare mode (output)
+template <
+	typename TimType
+	, const Channel kChannelNum
+	, const OutMode kMode = OutMode::kFrozen
+	, const Output kOut = Output::kDisabled
+	, const Output kOutN = Output::kDisabled
+	, const bool kPreloadEnable = false
+	, const bool kFastEnable = false
+	, const bool kClearOnEtrf = false
+>
+class AnyOutputChannel : public AnyChannel_<TimType::kTimerNum_, kChannelNum>
+{
+	//...
+}
+```
+
+
+## The `AnyOutputChannel<>` Template Parameters
+
+The following template parameters are available:
+- **`TimType`**: This argument is the **`Any<>`** data-type that 
+describes the timer settings in detail.
+- **`kChannelNum`**: This is the channel number: **`Channel::k1`**, 
+**`Channel::k2`**, **`Channel::k3`** or **`Channel::k4`**.
+- **`kMode`**: This is the output mode and can be one of the following 
+value: 
+  - **`kFrozen`**:  The comparison between the output compare register 
+  **TIMx_CCRn** and the counter **TIMx_CNT** has no effect on the 
+  outputs. (This mode is used to generate a timing base).
+  - **`kSetActive`**: Set channel to active level on match. **OCnREF** 
+  signal is forced high when the counter **TIMx_CNT** matches the 
+  capture/compare register (**TIMx_CCRn**).
+  - **`kSetInactive`**: Set channel to inactive level on match. 
+  **OCnREF** signal is forced low when the counter **TIMx_CNT** matches 
+  the capture/compare register (**TIMx_CCRn**).
+  - **`kToggle`**: **OCnREF** toggles when `TIMx_CNT=TIMx_CCRn`.
+  - **`kForceInactive`**: Force inactive level - **OC1REF** is forced low. 
+  - **`kForceActive`**: Force active level - **OC1REF** is forced high. 
+  - **`kPWM1`**: PWM mode 1 - In upcounting, channel is active as long 
+  as **TIMx_CNT<TIMx_CCRn** else inactive. In downcounting, channel is 
+  inactive (**OCnREF='0'**) as long as **TIMx_CNT>TIMx_CCRn** else active 
+  (**OC1REF='1'**). 
+  - **`kPWM2`**: PWM mode 2 - In upcounting, channel is inactive as long 
+  as **TIMx_CNT<TIMx_CCRn** else active. In downcounting, channel is 
+  active as long as **TIMx_CNT>TIMx_CCRn** else inactive.
+- **`kOut`**: This argument controls the state of the output pin. One of 
+the following values are accepted:
+  - **`kDisabled`**: The output is disabled.
+  - **`kEnabled`**: The output is enabled. Note that GPIO pin needs to be 
+  configured properly to connect timer function to the hardware pin.
+  - **`kInverted`**: The output is enabled , though operating in inverted 
+  logic level.
+- **`kOutN`**: Usually a timer channel has a positive and a negative 
+output and this argument control the negative output. Possible values 
+imitates the **`kOut`** argument.
+- **`kPreloadEnable`**: This enables the preload feature of the compare 
+register. This is a good feature since you can write to the register 
+regardless of the current counter state, since it timer is still working 
+with the old compare value. The new value is acquired when the timer 
+updates (i.e. overflows) and the new cycle uses it.
+- **`kFastEnable`**: This flag spares some synchronization cycles 
+required when timer is controlled by an external clock source. If all 
+signals are within the timer clock domain a faster internal operation is 
+possible.
+- **`kClearOnEtrf`**: **ETRF** is the filtered **ETR** input signal. It 
+can be used to clear the **OCnREF** signal when a rising edge is 
+detected. This is useful to measure pulse widths.
+
+
+## `AnyOutputChannel<>` Members
+
+These are the most important members of the `AnyOutputChannel<>` template 
+class:
+- **`kChannelNum_`**: A constant that stores the capture/compare channel, 
+as specified during construction.
+- **`GetCcrAddress()`**: Returns a **`void *`** with the address of the 
+**CCRn** register. This register stores the capture/compare value. Use 
+this method to program a DMA channel.
+- **`EnableIrq()`**: Enables the interrupt request to handle a 
+capture/compare event. A proper IRQ handler shall be defined to handle 
+the interrupt event.
+- **`DisableIrq()`**: Disables the interrupt request.
+- **`EnableDma()`**: Enables the DMA signal triggered when a 
+capture/compare event occurs. Take a look at the **`Timer::DmaChInfo<>`** 
+template for an abstract view of the DMA channel associated to each 
+channel. 
+- **`DisableDma()`**: Disables the DMA signal.
+- **`SetCompare()`**: Sets the register with a new compare value.
+- **`GetCapture()`**: Reads current compare value.
+- **`HasCaptured()`**: This bit is set by hardware on a capture. It is cleared by reading the CCRx register.
+- **``**:
+
+
+## `AnyOutputChannel<>` Example
+
+The following example shows how to setup a PWM to produce a variable 
+pulse width within the range of a byte value. Associating the output with 
+a low-pass filter it has the effect of an 8-bit D/A converter:
+
+```cpp
+// A data-type for the 8 MHz HSE clock
+typedef Clocks::AnyHse<> Hse;	// BluePill has a 8MHz XTAL
+// A data-type for the clock tree
+typedef Clocks::AnySycClk <
+	Hse							// uses HSE for the clock tree
+> SysClk;
+// Computes the prescaler for 1 MHz counter speed
+typedef InternalClock_Hz <kTim1, SysClk, 1000000> PwmFreq;
+// PWM should quantize a byte (0-255)
+typedef Any<PwmFreq, Mode::kUpCounter, 255> Pwm;
+// The output channel, attached to PWM timer
+typedef AnyOutputChannel<Pwm
+	, Channel::k1
+	, OutMode::kPWM1
+	, Output::kEnabled
+	, Output::kDisabled
+	, true
+	, true
+> PwmOut;
+```
+
+> To complete this hardware setup one should define a GPIO output using 
+> the `Gpio::AnyPortSetup<>` template. See **examples\06-dma-pwm** for a 
+> working example.
+
+The code snippet below produces a saw-tooth shape, as long as the PWM 
+output is connected to a correctly tuned low-pass filter:
+
+```cpp
+// Produces a saw-tooth shape on the PWM output
+void SawTooth()
+{
+	// Try different values to change wave period
+	static constexpr int kDelayCount = 500;
+
+	// Do forever
+	while (true)
+	{
+		// Scan all byte value range (0 to 255)
+		for (int i = 0; i < 256; ++i)
+		{
+			// Apply new PWM ratio
+			PwmOut::SetCompare(i);
+			// The delay duration will define the frequency of the wave
+			for (volatile int j = 0; j < kDelayCount; ++j)	{}
+		}
+	}
+}
+```
 
 
