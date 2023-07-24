@@ -1389,8 +1389,25 @@ channel.
 - **`DisableDma()`**: Disables the DMA signal.
 - **`SetCompare()`**: Sets the register with a new compare value.
 - **`GetCapture()`**: Reads current compare value.
-- **`HasCaptured()`**: This bit is set by hardware on a capture. It is cleared by reading the CCRx register.
-- **``**:
+- **`HasCaptured()`**: The hardware sets a bit on a capture, which can be 
+read by this method. It is cleared when calling **`GetCapture()`**.
+- **`HasCompared()`**: The hardware sets a flag when the counter matches 
+the compare value. Flag is also cleared here by this method.
+- **`HasOverCaptured()`**: The counter value has been captured in 
+**CCRx** register while the capture flag was already set. Flag is also 
+cleared by this method.
+- **`GenerateCaptureEvent()`**: This is a software generated capture 
+event. 
+- **`GenerateCompareEvent()`**: This is a software generated compare 
+event. 
+- **`Init()`**: First time initialization for this channel, including the 
+base timer. Note that first time initialization should happen only once. 
+Timers are a composite of elements. Use **`Setup()`** for an already 
+initialized timer.
+- **`Setup()`**: Initializes the channel, according to the template 
+attributes.
+- **`SetOutputMode()`**: This overrides the setting applied by 
+**`Setup()`** and modifies the output mode.
 
 
 ## `AnyOutputChannel<>` Example
