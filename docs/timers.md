@@ -1468,3 +1468,20 @@ void SawTooth()
 ```
 
 
+# Timer and DMA (`DmaChInfo<>`)
+
+Since older STM32 devices did not feature a **DMAMUX** interface, DMA 
+lines are hard-wired to timer channels. 
+
+To ensure better portability, the library defines data types for each 
+available connection. So, if you want to refer to the DMA channel tied to 
+the channel 2 of timer 1 you would use the following data-type:
+
+```cpp
+DmaChInfo<kTim1, Channel::k2>
+```
+
+Then you can specify a Dma channel data-type, like:
+typedef DMA::AnyChannel<
+	DmaChInfo<kTim1, Channel::k2>,
+> MyDmaChannel;
