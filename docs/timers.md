@@ -1482,6 +1482,16 @@ DmaChInfo<kTim1, Channel::k2>
 ```
 
 Then you can specify a Dma channel data-type, like:
-typedef DMA::AnyChannel<
-	DmaChInfo<kTim1, Channel::k2>,
+```cpp
+typedef Dma::AnyChannel<
+	DmaChInfo<kTim1, Channel::k2>,	// This simply 'knows' what DMA to use
+	Dma::Dir::kMemToPer,			// Move data from memory to the peripheral
+	Dma::PtrPolicy::kLongPtrInc,	// Source will be incremented
+	Dma::PtrPolicy::kLongPtr,		// Destination is fixed
+	Dma::Prio::kMedium				// Use medium priority
 > MyDmaChannel;
+```
+
+The example does not want to explain how the DMA works or can be used, 
+but it illustrates how we can specify a portable way to map the right
+DMA channel for the given timer resource.
