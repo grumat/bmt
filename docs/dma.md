@@ -504,6 +504,40 @@ you would define a function, anywhere in your source code like this:
 ```cpp
 extern "C" void __attribute__((interrupt)) DMA1_Channel1_IRQHandler()
 {
+	// ...write your ISR body here...
+}
+```
+
+#### C++ Variant Using GCC Extension
+
+It is possible to use a GCC extension to bind the handler to a class, 
+allowing it to interact with the class members directly, taking advantage 
+of an OOP approach.
+
+In the example below a `MyDMA` class is declared with the addition of a 
+static method used as ISR:
+
+```cpp
+class MyDMA
+{
+	// ...your class members...
+
+private:
+	static void ISR() __attribute__((interrupt)) asm("DMA1_Channel1_IRQHandler");
+
+	// ...more class members...
+}
+```
+
+The `ISR()` method will be internally renamed by the compiler during code 
+generation to the name provided in the `asm()` instruction.
+
+In the implementation file you write the method as usual:
+
+```cpp
+void MyDMA::ISR()
+{
+	// ...your ISR body...
 }
 ```
 
@@ -535,19 +569,27 @@ extern "C" void SystemInit()
 	MyDma::Init();
 }
 
+// Very general example function
 void MyDmaExample(const uint8_t *my_data, uint16_t count)
 {
 	//...
 
-	// Initialize DMA to transfer values to CCR0 of PWM Output
+	// Initialize DMA to transfer values to CCR0 of DMA channel
 	MyDma::Setup();
-	// In this example PwmOut is an hypothetical data-type for another 
-	// timer configured in PWM mode. Writing bytes to the CCR address of 
-	// it, will setup new PWM ratio, according to current byte. The 
-	// update period of the TIM2 governs the sample rate.
-	MyDma::Start(my_data, PwmOut::GetCcrAddress(), count);
+	// COntrols the data flow from a memory table to the CCRx of
+	// another timer.
+	MyDma::Start(my_data, MyOtherTimer::GetCcrAddress(), count);
 
 	//...
 }
 ```
+
+> In this example we associate a data buffer with the CCRx address of 
+another timer. The example here uses the update signal of the **MyDma** 
+timer to copy bytes to the CCRx register of another timer.  
+In practice the **MyDma** timer establishes the sample rate in that bytes 
+are written to the other timer. This is covered on the **06-dma-pwm** 
+example to modulate a PWM based on a table. The data on the table 
+produces a single ECG pulse. An example on how to implement an ECG 
+simulator.
 
