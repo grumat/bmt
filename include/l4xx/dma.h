@@ -337,8 +337,8 @@ public:
 		DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR = tmp;
 		DMA_Request_TypeDef *sel = GetDeviceSel();
-		sel->CSELR = sel->CSELR & ~(0b1111 << (uint32_t(kChan_) << 4))
-			| (uint32_t(kChSel_) << (uint32_t(kChan_) << 4));
+		sel->CSELR = ( sel->CSELR & ~(0b1111 << (uint32_t(kChan_) << 4)) )
+			| ( (uint32_t(kChSel_) << (uint32_t(kChan_) << 4)) );
 	}
 
 	/// Enables the DMA channel

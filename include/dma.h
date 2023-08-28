@@ -116,8 +116,8 @@ enum class Prio
 #	include "l4xx/dma.h"
 #	include "l4xx/dma-cfgs.h"
 #elif defined(STM32G4)
-#	include "g4xx/dma.h"
 #	include "g4xx/dmamux.h"
+#	include "g4xx/dma.h"
 #	include "g4xx/dma-cfgs.h"
 #elif defined(STM32F1)
 #	include "f1xx/dma.h"
