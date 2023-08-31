@@ -17,8 +17,10 @@ template <
 class AnyChannel
 {
 public:
-	// A DMA::AnyID<> definition that identifies the DMA
+	/// A DMA::AnyID<> definition that identifies the DMA
 	typedef kDmaID DmaID_;
+	/// A data-type for the DMAMUX
+	typedef AnyMux<DmaID_> Mux_;
 	/// A constant with the DMA controller instance number
 	static constexpr Itf kDma_ = kDmaID::kItf_;
 	/// A constant with the DMA channel number
@@ -326,6 +328,7 @@ public:
 		}
 		DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR = tmp;
+		Mux_::Setup();
 	}
 
 	/// Enables the DMA channel
