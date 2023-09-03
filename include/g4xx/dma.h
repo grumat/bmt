@@ -183,6 +183,7 @@ public:
 		if (kDma_ == Itf::k2)
 			RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
 #endif
+		Mux_::Init();
 		// Optional NVIC initialization
 		if (kDoInitNvic)
 		{

@@ -21,14 +21,21 @@ public:
 	static constexpr PerifSel kChSel_ = kDmaID::kChSel_;
 	/// The address base of the DMA peripheral
 	static constexpr uint32_t kMuxBase_ =
-		(kDma_ == Itf::k1) ? DMAMUX1_Channel0_BASE + uint32_t(kChan_)
+		(kDma_ == Itf::k1) ? DMAMUX1_Channel0_BASE + 4*uint32_t(kChan_)
 #ifdef DMA2_BASE
-		: (kDma_ == Itf::k2) ? DMAMUX1_Channel8_BASE + uint32_t(kChan_)
+		: (kDma_ == Itf::k2) ? DMAMUX1_Channel8_BASE + 4*uint32_t(kChan_)
 #endif
 		: 0;
 
 	/// Returns root device structure
 	ALWAYS_INLINE static DMAMUX_Channel_TypeDef *GetDevice() { return (DMAMUX_Channel_TypeDef *)kMuxBase_; }
+
+	ALWAYS_INLINE static constexpr void Init()
+	{
+#ifdef RCC_AHB1ENR_DMAMUX1EN
+		RCC->AHB1ENR |= RCC_AHB1ENR_DMAMUX1EN;
+#endif
+	}
 
 	ALWAYS_INLINE static constexpr void Setup()
 	{
