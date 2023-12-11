@@ -105,8 +105,6 @@ enum class PerifSel : uint8_t
 	kLpuart1Tx = 35,	// LPUART1 TX
 #endif	// LPUART1_BASE
 
-	kMem2Mem = 0,	// MEM2MEM
-
 #ifdef QUADSPI_BASE
 	kQuadspi = 40,	// QUADSPI
 #endif	// QUADSPI_BASE
