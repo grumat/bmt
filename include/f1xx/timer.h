@@ -1823,7 +1823,7 @@ public:
 		// TIM1 has extra features
 		if (BASE::HasBreakFeature())
 		{
-			static constexpr uint16_t kCr2Bits =
+			constexpr uint16_t kCr2Bits =
 				(BASE::kChannelNum_ == Channel::k1) ? TIM_CR2_OIS1 | TIM_CR2_OIS1N
 				: (BASE::kChannelNum_ == Channel::k2) ? TIM_CR2_OIS2 | TIM_CR2_OIS2N
 				: (BASE::kChannelNum_ == Channel::k3) ? TIM_CR2_OIS3 | TIM_CR2_OIS3N

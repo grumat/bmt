@@ -117,6 +117,8 @@ class Periph:
 		s += ', PerifSel::' + self.CppEnumName()
 		s += '>'
 		return s
+	def IsTimer(self):
+		return self.perif == "TIM"
 
 
 def ReadFile() -> list:
@@ -214,6 +216,16 @@ def AssignDmaChanns(trig : list, dmas : dict, order : list):
 				last = kk
 				break
 	return None
+
+class TimDma :
+	def __init__(self, t : Periph, dma : str) -> None:
+		self.tim = t
+		group = (dma[0], dma[1], t.mux)
+		self.group = {}
+		self.group[t.trig] = group
+	def Append(self, t : Periph, dma : str):
+		group = (dma[0], dma[1], t.mux)
+		self.group[t.trig] = group
 
 class Generator:
 	def __init__(self, fh) -> None:
@@ -374,6 +386,67 @@ namespace Dma
 			self.fh.write(">\n")
 			self.fh.write("{ };\n")
 
+	def MakeTimDmaHeader(self):
+		self.fh.write("""// This was added for backward compatibility. G4 features a powerful MUX and this 
+// file should be ignored for native projects
+
+// Generic template for the DMA configuration for a given timer
+template<
+	const Unit kTimerNum
+>
+struct DmaInfo
+{
+	// Update Event
+	typedef Dma::IdNone Update;
+	// Trigger event
+	typedef Dma::IdNone Trigger;
+	// Communtation event
+	typedef Dma::IdNone Commutation;
+};
+
+template<
+	const Unit kTimerNum
+	, const Channel kChannel
+>
+struct DmaChInfo : Dma::IdNone
+{
+};
+
+""")
+		
+	def MakeTimDmaFooter(self):
+		self.fh.write("""
+
+""")
+		
+	def MakeTimDma(self, td : TimDma):
+		self.Begin(td.tim.Macro())
+		self.fh.write("// Template specialization for DMA settings of TIM{0}>\n".format(td.tim.unit))
+		self.fh.write("template<> struct DmaInfo<kTim{0}>\n".format(td.tim.unit))
+		self.fh.write("{\n")
+		if "UP" in td.group:
+			self.fh.write("\ttypedef Dma::IdTim{0}Up Update;\n".format(td.tim.unit))
+		else:
+			self.fh.write("\ttypedef Dma::IdNone Update;\n")
+		if "TRIG" in td.group:
+			self.fh.write("\ttypedef Dma::IdTim{0}Trig Trigger;\n".format(td.tim.unit))
+		else:
+			self.fh.write("\ttypedef Dma::IdNone Trigger;\n")
+		if "COM" in td.group:
+			self.fh.write("\ttypedef Dma::IdTim{0}Com Commutation;\n".format(td.tim.unit))
+		else:
+			self.fh.write("\ttypedef Dma::IdNone Commutation;\n")
+		self.fh.write("};\n")
+		self.fh.write("\n")
+		for i in range(1, 5):
+			s = "CH" + str(i)
+			if s in td.group:
+				self.fh.write("// Template specialization for DMA Channel settings for TIM{0}_{1}>\n".format(td.tim.unit, s))
+				self.fh.write("template<> struct DmaChInfo<kTim{0}, Channel::k{2}> : Dma::IdTim{0}{1}\n".format(td.tim.unit, s.capitalize(), i))
+				self.fh.write("{\n")
+				self.fh.write("};\n")
+				self.fh.write("\n")
+
 
 
 def PrintNames(trigs : list, insts : list):
@@ -409,11 +482,34 @@ def PrintNames(trigs : list, insts : list):
 		g.MakeDmaFooter()
 
 
+def MakeTimDmaId(trigs : list, insts : list):
+	order = []
+	tims = {}
+	for n in insts:
+		for t in trigs:
+			if n == t.SortName():
+				if t.IsTimer():
+					for dma in t.dmachans:
+						if t.unit not in tims:
+							tims[t.unit] = TimDma(t, dma)
+							order.append(t.unit)
+						else:
+							tims[t.unit].Append(t, dma)
+					break
+	with open("tim_dma_id.g4.inl", 'wt') as fh:
+		g = Generator(fh)
+		g.MakeTimDmaHeader()
+		for k in order:
+			g.MakeTimDma(tims[k])
+		g.Flush()
+		g.MakeTimDmaFooter()
+
 
 trigs = ReadFile()
 ReadFileL4(trigs)
 channs = CollectDmaChanns(trigs)
 insts = IdentifyInstances(trigs)
-channs = AssignDmaChanns(trigs, channs, insts)
+AssignDmaChanns(trigs, channs, insts)
 PrintNames(trigs, insts)
+MakeTimDmaId(trigs, insts)
 
