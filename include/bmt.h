@@ -1,6 +1,7 @@
 #pragma once
 
 #include "otherlibs.h"
+#include "dummy.h"
 #include "systick.h"
 #include "gpio-utils.h"
 #include "stream.h"

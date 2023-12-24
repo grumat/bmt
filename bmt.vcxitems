@@ -27,6 +27,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\critical_section.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\delay.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\dma.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\dummy.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\exti.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\clocks.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\f1xx\delay.h" />

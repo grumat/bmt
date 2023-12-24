@@ -224,5 +224,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyPllVco.h">
       <Filter>include\shared</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\dummy.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
