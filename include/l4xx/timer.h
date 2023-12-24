@@ -714,12 +714,14 @@ public:
 ** @tparam kTimerMode: See Mode
 ** @tparam kReload: A value used for the auto-reload register (ARR)
 ** @tparam kBuffered: If auto-reload register should have a buffer (ARPE bit)
+** @tparam kStrictUpdate: Update events are only caused by counter overflow (URS bit)
 */
 template <
 	typename TimeBase
 	, const Mode kTimerMode = Mode::kUpCounter
 	, const uint32_t kReload = 0
 	, const bool kBuffered = true
+	, const bool kStrictUpdate = false
 >
 class Any : public AnyTimer_<TimeBase::kTimerNum_>
 {
@@ -734,6 +736,7 @@ public:
 		| TIM_CR1_CKD_Msk
 		;
 	static constexpr bool kBuffered_ = kBuffered;
+	static constexpr bool kStrictUpdate_ = kStrictUpdate;
 
 	ALWAYS_INLINE static void Init()
 	{
@@ -830,6 +833,8 @@ public:
 		TIM_TypeDef *timer = BASE::GetDevice();
 		// Compute CR1 register
 		uint32_t tmp = kBuffered_ ? TIM_CR1_ARPE : 0;
+		if (kStrictUpdate_)
+			tmp |= TIM_CR1_URS;
 		if (kTimerMode_ == Mode::kDownCounter)
 		{
 			tmp |= TIM_CR1_DIR;
