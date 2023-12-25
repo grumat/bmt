@@ -30,6 +30,9 @@
     <None Include="$(MSBuildThisFileDirectory)include\l4xx\tim_dma_id.inl">
       <Filter>include\l4xx</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)include\g4xx\tim_dma_id.inl">
+      <Filter>include\g4xx</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\bmt.h">
