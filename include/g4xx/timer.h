@@ -1225,7 +1225,6 @@ public:
 	static constexpr Channel kChannelNum_ = kChannelNum;
 	// Data type with DMA information about this timer channel
 	typedef DmaChInfo <kTimerNum, kChannelNum> DmaChInfo_;
-	static constexpr Dma::Itf DmaInstance_ = Dma::Itf::k1;
 	
 	static_assert(kChannelNum_ != Channel::k1 || BASE::HasCC1(), "Basic timer does not feature CC1 module");
 	static_assert(kChannelNum_ != Channel::k2 || BASE::HasCC2(), "Basic timer does not feature CC2 module");
@@ -1816,14 +1815,17 @@ public:
 		static_assert(kPreloadEnable && TimType::kBuffered_);
 
 		volatile TIM_TypeDef* timer = BASE::GetDevice();
-		timer->CNT = 0;
-		BASE::SetCompare(toggle1);
+		// Load initial wave attributes
 		timer->ARR = period1;
+		BASE::SetCompare(toggle1);
 		timer->EGR = TIM_EGR_UG;	// UG Event
-		BASE::SetCompare(toggle2);
-		timer->ARR = period2;
 		// Enable
 		timer->CR1 |= TIM_CR1_CEN;
+		// Now prepare for the next period
+		timer->ARR = period2;
+		BASE::SetCompare(toggle2);
+		// External clock can start. Consider that if you areusing very high internal 
+		// clock this method can fail...
 	}
 };
 

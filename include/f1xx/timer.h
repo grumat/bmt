@@ -1894,14 +1894,17 @@ public:
 		static_assert(kPreloadEnable && TimType::kBuffered_);
 
 		volatile TIM_TypeDef* timer = BASE::GetDevice();
-		timer->CNT = 0;
-		BASE::SetCompare(toggle1);
+		// Load initial wave attributes
 		timer->ARR = period1;
+		BASE::SetCompare(toggle1);
 		timer->EGR = TIM_EGR_UG;	// UG Event
-		BASE::SetCompare(toggle2);
-		timer->ARR = period2;
 		// Enable
 		timer->CR1 |= TIM_CR1_CEN;
+		// Now prepare for the next period
+		timer->ARR = period2;
+		BASE::SetCompare(toggle2);
+		// External clock can start. Consider that if you areusing very high internal 
+		// clock this method can fail...
 	}
 };
 
