@@ -14,7 +14,7 @@ enum class Impl
 {
 	kNormal,	///< Normal Pin functionality
 	kUnused,	///< Pin that can be initialized to a passive state, only.
-	kUnchanged,	///< No change allowed (use it to setup a partial group of pins)
+	kUnchanged,	///< No change allowed (use it to setup a partial group of pins).
 };
 
 
@@ -38,7 +38,7 @@ public:
 	static constexpr Port kPort_ = kPort;
 	/// Base address of the port peripheral
 	static constexpr uint32_t kPortBase_ = (GPIOA_BASE + uint32_t(kPort_) * 0x400);
-	/// The pin number constant value
+	/// Constant storing the GPIO pin number
 	static constexpr uint8_t kPin_ = kPin;
 	/// Constant storing desired port speed
 	static constexpr Speed kSpeed_ = kSpeed;
@@ -124,7 +124,7 @@ public:
 		;
 
 	/// Access to the peripheral memory space
-	constexpr static volatile GPIO_TypeDef& Io() { return *(volatile GPIO_TypeDef*)kPortBase_; }
+	static volatile GPIO_TypeDef &Io() { return *(volatile GPIO_TypeDef *)kPortBase_; }
 
 	// Pull resistors are not allowed
 	static_assert(kMode_ != Mode::kAnalog || kPuPd_ == PuPd::kFloating, "Pull-up/down not allowed in Analog mode");
@@ -201,7 +201,7 @@ public:
 	/// Sets pin up. The pin will be high as long as it is configured as GPIO output
 	constexpr static void SetHigh()
 	{
-		if (kODR_Mask_ != (uint16_t)~0U)
+		if (kBitValue_ != 0)
 		{
 			volatile GPIO_TypeDef &port = Io();
 			port.BSRR = kBitValue_;
@@ -211,7 +211,7 @@ public:
 	/// Sets pin down. The pin will be low as long as it is configured as GPIO output
 	constexpr static void SetLow()
 	{
-		if (kODR_Mask_ != (uint16_t)~0U)
+		if (kBitValue_ != 0)
 		{
 			volatile GPIO_TypeDef& port = Io();
 			port.BRR = kBitValue_;
@@ -230,7 +230,7 @@ public:
 	/// Reads current Pin electrical state
 	constexpr static bool Get()
 	{
-		if (kODR_Mask_ != (uint16_t)~0U)
+		if (kBitValue_ != 0)
 		{
 			volatile GPIO_TypeDef &port = Io();
 			return (port.IDR & kBitValue_) != 0;
@@ -242,7 +242,7 @@ public:
 	/// Checks if current pin electrical state is high
 	constexpr static bool IsHigh()
 	{
-		if (kODR_Mask_ != (uint16_t)~0U)
+		if (kBitValue_ != 0)
 		{
 			volatile GPIO_TypeDef &port = Io();
 			return (port.IDR & kBitValue_) != 0;
@@ -250,11 +250,11 @@ public:
 		else
 			return false;	// an unused pin always returns false here
 	}
-	
+
 	/// Checks if current pin electrical state is low
 	constexpr static bool IsLow()
 	{
-		if (kODR_Mask_ != (uint16_t)~0U)
+		if (kBitValue_ != 0)
 		{
 			volatile GPIO_TypeDef &port = Io();
 			return (port.IDR & kBitValue_) == 0;
@@ -266,7 +266,7 @@ public:
 	/// Toggles pin state
 	constexpr static void Toggle()
 	{
-		if (kODR_Mask_ != (uint16_t)~0U)
+		if (kBitValue_ != 0)
 		{
 			volatile GPIO_TypeDef &port = Io();
 			port.ODR ^= kBitValue_;
@@ -314,7 +314,7 @@ template<
 	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
 	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
-class AnyPin : public Private::Implementation_<
+class AnyPin : public Private::Implementation_ <
 	Private::Impl::kNormal
 	, kPort
 	, kPin
@@ -381,9 +381,9 @@ class AnyAnalog : public Private::Implementation_<
 //! Template for input pins
 template<
 	const Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, const PuPd kPuPd = PuPd::kFloating		///< Additional pin configuration (applies to input pin)
-	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+	, const uint8_t kPin					///< The pin of the port
+	, const PuPd kPuPd = PuPd::kFloating	///< Additional pin configuration (applies to input pin)
+	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
 class AnyIn : public Private::Implementation_<
 	Private::Impl::kNormal
@@ -400,7 +400,7 @@ class AnyIn : public Private::Implementation_<
 
 /// A template class to configure a port pin as a floating input pin
 template <
-	const Port kPort		///< The GPIO port
+	const Port kPort			///< The GPIO port
 	, const uint8_t kPin		///< The GPIO pin number
 	, typename Map = AfNoRemap	///< Pin remapping feature (pinremap.h)
 >
@@ -451,11 +451,7 @@ class AnyOut : public Private::Implementation_<
 	, Map
 >
 {
-private:
-	constexpr void Validate_()
-	{
-		static_assert(kMode >= Mode::kOutput, "template requires an output pin configuration");
-	}
+	static_assert(kMode >= Mode::kOutput, "template requires an output pin configuration");
 };
 
 
@@ -498,10 +494,10 @@ class AnyFastOut1 : public AnyOut<
 //! Template for open drain output pins
 template<
 	const Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
-	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+	, const uint8_t kPin					///< The pin of the port
+	, const Speed kSpeed = Speed::kFast		///< Speed for the pin
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
+	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
 class AnyOutOD : public AnyOut<
 	kPort
@@ -518,12 +514,12 @@ class AnyOutOD : public AnyOut<
 //! Template for generic alternate output pins
 template<
 	const Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
-	, const PuPd kPuPd = PuPd::kFloating		///< Additional pin configuration
-	, const Mode kMode = Mode::kAlternate		///< Mode to configure the port
+	, const uint8_t kPin					///< The pin of the port
+	, typename Map							///< Pin remapping feature (pinremap.h)
+	, const Speed kSpeed = Speed::kFast		///< Speed for the pin
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
+	, const PuPd kPuPd = PuPd::kFloating	///< Additional pin configuration
+	, const Mode kMode = Mode::kAlternate	///< Mode to configure the port
 >
 class AnyAltOut : public Private::Implementation_<
 	Private::Impl::kNormal
@@ -536,21 +532,17 @@ class AnyAltOut : public Private::Implementation_<
 	, Map
 >
 {
-private:
-	constexpr void Validate_()
-	{
-		static_assert(kMode >= Mode::kAlternate, "template requires an alternate output pin configuration");
-	}
+	static_assert(kMode >= Mode::kAlternate, "template requires an alternate output pin configuration");
 };
 
 
 //! Template for Push-Pull alternate output pins
 template<
 	const Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
+	, const uint8_t kPin					///< The pin of the port
+	, typename Map							///< Pin remapping feature (pinremap.h)
+	, const Speed kSpeed = Speed::kFast		///< Speed for the pin
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
 >
 class AnyAltOutPP : public AnyAltOut <
 	kPort
@@ -568,10 +560,10 @@ class AnyAltOutPP : public AnyAltOut <
 //! Template for Open-Drain alternate output pins
 template<
 	const Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
+	, const uint8_t kPin					///< The pin of the port
+	, typename Map							///< Pin remapping feature (pinremap.h)
+	, const Speed kSpeed = Speed::kFast		///< Speed for the pin
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
 >
 class AnyAltOutOD : public AnyAltOut <
 	kPort
@@ -989,14 +981,14 @@ typedef AnyOut<Port::PA, 0, Speed::kOutput2MHz, Level::kHigh> GREEN_LED;
 /// Initial configuration for PORTA
 typedef AnyPortSetup <Port::PA
 	, GREEN_LED			///< bit bang
-	, Unused<1>		///< not used
-	, Unused<2>		///< not used
-	, Unused<3>		///< not used
-	, Unused<4>		///< not used
-	, Unused<5>		///< not used
-	, Unused<6>		///< not used
-	, Unused<7>		///< not used
-	, Unused<8>		///< not used
+	, Unused<1>			///< not used
+	, Unused<2>			///< not used
+	, Unused<3>			///< not used
+	, Unused<4>			///< not used
+	, Unused<5>			///< not used
+	, Unused<6>			///< not used
+	, Unused<7>			///< not used
+	, Unused<8>			///< not used
 	, USART1_TX_PA9		///< GDB UART port
 	, USART1_RX_PA10	///< GDB UART port
 	, Unused<11>		///< USB-
@@ -1062,11 +1054,6 @@ public:
 	/// This means that Unchanged<> pins have the same behavior as Unused<>.
 	constexpr static void Init()
 	{
-		/*
-		** Note all constants (i.e. constexpr) are resolved at compile time and unused code is stripped
-		** out by compiler, even for an unoptimized build.
-		*/
-
 		SUPER::EnableClock();
 		// Apply Alternate Function configuration
 		AnyAFR<SUPER::kAfConf_, SUPER::kAfMask_>::Enable();

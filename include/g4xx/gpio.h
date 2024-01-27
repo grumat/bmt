@@ -25,7 +25,7 @@ Note that "reserved" or "x" states are honored as possible.
 */
 template<
 	const Impl kImpl							///< Behavior of this implementation
-	, const Gpio::Port kPort					///< The GPIO port
+	, const Port kPort							///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, const Mode kMode = Mode::kInput			///< Mode to configure the port
 	, const Speed kSpeed = Speed::kInput		///< Speed for the pin
@@ -37,7 +37,7 @@ class Implementation_
 {
 public:
 	/// Constant storing the GPIO port number
-	static constexpr Gpio::Port kPort_ = kPort;
+	static constexpr Port kPort_ = kPort;
 	/// Base address of the port peripheral
 	static constexpr uint32_t kPortBase_ = (GPIOA_BASE + uint32_t(kPort_) * 0x400);
 	/// Constant storing the GPIO pin number
@@ -155,7 +155,7 @@ public:
 	static constexpr uint32_t kAFRH_Mask_ = Map::kAFRH_Mask_;
 
 	/// Access to the peripheral memory space
-	constexpr static volatile GPIO_TypeDef &Io() { return *(volatile GPIO_TypeDef *)kPortBase_; }
+	static volatile GPIO_TypeDef &Io() { return *(volatile GPIO_TypeDef *)kPortBase_; }
 
 	/// Apply default configuration for the pin.
 	constexpr static void SetupPinMode()
@@ -174,7 +174,7 @@ public:
 	static_assert(Map::kNoRemap_ || (Map::kPort_ == kPort_ && Map::kPin_ == kPin_), "pin remapping applies to a different pin");
 	// Input pin cannot set a pin speed
 	static_assert(!kIsInput_ || kSpeed_ == Speed::kInput, "Cannot select a speed for input pin");
-	// Pull-up resitor not allowed in Analog mode
+	// Pull-up resistor not allowed in Analog mode
 	static_assert(kMode_ != Mode::kAnalog || kPuPd_ != PuPd::kPullUp, "Pull-up not allowed in Analog mode");
 
 	/// Apply default configuration for the pin.
@@ -299,7 +299,7 @@ public:
 			return (port.IDR & kBitValue_) != 0;
 		}
 		else
-			return false;
+			return false;	// an unused pin always returns false here
 	}
 
 	/// Checks if current pin electrical state is low
@@ -311,7 +311,7 @@ public:
 			return (port.IDR & kBitValue_) == 0;
 		}
 		else
-			return false;
+			return false;	// an unused pin always returns false here
 	}
 
 	/// Toggles pin state
@@ -324,6 +324,7 @@ public:
 		}
 	}
 };
+
 
 }	// namespace Private
 
@@ -340,31 +341,29 @@ public:
 **
 **	Example:
 **		// Sets a data-type to drive an SPI1 CLK output
-**		typedef GpioTemplate<Port::PA, 5, kOutput50MHz, Mode::kPushPull, Level::kHigh> MY_SPI_CLK;
-**		// Sets a data-type to inactivate the pin defined before
-**		typedef AnyInPu<Port::PA, 5> MY_INACTIVE_SPI_CLK;
+**		typedef AnyPin<Port::PA, 5, Mode::kOutput, Speed::kFast, Level::kHigh> MY_SPI_CLK;
 **
 **	Also see the shortcut templates that reduces the clutter to declare common
-**	IO forms: Floating<>, AnyInPu<> and AnyInPd<>.
+**	IO forms: AnyIn<>, Floating<>, AnyInPu<> and AnyInPd<>.
 **
 **	Device specific peripherals are also mapped into handy data-types, like for
 **	example: SPI1_SCK_PA5, ADC12_IN0 and TIM2_CH2_PA1.
 **
 **	@tparam kPort: the GPIO port.
 **	@tparam kPin: The GPIO pin number.
-**	@tparam kMode: Defines pin direction.
-**	@tparam kConf: Defines how the pin is driven or pulled up/down.
+**	@tparam kMode: Defines pin direction or output configuration.
+**	@tparam kPuPd: Defines pull up/Pull down activity.
 **	@tparam kLevel: Defines the level of the pin to be initialized.
 **	@tparam Map: A data-type that allows STM32 Pin Remap. Definitions are found on remap.h.
 */
 template<
-	const Gpio::Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, const Mode kMode = Mode::kInput			///< Mode to configure the port
-	, const Speed kSpeed = Speed::kInput		///< Speed for the pin
-	, const PuPd kPuPd = PuPd::kFloating		///< Additional pin configuration
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
-	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+	const Port kPort						///< The GPIO port
+	, const uint8_t kPin					///< The pin of the port
+	, const Mode kMode = Mode::kInput		///< Mode to configure the port
+	, const Speed kSpeed = Speed::kInput	///< Speed for the pin
+	, const PuPd kPuPd = PuPd::kFloating	///< Additional pin configuration
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
+	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
 class AnyPin : public Private::Implementation_ <
 	Private::Impl::kNormal
@@ -399,7 +398,7 @@ class Unused : public Private::Implementation_
 
 /// A template pin configuration for a pin that should not be affected
 template<
-	const uint8_t kPin		///< Pin number is required
+	const uint8_t kPin						///< Pin number is required
 >
 class Unchanged : public Private::Implementation_
 	<
@@ -413,9 +412,9 @@ class Unchanged : public Private::Implementation_
 
 //! Template for input pins
 template<
-	const Gpio::Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+	const Port kPort						///< The GPIO port
+	, const uint8_t kPin					///< The pin of the port
+	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
 class AnyAnalog : public Private::Implementation_<
 	Private::Impl::kNormal
@@ -432,10 +431,10 @@ class AnyAnalog : public Private::Implementation_<
 
 //! Template for input pins
 template<
-	const Gpio::Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, const PuPd kPuPd = PuPd::kFloating		///< Additional pin configuration
-	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+	const Port kPort						///< The GPIO port
+	, const uint8_t kPin					///< The pin of the port
+	, const PuPd kPuPd = PuPd::kFloating	///< Additional pin configuration
+	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
 class AnyIn : public Private::Implementation_<
 	Private::Impl::kNormal
@@ -452,7 +451,7 @@ class AnyIn : public Private::Implementation_<
 
 /// A template class to configure a port pin as a floating input pin
 template <
-	const Gpio::Port kPort		///< The GPIO port
+	const Port kPort			///< The GPIO port
 	, const uint8_t kPin		///< The GPIO pin number
 	, typename Map = AfNoRemap	///< Pin remapping feature (pinremap.h)
 >
@@ -463,7 +462,7 @@ class Floating : public AnyIn<kPort, kPin, PuPd::kFloating, Map>
 
 /// A template class to configure a port pin as digital input having a pull-up
 template <
-	const Gpio::Port kPort
+	const Port kPort
 	, const uint8_t kPin
 	, typename Map = AfNoRemap	///< Pin remapping feature (pinremap.h)
 >
@@ -474,7 +473,7 @@ class AnyInPu : public AnyIn<kPort, kPin, PuPd::kPullUp, Map>
 
 /// A template class to configure a port pin as digital input having a pull-down
 template <
-	const Gpio::Port kPort
+	const Port kPort
 	, const uint8_t kPin
 	, typename Map = AfNoRemap	///< Pin remapping feature (pinremap.h)
 >
@@ -485,7 +484,7 @@ class AnyInPd : public AnyIn<kPort, kPin, PuPd::kPullDown, Map>
 
 //! Template for output pins
 template<
-	const Gpio::Port kPort						///< The GPIO port
+	const Port kPort							///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
 	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
 	, const Level kLevel = Level::kLow			///< Initial pin level
@@ -508,13 +507,51 @@ class AnyOut : public Private::Implementation_<
 };
 
 
-//! Template for output pins
+//! Template for fast output pins at logic level low
 template<
-	const Gpio::Port kPort						///< The GPIO port
+	const Port kPort							///< The GPIO port
 	, const uint8_t kPin						///< The pin of the port
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
 	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+>
+class AnyFastOut0 : public AnyOut<
+	kPort
+	, kPin
+	, Speed::kFast
+	, Level::kLow
+	, PuPd::kFloating
+	, Mode::kOutput
+	, Map
+>
+{
+};
+
+
+//! Template for fast output pins at logic level hi
+template<
+	const Port kPort							///< The GPIO port
+	, const uint8_t kPin						///< The pin of the port
+	, typename Map = AfNoRemap					///< Pin remapping feature (pinremap.h)
+>
+class AnyFastOut1 : public AnyOut<
+	kPort
+	, kPin
+	, Speed::kFast
+	, Level::kHigh
+	, PuPd::kFloating
+	, Mode::kOutput
+	, Map
+>
+{
+};
+
+
+//! Template for open drain output pins
+template<
+	const Port kPort						///< The GPIO port
+	, const uint8_t kPin					///< The pin of the port
+	, const Speed kSpeed = Speed::kFast		///< Speed for the pin
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
+	, typename Map = AfNoRemap				///< Pin remapping feature (pinremap.h)
 >
 class AnyOutOD : public AnyOut<
 	kPort
@@ -529,15 +566,15 @@ class AnyOutOD : public AnyOut<
 };
 
 
-//! Template for output pins
+//! Template for generic alternate output pins
 template<
-	const Gpio::Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
-	, const PuPd kPuPd = PuPd::kFloating		///< Additional pin configuration
-	, const Mode kMode = Mode::kAlternate		///< Mode to configure the port
+	const Port kPort						///< The GPIO port
+	, const uint8_t kPin					///< The pin of the port
+	, typename Map							///< Pin remapping feature (pinremap.h)
+	, const Speed kSpeed = Speed::kFast		///< Speed for the pin
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
+	, const PuPd kPuPd = PuPd::kFloating	///< Additional pin configuration
+	, const Mode kMode = Mode::kAlternate	///< Mode to configure the port
 >
 class AnyAltOut : public Private::Implementation_<
 	Private::Impl::kNormal
@@ -556,11 +593,11 @@ class AnyAltOut : public Private::Implementation_<
 
 //! Template for Push-Pull alternate output pins
 template<
-	const Gpio::Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
+	const Port kPort						///< The GPIO port
+	, const uint8_t kPin					///< The pin of the port
+	, typename Map							///< Pin remapping feature (pinremap.h)
+	, const Speed kSpeed = Speed::kFast		///< Speed for the pin
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
 >
 class AnyAltOutPP : public AnyAltOut <
 	kPort
@@ -577,11 +614,11 @@ class AnyAltOutPP : public AnyAltOut <
 
 //! Template for Open-Drain alternate output pins
 template<
-	const Gpio::Port kPort						///< The GPIO port
-	, const uint8_t kPin						///< The pin of the port
-	, typename Map								///< Pin remapping feature (pinremap.h)
-	, const Speed kSpeed = Speed::kFast			///< Speed for the pin
-	, const Level kLevel = Level::kLow			///< Initial pin level (applies to output pin)
+	const Port kPort						///< The GPIO port
+	, const uint8_t kPin					///< The pin of the port
+	, typename Map							///< Pin remapping feature (pinremap.h)
+	, const Speed kSpeed = Speed::kFast		///< Speed for the pin
+	, const Level kLevel = Level::kLow		///< Initial pin level (applies to output pin)
 >
 class AnyAltOutOD : public AnyAltOut <
 	kPort
@@ -598,12 +635,12 @@ class AnyAltOutOD : public AnyAltOut <
 
 /// A template class for a group of related pins to be operated all at once
 /*!
-Pretty same as AnyPortSetup<> template, although not all pins have to be
-defined. The only requirement is that pin numbers have to be unique.
+Pretty same as AnyPortSetup<> template, although not all pins have to be 
+defined. The only requirement is that pin numbers have to be unique. 
 Although recommended pins must not be ordered.
 */
 template <
-	const Gpio::Port kPort				/// The GPIO port number
+	const Port kPort					/// The GPIO port number
 	, typename Pin0 = Unchanged<0>		/// Definition for any pin, any order
 	, typename Pin1 = Unchanged<1>		/// Definition for any pin, any order
 	, typename Pin2 = Unchanged<2>		/// Definition for any pin, any order
@@ -625,7 +662,7 @@ class AnyPinGroup
 {
 public:
 	/// The GPIO port peripheral
-	static constexpr Gpio::Port kPort_ = kPort;
+	static constexpr Port kPort_ = kPort;
 	/// The base address for the GPIO peripheral registers
 	static constexpr uint32_t kPortBase_ = (GPIOA_BASE + uint32_t(kPort_) * 0x400);
 	/// Combined constant value for MODER hardware register
@@ -798,7 +835,7 @@ public:
 	constexpr static volatile GPIO_TypeDef& Io() { return *(volatile GPIO_TypeDef*)kPortBase_; }
 
 	// Validates the PIN0
-	static_assert(Pin0::kPort_ == Port::kUnusedPort
+	static_assert(Pin0::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin0::kPort_ == kPort_
 			&& (Pin0::kPin_ != Pin1::kPin_ || Pin1::kPort_ == Port::kUnusedPort)
@@ -816,10 +853,10 @@ public:
 			&& (Pin0::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin0::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin0::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN0: Inconsistent port number or pin number collision");
 	// Validates the PIN1
-	static_assert(Pin1::kPort_ == Port::kUnusedPort
+	static_assert(Pin1::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin1::kPort_ == kPort_
 			&& (Pin1::kPin_ != Pin2::kPin_ || Pin2::kPort_ == Port::kUnusedPort)
@@ -836,10 +873,10 @@ public:
 			&& (Pin1::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin1::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin1::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN1: Inconsistent port number or pin number collision");
 	// Validates the PIN2
-	static_assert(Pin2::kPort_ == Port::kUnusedPort
+	static_assert(Pin2::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin2::kPort_ == kPort_
 			&& (Pin2::kPin_ != Pin3::kPin_ || Pin3::kPort_ == Port::kUnusedPort)
@@ -855,10 +892,10 @@ public:
 			&& (Pin2::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin2::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin2::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN2: Inconsistent port number or pin number collision");
 	// Validates the PIN3
-	static_assert(Pin3::kPort_ == Port::kUnusedPort
+	static_assert(Pin3::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin3::kPort_ == kPort_
 			&& (Pin3::kPin_ != Pin4::kPin_ || Pin4::kPort_ == Port::kUnusedPort)
@@ -873,10 +910,10 @@ public:
 			&& (Pin3::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin3::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin3::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN3: Inconsistent port number or pin number collision");
 	// Validates the PIN4
-	static_assert(Pin4::kPort_ == Port::kUnusedPort
+	static_assert(Pin4::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin4::kPort_ == kPort_
 			&& (Pin4::kPin_ != Pin5::kPin_ || Pin5::kPort_ == Port::kUnusedPort)
@@ -890,10 +927,10 @@ public:
 			&& (Pin4::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin4::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin4::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN4: Inconsistent port number or pin number collision");
 	// Validates the PIN5
-	static_assert(Pin5::kPort_ == Port::kUnusedPort
+	static_assert(Pin5::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin5::kPort_ == kPort_
 			&& (Pin5::kPin_ != Pin6::kPin_ || Pin6::kPort_ == Port::kUnusedPort)
@@ -906,10 +943,10 @@ public:
 			&& (Pin5::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin5::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin5::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN5: Inconsistent port number or pin number collision");
 	// Validates the PIN6
-	static_assert(Pin6::kPort_ == Port::kUnusedPort
+	static_assert(Pin6::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin6::kPort_ == kPort_
 			&& (Pin6::kPin_ != Pin7::kPin_ || Pin7::kPort_ == Port::kUnusedPort)
@@ -921,10 +958,10 @@ public:
 			&& (Pin6::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin6::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin6::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN6: Inconsistent port number or pin number collision");
 	// Validates the PIN7
-	static_assert(Pin7::kPort_ == Port::kUnusedPort
+	static_assert(Pin7::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin7::kPort_ == kPort_
 			&& (Pin7::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
@@ -935,10 +972,10 @@ public:
 			&& (Pin7::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin7::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin7::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN7: Inconsistent port number or pin number collision");
 	// Validates the PIN8
-	static_assert(Pin8::kPort_ == Port::kUnusedPort
+	static_assert(Pin8::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin8::kPort_ == kPort_
 			&& (Pin8::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
@@ -948,10 +985,10 @@ public:
 			&& (Pin8::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin8::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin8::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN8: Inconsistent port number or pin number collision");
 	// Validates the PIN9
-	static_assert(Pin9::kPort_ == Port::kUnusedPort
+	static_assert(Pin9::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin9::kPort_ == kPort_
 			&& (Pin9::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
@@ -960,10 +997,10 @@ public:
 			&& (Pin9::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin9::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin9::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN9: Inconsistent port number or pin number collision");
 	// Validates the PIN10
-	static_assert(Pin10::kPort_ == Port::kUnusedPort
+	static_assert(Pin10::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin10::kPort_ == kPort_
 			&& (Pin10::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
@@ -971,41 +1008,41 @@ public:
 			&& (Pin10::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin10::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin10::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN10: Inconsistent port number or pin number collision");
 	// Validates the PIN11
-	static_assert(Pin11::kPort_ == Port::kUnusedPort
+	static_assert(Pin11::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin11::kPort_ == kPort_
 			&& (Pin11::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
 			&& (Pin11::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin11::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin11::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN11: Inconsistent port number or pin number collision");
 	// Validates the PIN12
-	static_assert(Pin12::kPort_ == Port::kUnusedPort
+	static_assert(Pin12::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin12::kPort_ == kPort_
 			&& (Pin12::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
 			&& (Pin12::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin12::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN12: Inconsistent port number or pin number collision");
 	// Validates the PIN13
-	static_assert(Pin13::kPort_ == Port::kUnusedPort
+	static_assert(Pin13::kPort_ == Port::kUnusedPort 
 		|| (
 			Pin13::kPort_ == kPort_
 			&& (Pin13::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
 			&& (Pin13::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN13: Inconsistent port number or pin number collision");
 	// Validates the PIN14
 	static_assert(Pin14::kPort_ == Port::kUnusedPort
 		|| (
 			Pin14::kPort_ == kPort_
 			&& (Pin14::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-			)
+		)
 		, "PIN14: Inconsistent port number or pin number collision");
 	// Validates the PIN15
 	static_assert(Pin15::kPort_ == Port::kUnusedPort || Pin15::kPort_ == kPort_
@@ -1094,18 +1131,18 @@ This configuration is a sample code to setup the GPIO for the USART1 through PA9
 and a LED on PA0.
 \code{.cpp}
 /// Pin for green LED
-typedef GpioTemplate<Port::PA, 0, Speed::kOutput2MHzkOutput2MHz, Mode::kPushPull, Level::kHigh> GREEN_LED;
+typedef AnyOut<Port::PA, 0, Speed::kOutput2MHz, Level::kHigh, Mode::kPushPull> GREEN_LED;
 /// Initial configuration for PORTA
 typedef AnyPortSetup <Port::PA
 	, GREEN_LED			///< bit bang
-	, Unused<1>		///< not used
-	, Unused<2>		///< not used
-	, Unused<3>		///< not used
-	, Unused<4>		///< not used
-	, Unused<5>		///< not used
-	, Unused<6>		///< not used
-	, Unused<7>		///< not used
-	, Unused<8>		///< not used
+	, Unused<1>			///< not used
+	, Unused<2>			///< not used
+	, Unused<3>			///< not used
+	, Unused<4>			///< not used
+	, Unused<5>			///< not used
+	, Unused<6>			///< not used
+	, Unused<7>			///< not used
+	, Unused<8>			///< not used
 	, USART1_TX_PA9		///< GDB UART port
 	, USART1_RX_PA10	///< GDB UART port
 	, Unused<11>		///< USB-
@@ -1143,19 +1180,19 @@ template <
 >
 class AnyPortSetup : public AnyPinGroup<
 	kPort,
-	Pin0, Pin1, Pin2, Pin3,
-	Pin4, Pin5, Pin6, Pin7,
-	Pin8, Pin9, Pin10, Pin11,
-	Pin12, Pin13, Pin14, Pin15
->
+	Pin0,	Pin1,	Pin2,	Pin3,
+	Pin4,	Pin5,	Pin6,	Pin7,
+	Pin8,	Pin9,	Pin10,	Pin11,
+	Pin12,	Pin13,	Pin14,	Pin15
+	>
 {
 public:
 	typedef AnyPinGroup<
 		kPort,
-		Pin0, Pin1, Pin2, Pin3,
-		Pin4, Pin5, Pin6, Pin7,
-		Pin8, Pin9, Pin10, Pin11,
-		Pin12, Pin13, Pin14, Pin15
+		Pin0,	Pin1,	Pin2,	Pin3, 
+		Pin4,	Pin5,	Pin6,	Pin7,
+		Pin8,	Pin9,	Pin10,	Pin11,
+		Pin12,	Pin13,	Pin14,	Pin15
 	> SUPER;
 
 	// Compilation will fail here if one GPIO pin number does not match its **position**
@@ -1167,10 +1204,12 @@ public:
 		, "Inconsistent pin position"
 		);
 
-	/// Initialize to Port assuming the first use of all GPIO pins
+	/// Initialize to GPIO overwriting all previous configuration of the port
+	/// This means that Unchanged<> pins have the same behavior as Unused<>.
 	constexpr static void Init()
 	{
 		SUPER::EnableClock();
+		// Apply
 		SUPER::Enable();
 	}
 };
@@ -1184,11 +1223,11 @@ configuration for a short period and later restore to the previous state.
 
 Note that this affects all bits of the port.
 */
-template<const Gpio::Port kPort>
+template<const Port kPort>
 class SaveGpio
 {
 public:
-	static constexpr Gpio::Port kPort_ = kPort;
+	static constexpr Port kPort_ = kPort;
 	static constexpr uint32_t kPortBase_ = (GPIOA_BASE + uint32_t(kPort_) * 0x400);
 
 	/// Access to the hardware IO data structure

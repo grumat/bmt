@@ -1123,7 +1123,7 @@ public:
 		timer->CR1 |= TIM_CR1_CEN;
 	}
 
-	ALWAYS_INLINE static void StartRepetition(const uint8_t rep)
+	ALWAYS_INLINE static void SetupRepetition(const uint8_t rep)
 	{
 		static_assert(BASE::HasRepetitionCounter());
 		volatile TIM_TypeDef *timer = BASE::GetDevice();
@@ -1131,10 +1131,14 @@ public:
 		timer->EGR = TIM_EGR_UG;		// UG Event
 		if(kBuffered_)
 			timer->EGR = TIM_EGR_UG;	// UG Event
-		timer->CR1 |= TIM_CR1_CEN;
+	}
+	ALWAYS_INLINE static void StartRepetition(const uint8_t rep)
+	{
+		SetupRepetition(rep);
+		CounterResume();
 	}
 
-	ALWAYS_INLINE static void StartRepetition(const TypCnt cnt, const uint8_t rep)
+	ALWAYS_INLINE static void SetupRepetition(const TypCnt cnt, const uint8_t rep)
 	{
 		static_assert(BASE::HasRepetitionCounter());
 		volatile TIM_TypeDef *timer = BASE::GetDevice();
@@ -1143,12 +1147,19 @@ public:
 		timer->EGR = TIM_EGR_UG;		// UG Event
 		if (kBuffered_)
 			timer->EGR = TIM_EGR_UG;	// UG Event
-		timer->CR1 |= TIM_CR1_CEN;
+	}
+	ALWAYS_INLINE static void StartRepetition(const TypCnt cnt, const uint8_t rep)
+	{
+		SetupRepetition(cnt, rep);
+		CounterResume();
 	}
 
 	ALWAYS_INLINE static TypCnt GetCounter() { return (TypCnt)(BASE::GetDevice())->CNT; }
 
 	ALWAYS_INLINE static TypCnt DistanceOf(TypCnt start) { return GetCounter() - start; }
+
+	ALWAYS_INLINE static uint32_t GetPrescaler() { return (BASE::GetDevice())->PSC; }
+	ALWAYS_INLINE static void SetPrescaler(uint32_t v) { (BASE::GetDevice())->PSC = v; }
 
 // Time conversion
 public:
