@@ -257,22 +257,26 @@ class AfPinName:
 	def get_af_name(self):
 		return "Af{}_{}{}".format(self.dev, self.port, self.pin)
 	def get_af_decl_line(self):
-		s1 = "typedef AnyAFR<Port::{0}, {1}, AF::k{2}>".format(self.port, self.pin, self.af)
-		s2 = "Af{2}_{0}{1};".format(self.port, self.pin, self.dev)
+		# Generates: using AfUSART1_TX_PA1 = AnyAFR<Port::PA, 1, AF::kUSART1>;
+		type_name = "Af{}_{}{}".format(self.dev, self.port, self.pin)
+		s1 = "using {} = AnyAFR<Port::{}, {}, AF::k{}>".format(type_name, self.port, self.pin, self.af)
 		s1 = align_to_col(s1, 40)
-		return s1 + s2
+		return s1 + ";"
 	def get_type_lines(self):
 		lines = []
 		s1 = "/// A default configuration to map {0} on {1}{2} pin".format(self.dev.replace('_', ' ', 1), self.port, self.pin)
 		lines.append(s1)
 		if self.is_analog():
-			s1 = "typedef AnyAnalog<Port::{0}, {1}>".format(self.port, self.pin)
+			type_name = "Analog_{}{}".format(self.port, self.pin)
+			s1 = "using {} = AnyAnalog<Port::{}, {}>".format(type_name, self.port, self.pin)
 			s1 = align_to_col(s1, 36)
 		elif 'od' in self.impl:
-			s1 = "typedef AnyAltOutOD<Port::{0}, {1}, {2}>".format(self.port, self.pin, self.get_af_name())
+			type_name = self.get_af_name()
+			s1 = "using {} = AnyAltOutOD<Port::{}, {}, {}>".format(type_name, self.port, self.pin, type_name)
 			s1 = align_to_col(s1, 60)
 		else:
-			s1 = "typedef AnyAltOut<Port::{0}, {1}, {2}".format(self.port, self.pin, self.get_af_name())
+			type_name = "{0}_{1}{2}".format(self.dev, self.port, self.pin)
+			s1 = "using {0} = AnyAltOut<Port::{1}, {2}, {3}".format(type_name, self.port, self.pin, self.get_af_name())
 			s1b = ""
 			s1c = ""
 			s1d = ""
@@ -297,7 +301,7 @@ class AfPinName:
 				s1c = ", Level::kLow"
 			s1 += s1b + s1c + s1d + '>'
 			s1 = align_to_col(s1, 60)
-		s2 = "{0}_{1}{2};".format(self.dev, self.port, self.pin)
+		s2 = ";"
 		lines.append(s1+s2)
 		return lines
 

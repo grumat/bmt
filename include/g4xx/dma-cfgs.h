@@ -255,412 +255,409 @@ enum class PerifSel : uint8_t
 };
 
 
-typedef AnyID<Itf::k1, Chan::kNone, PerifSel::kMem2Mem> IdNone;
-
+using IdNone = AnyID<Itf::k1, Chan::kNone, PerifSel::kMem2Mem>;
 /* The type definitions below are, wherever possible, based on DMA settings of STM32L4xx. */
 
 #ifdef ADC1_BASE
 /// A template class to map ADC1 to DMA1 channel 1
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kAdc1> IdAdc1;
+using IdAdc1 = AnyID<Itf::k1, Chan::k1, PerifSel::kAdc1>;
 /// A template class to map ADC1 to DMA2 channel 3 (alternate)
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::kAdc1> IdAdc1_2;
+using IdAdc1_2 = AnyID<Itf::k2, Chan::k3, PerifSel::kAdc1>;
 #endif	// ADC1_BASE
 
 #ifdef ADC2_BASE
 /// A template class to map ADC2 to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kAdc2> IdAdc2;
+using IdAdc2 = AnyID<Itf::k1, Chan::k2, PerifSel::kAdc2>;
 /// A template class to map ADC2 to DMA2 channel 4 (alternate)
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kAdc2> IdAdc2_2;
+using IdAdc2_2 = AnyID<Itf::k2, Chan::k4, PerifSel::kAdc2>;
 #endif	// ADC2_BASE
 
 #ifdef ADC3_BASE
 /// A template class to map ADC3 to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kAdc3> IdAdc3;
+using IdAdc3 = AnyID<Itf::k1, Chan::k3, PerifSel::kAdc3>;
 /// A template class to map ADC3 to DMA2 channel 5 (alternate)
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kAdc3> IdAdc3_2;
+using IdAdc3_2 = AnyID<Itf::k2, Chan::k5, PerifSel::kAdc3>;
 #endif	// ADC3_BASE
 
 #ifdef ADC4_BASE
 /// A template class to map ADC4 to DMA2 channel 3
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::kAdc4> IdAdc4;
+using IdAdc4 = AnyID<Itf::k2, Chan::k3, PerifSel::kAdc4>;
 #endif	// ADC4_BASE
 
 #ifdef ADC5_BASE
 /// A template class to map ADC5 to DMA1 channel 1
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kAdc5> IdAdc5;
+using IdAdc5 = AnyID<Itf::k1, Chan::k1, PerifSel::kAdc5>;
 #endif	// ADC5_BASE
 
 #ifdef AES_BASE
 /// A template class to map AES IN to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kAesIn> IdAesIn;
+using IdAesIn = AnyID<Itf::k2, Chan::k1, PerifSel::kAesIn>;
 /// A template class to map AES IN to DMA2 channel 5 (alternate)
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kAesIn> IdAesIn_2;
+using IdAesIn_2 = AnyID<Itf::k2, Chan::k5, PerifSel::kAesIn>;
 /// A template class to map AES OUT to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kAesOut> IdAesOut;
+using IdAesOut = AnyID<Itf::k2, Chan::k2, PerifSel::kAesOut>;
 /// A template class to map AES OUT to DMA2 channel 3 (alternate)
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::kAesOut> IdAesOut_2;
+using IdAesOut_2 = AnyID<Itf::k2, Chan::k3, PerifSel::kAesOut>;
 #endif	// AES_BASE
 
 #ifdef CORDIC_BASE
 /// A template class to map CORDIC READ to DMA2 channel 3
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::kCordicRead> IdCordicRead;
+using IdCordicRead = AnyID<Itf::k2, Chan::k3, PerifSel::kCordicRead>;
 /// A template class to map CORDIC WRITE to DMA1 channel 1
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kCordicWrite> IdCordicWrite;
+using IdCordicWrite = AnyID<Itf::k1, Chan::k1, PerifSel::kCordicWrite>;
 #endif	// CORDIC_BASE
 
 #ifdef DAC1_BASE
 /// A template class to map DAC1 CHANNEL1 to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kDac1Channel1> IdDac1Channel1;
+using IdDac1Channel1 = AnyID<Itf::k1, Chan::k3, PerifSel::kDac1Channel1>;
 /// A template class to map DAC1 CHANNEL1 to DMA2 channel 4 (alternate)
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kDac1Channel1> IdDac1Channel1_2;
+using IdDac1Channel1_2 = AnyID<Itf::k2, Chan::k4, PerifSel::kDac1Channel1>;
 /// A template class to map DAC1 CHANNEL2 to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kDac1Channel2> IdDac1Channel2;
+using IdDac1Channel2 = AnyID<Itf::k1, Chan::k4, PerifSel::kDac1Channel2>;
 /// A template class to map DAC1 CHANNEL2 to DMA2 channel 5 (alternate)
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kDac1Channel2> IdDac1Channel2_2;
+using IdDac1Channel2_2 = AnyID<Itf::k2, Chan::k5, PerifSel::kDac1Channel2>;
 #endif	// DAC1_BASE
 
 #ifdef DAC2_BASE
 /// A template class to map DAC2 CHANNEL1 to DMA2 channel 4
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kDac2Channel1> IdDac2Channel1;
+using IdDac2Channel1 = AnyID<Itf::k2, Chan::k4, PerifSel::kDac2Channel1>;
 #endif	// DAC2_BASE
 
 #ifdef DAC3_BASE
 /// A template class to map DAC3 CHANNEL1 to DMA2 channel 6
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kDac3Channel1> IdDac3Channel1;
+using IdDac3Channel1 = AnyID<Itf::k2, Chan::k6, PerifSel::kDac3Channel1>;
 /// A template class to map DAC3 CHANNEL2 to DMA2 channel 4
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kDac3Channel2> IdDac3Channel2;
+using IdDac3Channel2 = AnyID<Itf::k2, Chan::k4, PerifSel::kDac3Channel2>;
 #endif	// DAC3_BASE
 
 #ifdef DAC4_BASE
 /// A template class to map DAC4 CHANNEL1 to DMA2 channel 6
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kDac4Channel1> IdDac4Channel1;
+using IdDac4Channel1 = AnyID<Itf::k2, Chan::k6, PerifSel::kDac4Channel1>;
 /// A template class to map DAC4 CHANNEL2 to DMA2 channel 4
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kDac4Channel2> IdDac4Channel2;
+using IdDac4Channel2 = AnyID<Itf::k2, Chan::k4, PerifSel::kDac4Channel2>;
 #endif	// DAC4_BASE
 
 #ifdef FMAC_BASE
 /// A template class to map FMAC READ to DMA2 channel 6
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kFmacRead> IdFmacRead;
+using IdFmacRead = AnyID<Itf::k2, Chan::k6, PerifSel::kFmacRead>;
 /// A template class to map FMAC WRITE to DMA2 channel 4
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kFmacWrite> IdFmacWrite;
+using IdFmacWrite = AnyID<Itf::k2, Chan::k4, PerifSel::kFmacWrite>;
 #endif	// FMAC_BASE
 
 /// A template class to map GENERATOR0 to DMA2 channel 6
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kGenerator0> IdGenerator0;
+using IdGenerator0 = AnyID<Itf::k2, Chan::k6, PerifSel::kGenerator0>;
 /// A template class to map GENERATOR1 to DMA2 channel 4
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kGenerator1> IdGenerator1;
+using IdGenerator1 = AnyID<Itf::k2, Chan::k4, PerifSel::kGenerator1>;
 /// A template class to map GENERATOR2 to DMA1 channel 1
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kGenerator2> IdGenerator2;
+using IdGenerator2 = AnyID<Itf::k1, Chan::k1, PerifSel::kGenerator2>;
 /// A template class to map GENERATOR3 to DMA2 channel 3
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::kGenerator3> IdGenerator3;
-
+using IdGenerator3 = AnyID<Itf::k2, Chan::k3, PerifSel::kGenerator3>;
 #ifdef HRTIM1_BASE
 /// A template class to map HRTIM1 A to DMA2 channel 5
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kHrtim1A> IdHrtim1A;
+using IdHrtim1A = AnyID<Itf::k2, Chan::k5, PerifSel::kHrtim1A>;
 /// A template class to map HRTIM1 B to DMA2 channel 7
-typedef AnyID<Itf::k2, Chan::k7, PerifSel::kHrtim1B> IdHrtim1B;
+using IdHrtim1B = AnyID<Itf::k2, Chan::k7, PerifSel::kHrtim1B>;
 /// A template class to map HRTIM1 C to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kHrtim1C> IdHrtim1C;
+using IdHrtim1C = AnyID<Itf::k1, Chan::k2, PerifSel::kHrtim1C>;
 /// A template class to map HRTIM1 D to DMA1 channel 6
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kHrtim1D> IdHrtim1D;
+using IdHrtim1D = AnyID<Itf::k1, Chan::k6, PerifSel::kHrtim1D>;
 /// A template class to map HRTIM1 E to DMA1 channel 7
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kHrtim1E> IdHrtim1E;
+using IdHrtim1E = AnyID<Itf::k1, Chan::k7, PerifSel::kHrtim1E>;
 /// A template class to map HRTIM1 F to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kHrtim1F> IdHrtim1F;
+using IdHrtim1F = AnyID<Itf::k1, Chan::k4, PerifSel::kHrtim1F>;
 /// A template class to map HRTIM1 M to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kHrtim1M> IdHrtim1M;
+using IdHrtim1M = AnyID<Itf::k2, Chan::k1, PerifSel::kHrtim1M>;
 #endif	// HRTIM1_BASE
 
 #ifdef I2C1_BASE
 /// A template class to map I2C1 RX to DMA1 channel 7
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kI2c1Rx> IdI2c1Rx;
+using IdI2c1Rx = AnyID<Itf::k1, Chan::k7, PerifSel::kI2c1Rx>;
 /// A template class to map I2C1 RX to DMA2 channel 6 (alternate)
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kI2c1Rx> IdI2c1Rx_2;
+using IdI2c1Rx_2 = AnyID<Itf::k2, Chan::k6, PerifSel::kI2c1Rx>;
 /// A template class to map I2C1 TX to DMA1 channel 6
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kI2c1Tx> IdI2c1Tx;
+using IdI2c1Tx = AnyID<Itf::k1, Chan::k6, PerifSel::kI2c1Tx>;
 /// A template class to map I2C1 TX to DMA2 channel 7 (alternate)
-typedef AnyID<Itf::k2, Chan::k7, PerifSel::kI2c1Tx> IdI2c1Tx_2;
+using IdI2c1Tx_2 = AnyID<Itf::k2, Chan::k7, PerifSel::kI2c1Tx>;
 #endif	// I2C1_BASE
 
 #ifdef I2C2_BASE
 /// A template class to map I2C2 RX to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kI2c2Rx> IdI2c2Rx;
+using IdI2c2Rx = AnyID<Itf::k1, Chan::k5, PerifSel::kI2c2Rx>;
 /// A template class to map I2C2 TX to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kI2c2Tx> IdI2c2Tx;
+using IdI2c2Tx = AnyID<Itf::k1, Chan::k4, PerifSel::kI2c2Tx>;
 #endif	// I2C2_BASE
 
 #ifdef I2C3_BASE
 /// A template class to map I2C3 RX to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kI2c3Rx> IdI2c3Rx;
+using IdI2c3Rx = AnyID<Itf::k1, Chan::k3, PerifSel::kI2c3Rx>;
 /// A template class to map I2C3 TX to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kI2c3Tx> IdI2c3Tx;
+using IdI2c3Tx = AnyID<Itf::k1, Chan::k2, PerifSel::kI2c3Tx>;
 #endif	// I2C3_BASE
 
 #ifdef I2C4_BASE
 /// A template class to map I2C4 RX to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kI2c4Rx> IdI2c4Rx;
+using IdI2c4Rx = AnyID<Itf::k2, Chan::k1, PerifSel::kI2c4Rx>;
 /// A template class to map I2C4 TX to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kI2c4Tx> IdI2c4Tx;
+using IdI2c4Tx = AnyID<Itf::k2, Chan::k2, PerifSel::kI2c4Tx>;
 #endif	// I2C4_BASE
 
 #ifdef LPUART1_BASE
 /// A template class to map LPUART1 RX to DMA2 channel 7
-typedef AnyID<Itf::k2, Chan::k7, PerifSel::kLpuart1Rx> IdLpuart1Rx;
+using IdLpuart1Rx = AnyID<Itf::k2, Chan::k7, PerifSel::kLpuart1Rx>;
 /// A template class to map LPUART1 TX to DMA2 channel 6
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kLpuart1Tx> IdLpuart1Tx;
+using IdLpuart1Tx = AnyID<Itf::k2, Chan::k6, PerifSel::kLpuart1Tx>;
 #endif	// LPUART1_BASE
 
 /// A template class to map MEM2MEM to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kMem2Mem> IdMem2Mem;
-
+using IdMem2Mem = AnyID<Itf::k1, Chan::k4, PerifSel::kMem2Mem>;
 #ifdef QUADSPI_BASE
 /// A template class to map QUADSPI to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kQuadspi> IdQuadspi;
+using IdQuadspi = AnyID<Itf::k1, Chan::k5, PerifSel::kQuadspi>;
 /// A template class to map QUADSPI to DMA2 channel 7 (alternate)
-typedef AnyID<Itf::k2, Chan::k7, PerifSel::kQuadspi> IdQuadspi_2;
+using IdQuadspi_2 = AnyID<Itf::k2, Chan::k7, PerifSel::kQuadspi>;
 #endif	// QUADSPI_BASE
 
 #ifdef SAI1_BASE
 /// A template class to map SAI1 A to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kSai1A> IdSai1A;
+using IdSai1A = AnyID<Itf::k2, Chan::k1, PerifSel::kSai1A>;
 /// A template class to map SAI1 A to DMA2 channel 6 (alternate)
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kSai1A> IdSai1A_2;
+using IdSai1A_2 = AnyID<Itf::k2, Chan::k6, PerifSel::kSai1A>;
 /// A template class to map SAI1 B to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kSai1B> IdSai1B;
+using IdSai1B = AnyID<Itf::k2, Chan::k2, PerifSel::kSai1B>;
 /// A template class to map SAI1 B to DMA2 channel 7 (alternate)
-typedef AnyID<Itf::k2, Chan::k7, PerifSel::kSai1B> IdSai1B_2;
+using IdSai1B_2 = AnyID<Itf::k2, Chan::k7, PerifSel::kSai1B>;
 #endif	// SAI1_BASE
 
 #ifdef SPI1_BASE
 /// A template class to map SPI1 RX to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kSpi1Rx> IdSpi1Rx;
+using IdSpi1Rx = AnyID<Itf::k1, Chan::k2, PerifSel::kSpi1Rx>;
 /// A template class to map SPI1 RX to DMA2 channel 3 (alternate)
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::kSpi1Rx> IdSpi1Rx_2;
+using IdSpi1Rx_2 = AnyID<Itf::k2, Chan::k3, PerifSel::kSpi1Rx>;
 /// A template class to map SPI1 TX to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kSpi1Tx> IdSpi1Tx;
+using IdSpi1Tx = AnyID<Itf::k1, Chan::k3, PerifSel::kSpi1Tx>;
 /// A template class to map SPI1 TX to DMA2 channel 4 (alternate)
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kSpi1Tx> IdSpi1Tx_2;
+using IdSpi1Tx_2 = AnyID<Itf::k2, Chan::k4, PerifSel::kSpi1Tx>;
 #endif	// SPI1_BASE
 
 #ifdef SPI2_BASE
 /// A template class to map SPI2 RX to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kSpi2Rx> IdSpi2Rx;
+using IdSpi2Rx = AnyID<Itf::k1, Chan::k4, PerifSel::kSpi2Rx>;
 /// A template class to map SPI2 TX to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kSpi2Tx> IdSpi2Tx;
+using IdSpi2Tx = AnyID<Itf::k1, Chan::k5, PerifSel::kSpi2Tx>;
 #endif	// SPI2_BASE
 
 #ifdef SPI3_BASE
 /// A template class to map SPI3 RX to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kSpi3Rx> IdSpi3Rx;
+using IdSpi3Rx = AnyID<Itf::k2, Chan::k1, PerifSel::kSpi3Rx>;
 /// A template class to map SPI3 TX to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kSpi3Tx> IdSpi3Tx;
+using IdSpi3Tx = AnyID<Itf::k2, Chan::k2, PerifSel::kSpi3Tx>;
 #endif	// SPI3_BASE
 
 #ifdef SPI4_BASE
 /// A template class to map SPI4 RX to DMA2 channel 5
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kSpi4Rx> IdSpi4Rx;
+using IdSpi4Rx = AnyID<Itf::k2, Chan::k5, PerifSel::kSpi4Rx>;
 /// A template class to map SPI4 TX to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kSpi4Tx> IdSpi4Tx;
+using IdSpi4Tx = AnyID<Itf::k1, Chan::k2, PerifSel::kSpi4Tx>;
 #endif	// SPI4_BASE
 
 #ifdef TIM1_BASE
 /// A template class to map TIM1 CH1 to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kTim1Ch1> IdTim1Ch1;
+using IdTim1Ch1 = AnyID<Itf::k1, Chan::k2, PerifSel::kTim1Ch1>;
 /// A template class to map TIM1 CH2 to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kTim1Ch2> IdTim1Ch2;
+using IdTim1Ch2 = AnyID<Itf::k1, Chan::k3, PerifSel::kTim1Ch2>;
 /// A template class to map TIM1 CH3 to DMA1 channel 7
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kTim1Ch3> IdTim1Ch3;
+using IdTim1Ch3 = AnyID<Itf::k1, Chan::k7, PerifSel::kTim1Ch3>;
 /// A template class to map TIM1 CH4 to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kTim1Ch4> IdTim1Ch4;
+using IdTim1Ch4 = AnyID<Itf::k1, Chan::k4, PerifSel::kTim1Ch4>;
 /// A template class to map TIM1 COM to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kTim1Com> IdTim1Com;
+using IdTim1Com = AnyID<Itf::k1, Chan::k4, PerifSel::kTim1Com>;
 /// A template class to map TIM1 TRIG to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kTim1Trig> IdTim1Trig;
+using IdTim1Trig = AnyID<Itf::k1, Chan::k4, PerifSel::kTim1Trig>;
 /// A template class to map TIM1 UP to DMA1 channel 6
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kTim1Up> IdTim1Up;
+using IdTim1Up = AnyID<Itf::k1, Chan::k6, PerifSel::kTim1Up>;
 #endif	// TIM1_BASE
 
 #ifdef TIM2_BASE
 /// A template class to map TIM2 CH1 to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kTim2Ch1> IdTim2Ch1;
+using IdTim2Ch1 = AnyID<Itf::k1, Chan::k5, PerifSel::kTim2Ch1>;
 /// A template class to map TIM2 CH2 to DMA1 channel 7
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kTim2Ch2> IdTim2Ch2;
+using IdTim2Ch2 = AnyID<Itf::k1, Chan::k7, PerifSel::kTim2Ch2>;
 /// A template class to map TIM2 CH3 to DMA1 channel 1
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kTim2Ch3> IdTim2Ch3;
+using IdTim2Ch3 = AnyID<Itf::k1, Chan::k1, PerifSel::kTim2Ch3>;
 /// A template class to map TIM2 CH4 to DMA1 channel 7
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kTim2Ch4> IdTim2Ch4;
+using IdTim2Ch4 = AnyID<Itf::k1, Chan::k7, PerifSel::kTim2Ch4>;
 /// A template class to map TIM2 UP to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kTim2Up> IdTim2Up;
+using IdTim2Up = AnyID<Itf::k1, Chan::k2, PerifSel::kTim2Up>;
 #endif	// TIM2_BASE
 
 #ifdef TIM3_BASE
 /// A template class to map TIM3 CH1 to DMA1 channel 6
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kTim3Ch1> IdTim3Ch1;
+using IdTim3Ch1 = AnyID<Itf::k1, Chan::k6, PerifSel::kTim3Ch1>;
 /// A template class to map TIM3 CH2 to DMA2 channel 5
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kTim3Ch2> IdTim3Ch2;
+using IdTim3Ch2 = AnyID<Itf::k2, Chan::k5, PerifSel::kTim3Ch2>;
 /// A template class to map TIM3 CH3 to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kTim3Ch3> IdTim3Ch3;
+using IdTim3Ch3 = AnyID<Itf::k1, Chan::k2, PerifSel::kTim3Ch3>;
 /// A template class to map TIM3 CH4 to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kTim3Ch4> IdTim3Ch4;
+using IdTim3Ch4 = AnyID<Itf::k1, Chan::k3, PerifSel::kTim3Ch4>;
 /// A template class to map TIM3 TRIG to DMA1 channel 6
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kTim3Trig> IdTim3Trig;
+using IdTim3Trig = AnyID<Itf::k1, Chan::k6, PerifSel::kTim3Trig>;
 /// A template class to map TIM3 UP to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kTim3Up> IdTim3Up;
+using IdTim3Up = AnyID<Itf::k1, Chan::k3, PerifSel::kTim3Up>;
 #endif	// TIM3_BASE
 
 #ifdef TIM4_BASE
 /// A template class to map TIM4 CH1 to DMA1 channel 1
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kTim4Ch1> IdTim4Ch1;
+using IdTim4Ch1 = AnyID<Itf::k1, Chan::k1, PerifSel::kTim4Ch1>;
 /// A template class to map TIM4 CH2 to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kTim4Ch2> IdTim4Ch2;
+using IdTim4Ch2 = AnyID<Itf::k1, Chan::k4, PerifSel::kTim4Ch2>;
 /// A template class to map TIM4 CH3 to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kTim4Ch3> IdTim4Ch3;
+using IdTim4Ch3 = AnyID<Itf::k1, Chan::k5, PerifSel::kTim4Ch3>;
 /// A template class to map TIM4 CH4 to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kTim4Ch4> IdTim4Ch4;
+using IdTim4Ch4 = AnyID<Itf::k1, Chan::k2, PerifSel::kTim4Ch4>;
 /// A template class to map TIM4 UP to DMA1 channel 7
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kTim4Up> IdTim4Up;
+using IdTim4Up = AnyID<Itf::k1, Chan::k7, PerifSel::kTim4Up>;
 #endif	// TIM4_BASE
 
 #ifdef TIM5_BASE
 /// A template class to map TIM5 CH1 to DMA2 channel 5
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kTim5Ch1> IdTim5Ch1;
+using IdTim5Ch1 = AnyID<Itf::k2, Chan::k5, PerifSel::kTim5Ch1>;
 /// A template class to map TIM5 CH2 to DMA2 channel 4
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kTim5Ch2> IdTim5Ch2;
+using IdTim5Ch2 = AnyID<Itf::k2, Chan::k4, PerifSel::kTim5Ch2>;
 /// A template class to map TIM5 CH3 to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kTim5Ch3> IdTim5Ch3;
+using IdTim5Ch3 = AnyID<Itf::k2, Chan::k2, PerifSel::kTim5Ch3>;
 /// A template class to map TIM5 CH4 to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kTim5Ch4> IdTim5Ch4;
+using IdTim5Ch4 = AnyID<Itf::k2, Chan::k1, PerifSel::kTim5Ch4>;
 /// A template class to map TIM5 TRIG to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kTim5Trig> IdTim5Trig;
+using IdTim5Trig = AnyID<Itf::k2, Chan::k1, PerifSel::kTim5Trig>;
 /// A template class to map TIM5 UP to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kTim5Up> IdTim5Up;
+using IdTim5Up = AnyID<Itf::k2, Chan::k2, PerifSel::kTim5Up>;
 #endif	// TIM5_BASE
 
 #ifdef TIM6_BASE
 /// A template class to map TIM6 UP to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kTim6Up> IdTim6Up;
+using IdTim6Up = AnyID<Itf::k1, Chan::k3, PerifSel::kTim6Up>;
 /// A template class to map TIM6 UP to DMA2 channel 4 (alternate)
-typedef AnyID<Itf::k2, Chan::k4, PerifSel::kTim6Up> IdTim6Up_2;
+using IdTim6Up_2 = AnyID<Itf::k2, Chan::k4, PerifSel::kTim6Up>;
 #endif	// TIM6_BASE
 
 #ifdef TIM7_BASE
 /// A template class to map TIM7 UP to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kTim7Up> IdTim7Up;
+using IdTim7Up = AnyID<Itf::k1, Chan::k4, PerifSel::kTim7Up>;
 /// A template class to map TIM7 UP to DMA2 channel 5 (alternate)
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kTim7Up> IdTim7Up_2;
+using IdTim7Up_2 = AnyID<Itf::k2, Chan::k5, PerifSel::kTim7Up>;
 #endif	// TIM7_BASE
 
 #ifdef TIM8_BASE
 /// A template class to map TIM8 CH1 to DMA2 channel 6
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kTim8Ch1> IdTim8Ch1;
+using IdTim8Ch1 = AnyID<Itf::k2, Chan::k6, PerifSel::kTim8Ch1>;
 /// A template class to map TIM8 CH2 to DMA2 channel 7
-typedef AnyID<Itf::k2, Chan::k7, PerifSel::kTim8Ch2> IdTim8Ch2;
+using IdTim8Ch2 = AnyID<Itf::k2, Chan::k7, PerifSel::kTim8Ch2>;
 /// A template class to map TIM8 CH3 to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kTim8Ch3> IdTim8Ch3;
+using IdTim8Ch3 = AnyID<Itf::k2, Chan::k1, PerifSel::kTim8Ch3>;
 /// A template class to map TIM8 CH4 to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kTim8Ch4> IdTim8Ch4;
+using IdTim8Ch4 = AnyID<Itf::k2, Chan::k2, PerifSel::kTim8Ch4>;
 /// A template class to map TIM8 COM to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kTim8Com> IdTim8Com;
+using IdTim8Com = AnyID<Itf::k2, Chan::k2, PerifSel::kTim8Com>;
 /// A template class to map TIM8 TRIG to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kTim8Trig> IdTim8Trig;
+using IdTim8Trig = AnyID<Itf::k2, Chan::k2, PerifSel::kTim8Trig>;
 /// A template class to map TIM8 UP to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kTim8Up> IdTim8Up;
+using IdTim8Up = AnyID<Itf::k2, Chan::k1, PerifSel::kTim8Up>;
 #endif	// TIM8_BASE
 
 #ifdef TIM15_BASE
 /// A template class to map TIM15 CH1 to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kTim15Ch1> IdTim15Ch1;
+using IdTim15Ch1 = AnyID<Itf::k1, Chan::k5, PerifSel::kTim15Ch1>;
 /// A template class to map TIM15 COM to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kTim15Com> IdTim15Com;
+using IdTim15Com = AnyID<Itf::k1, Chan::k5, PerifSel::kTim15Com>;
 /// A template class to map TIM15 TRIG to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kTim15Trig> IdTim15Trig;
+using IdTim15Trig = AnyID<Itf::k1, Chan::k5, PerifSel::kTim15Trig>;
 /// A template class to map TIM15 UP to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kTim15Up> IdTim15Up;
+using IdTim15Up = AnyID<Itf::k1, Chan::k5, PerifSel::kTim15Up>;
 #endif	// TIM15_BASE
 
 #ifdef TIM16_BASE
 /// A template class to map TIM16 CH1 to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kTim16Ch1> IdTim16Ch1;
+using IdTim16Ch1 = AnyID<Itf::k1, Chan::k3, PerifSel::kTim16Ch1>;
 /// A template class to map TIM16 CH1 to DMA1 channel 6 (alternate)
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kTim16Ch1> IdTim16Ch1_2;
+using IdTim16Ch1_2 = AnyID<Itf::k1, Chan::k6, PerifSel::kTim16Ch1>;
 /// A template class to map TIM16 UP to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kTim16Up> IdTim16Up;
+using IdTim16Up = AnyID<Itf::k1, Chan::k3, PerifSel::kTim16Up>;
 /// A template class to map TIM16 UP to DMA1 channel 6 (alternate)
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kTim16Up> IdTim16Up_2;
+using IdTim16Up_2 = AnyID<Itf::k1, Chan::k6, PerifSel::kTim16Up>;
 #endif	// TIM16_BASE
 
 #ifdef TIM17_BASE
 /// A template class to map TIM17 CH1 to DMA1 channel 1
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kTim17Ch1> IdTim17Ch1;
+using IdTim17Ch1 = AnyID<Itf::k1, Chan::k1, PerifSel::kTim17Ch1>;
 /// A template class to map TIM17 CH1 to DMA1 channel 7 (alternate)
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kTim17Ch1> IdTim17Ch1_2;
+using IdTim17Ch1_2 = AnyID<Itf::k1, Chan::k7, PerifSel::kTim17Ch1>;
 /// A template class to map TIM17 UP to DMA1 channel 1
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kTim17Up> IdTim17Up;
+using IdTim17Up = AnyID<Itf::k1, Chan::k1, PerifSel::kTim17Up>;
 /// A template class to map TIM17 UP to DMA1 channel 7 (alternate)
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kTim17Up> IdTim17Up_2;
+using IdTim17Up_2 = AnyID<Itf::k1, Chan::k7, PerifSel::kTim17Up>;
 #endif	// TIM17_BASE
 
 #ifdef TIM20_BASE
 /// A template class to map TIM20 CH1 to DMA2 channel 5
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kTim20Ch1> IdTim20Ch1;
+using IdTim20Ch1 = AnyID<Itf::k2, Chan::k5, PerifSel::kTim20Ch1>;
 /// A template class to map TIM20 CH2 to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kTim20Ch2> IdTim20Ch2;
+using IdTim20Ch2 = AnyID<Itf::k1, Chan::k2, PerifSel::kTim20Ch2>;
 /// A template class to map TIM20 CH3 to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kTim20Ch3> IdTim20Ch3;
+using IdTim20Ch3 = AnyID<Itf::k2, Chan::k1, PerifSel::kTim20Ch3>;
 /// A template class to map TIM20 CH4 to DMA1 channel 7
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kTim20Ch4> IdTim20Ch4;
+using IdTim20Ch4 = AnyID<Itf::k1, Chan::k7, PerifSel::kTim20Ch4>;
 /// A template class to map TIM20 COM to DMA1 channel 6
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kTim20Com> IdTim20Com;
+using IdTim20Com = AnyID<Itf::k1, Chan::k6, PerifSel::kTim20Com>;
 /// A template class to map TIM20 TRIG to DMA2 channel 7
-typedef AnyID<Itf::k2, Chan::k7, PerifSel::kTim20Trig> IdTim20Trig;
+using IdTim20Trig = AnyID<Itf::k2, Chan::k7, PerifSel::kTim20Trig>;
 /// A template class to map TIM20 UP to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kTim20Up> IdTim20Up;
+using IdTim20Up = AnyID<Itf::k1, Chan::k4, PerifSel::kTim20Up>;
 #endif	// TIM20_BASE
 
 #ifdef UART4_BASE
 /// A template class to map UART4 RX to DMA2 channel 5
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kUart4Rx> IdUart4Rx;
+using IdUart4Rx = AnyID<Itf::k2, Chan::k5, PerifSel::kUart4Rx>;
 /// A template class to map UART4 TX to DMA2 channel 3
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::kUart4Tx> IdUart4Tx;
+using IdUart4Tx = AnyID<Itf::k2, Chan::k3, PerifSel::kUart4Tx>;
 #endif	// UART4_BASE
 
 #ifdef UART5_BASE
 /// A template class to map UART5 RX to DMA2 channel 2
-typedef AnyID<Itf::k2, Chan::k2, PerifSel::kUart5Rx> IdUart5Rx;
+using IdUart5Rx = AnyID<Itf::k2, Chan::k2, PerifSel::kUart5Rx>;
 /// A template class to map UART5 TX to DMA2 channel 1
-typedef AnyID<Itf::k2, Chan::k1, PerifSel::kUart5Tx> IdUart5Tx;
+using IdUart5Tx = AnyID<Itf::k2, Chan::k1, PerifSel::kUart5Tx>;
 #endif	// UART5_BASE
 
 #ifdef UCPD1_BASE
 /// A template class to map UCPD1 RX to DMA2 channel 5
-typedef AnyID<Itf::k2, Chan::k5, PerifSel::kUcpd1Rx> IdUcpd1Rx;
+using IdUcpd1Rx = AnyID<Itf::k2, Chan::k5, PerifSel::kUcpd1Rx>;
 /// A template class to map UCPD1 TX to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kUcpd1Tx> IdUcpd1Tx;
+using IdUcpd1Tx = AnyID<Itf::k1, Chan::k4, PerifSel::kUcpd1Tx>;
 #endif	// UCPD1_BASE
 
 #ifdef USART1_BASE
 /// A template class to map USART1 RX to DMA1 channel 5
-typedef AnyID<Itf::k1, Chan::k5, PerifSel::kUsart1Rx> IdUsart1Rx;
+using IdUsart1Rx = AnyID<Itf::k1, Chan::k5, PerifSel::kUsart1Rx>;
 /// A template class to map USART1 RX to DMA2 channel 7 (alternate)
-typedef AnyID<Itf::k2, Chan::k7, PerifSel::kUsart1Rx> IdUsart1Rx_2;
+using IdUsart1Rx_2 = AnyID<Itf::k2, Chan::k7, PerifSel::kUsart1Rx>;
 /// A template class to map USART1 TX to DMA1 channel 4
-typedef AnyID<Itf::k1, Chan::k4, PerifSel::kUsart1Tx> IdUsart1Tx;
+using IdUsart1Tx = AnyID<Itf::k1, Chan::k4, PerifSel::kUsart1Tx>;
 /// A template class to map USART1 TX to DMA2 channel 6 (alternate)
-typedef AnyID<Itf::k2, Chan::k6, PerifSel::kUsart1Tx> IdUsart1Tx_2;
+using IdUsart1Tx_2 = AnyID<Itf::k2, Chan::k6, PerifSel::kUsart1Tx>;
 #endif	// USART1_BASE
 
 #ifdef USART2_BASE
 /// A template class to map USART2 RX to DMA1 channel 6
-typedef AnyID<Itf::k1, Chan::k6, PerifSel::kUsart2Rx> IdUsart2Rx;
+using IdUsart2Rx = AnyID<Itf::k1, Chan::k6, PerifSel::kUsart2Rx>;
 /// A template class to map USART2 TX to DMA1 channel 7
-typedef AnyID<Itf::k1, Chan::k7, PerifSel::kUsart2Tx> IdUsart2Tx;
+using IdUsart2Tx = AnyID<Itf::k1, Chan::k7, PerifSel::kUsart2Tx>;
 #endif	// USART2_BASE
 
 #ifdef USART3_BASE
 /// A template class to map USART3 RX to DMA1 channel 3
-typedef AnyID<Itf::k1, Chan::k3, PerifSel::kUsart3Rx> IdUsart3Rx;
+using IdUsart3Rx = AnyID<Itf::k1, Chan::k3, PerifSel::kUsart3Rx>;
 /// A template class to map USART3 TX to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kUsart3Tx> IdUsart3Tx;
+using IdUsart3Tx = AnyID<Itf::k1, Chan::k2, PerifSel::kUsart3Tx>;
 #endif	// USART3_BASE
 
 

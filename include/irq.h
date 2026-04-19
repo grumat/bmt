@@ -58,12 +58,9 @@ static constexpr IRQn_Type BogusIrqType = SysTick_IRQn;
 Example:
 \code{.cpp}
 /// A data-type representing interface to the PC
-typedef IrqTemplate<USART1_IRQn> CommPC;
-/// A data-type representing interface to a Modem
-typedef IrqTemplate<USART2_IRQn> CommModem;
-/// Group both together
-typedef IrqSet<CommPC, CommModem> AllComms;
-
+using CommPC = IrqTemplate<USART1_IRQn>;/// A data-type representing interface to a Modem
+using CommModem = IrqTemplate<USART2_IRQn>;/// Group both together
+using AllComms = IrqSet<CommPC, CommModem>;
 void MyExample()
 {
 	// This shows how handle interrupts individually

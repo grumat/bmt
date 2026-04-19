@@ -59,9 +59,9 @@ STM32L4xx and STM32G4xx devices.
 Install paths should look something like this:
 
 ```
-%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_F1_V1.8.4\Drivers
-%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_L4_V1.17.2\Drivers
-%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_G4_V1.5.1\Drivers
+%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_F1_VX.Y.Z\Drivers
+%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_L4_VX.Y.Z\Drivers
+%USERPROFILE%\STM32Cube\Repository\STM32Cube_FW_G4_VX.Y.Z\Drivers
 ```
 
 > As new versions of these packages are released you may need to tune 
@@ -182,5 +182,5 @@ following table:
 A typical gcc command line would look like this:
 
 ```
-arm-none-eabi-gcc.exe -DSTM32F103xB -I "%USERPROFILE%\AppData\Local\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F1xxxx\CMSIS_HAL\Device\ST\STM32F1xx\Include\stm32f1xx.h" ...etc...
+arm-none-eabi-gcc -DSTM32F103xB -I "%USERPROFILE%\AppData\Local\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F1xxxx\CMSIS_HAL\Device\ST\STM32F1xx\Include" ...other options...
 ```

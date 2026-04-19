@@ -15,8 +15,7 @@ template<
 >
 class AnyPllVco : public Private::PllVcoAttr_<PllVcoAttr>
 {
-	typedef Private::PllVcoAttr_<PllVcoAttr> super;
-public:
+using super = Private::PllVcoAttr_<PllVcoAttr>;public:
 	//! Divisor '/R' for the PLLCLK output frequency
 	static constexpr uint32_t k_R_ = k_R;
 	//! Algorithm to compute PLL fraction for a specified '/R' divisor
@@ -32,8 +31,7 @@ public:
 template<typename PllVcoAttr>
 class AnyPllVcoAuto : public Private::PllVcoAttr_<PllVcoAttr>
 {
-	typedef Private::PllVcoAttr_<PllVcoAttr> super;
-public:
+using super = Private::PllVcoAttr_<PllVcoAttr>;public:
 	//! Tries the best approach
 	static constexpr PllFraction ComputePllFraction(const uint32_t clk, const uint32_t fq)
 	{

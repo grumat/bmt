@@ -88,9 +88,9 @@ class Task;
 class TaskQueueProxy;
 
 /// Data-type for task procedure pointers
-typedef TaskResult (*TaskProc_t)(volatile Task*);
+using TaskProc_t = TaskResult (*)(volatile Task*);
 /// Data-type for ISR task procedures
-typedef void (*IsrProc_t)(void *pParam);
+using IsrProc_t = void (*)(void *pParam);
 
 
 /// Structure used to define a task

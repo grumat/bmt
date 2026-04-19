@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <type_traits>
 
 // STM32F103xB
 #if defined (STM32F100xB) || defined (STM32F100xE) || defined (STM32F101x6) || \

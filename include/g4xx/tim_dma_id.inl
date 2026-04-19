@@ -8,11 +8,11 @@ template<
 struct DmaInfo
 {
 	// Update Event
-	typedef Dma::IdNone Update;
+	using Update = Dma::IdNone;
 	// Trigger event
-	typedef Dma::IdNone Trigger;
+	using Trigger = Dma::IdNone;
 	// Communtation event
-	typedef Dma::IdNone Commutation;
+	using Commutation = Dma::IdNone;
 };
 
 template<
@@ -27,9 +27,9 @@ struct DmaChInfo : Dma::IdNone
 // Template specialization for DMA settings of TIM1>
 template<> struct DmaInfo<kTim1>
 {
-	typedef Dma::IdTim1Up Update;
-	typedef Dma::IdTim1Trig Trigger;
-	typedef Dma::IdTim1Com Commutation;
+	using Update = Dma::IdTim1Up;
+	using Trigger = Dma::IdTim1Trig;
+	using Commutation = Dma::IdTim1Com;
 };
 
 // Template specialization for DMA Channel settings for TIM1_CH1>
@@ -58,9 +58,9 @@ template<> struct DmaChInfo<kTim1, Channel::k4> : Dma::IdTim1Ch4
 // Template specialization for DMA settings of TIM2>
 template<> struct DmaInfo<kTim2>
 {
-	typedef Dma::IdTim2Up Update;
-	typedef Dma::IdNone Trigger;
-	typedef Dma::IdNone Commutation;
+	using Update = Dma::IdTim2Up;
+	using Trigger = Dma::IdNone;
+	using Commutation = Dma::IdNone;
 };
 
 // Template specialization for DMA Channel settings for TIM2_CH1>
@@ -89,9 +89,9 @@ template<> struct DmaChInfo<kTim2, Channel::k4> : Dma::IdTim2Ch4
 // Template specialization for DMA settings of TIM3>
 template<> struct DmaInfo<kTim3>
 {
-	typedef Dma::IdTim3Up Update;
-	typedef Dma::IdTim3Trig Trigger;
-	typedef Dma::IdNone Commutation;
+	using Update = Dma::IdTim3Up;
+	using Trigger = Dma::IdTim3Trig;
+	using Commutation = Dma::IdNone;
 };
 
 // Template specialization for DMA Channel settings for TIM3_CH1>
@@ -120,9 +120,9 @@ template<> struct DmaChInfo<kTim3, Channel::k4> : Dma::IdTim3Ch4
 // Template specialization for DMA settings of TIM4>
 template<> struct DmaInfo<kTim4>
 {
-	typedef Dma::IdTim4Up Update;
-	typedef Dma::IdNone Trigger;
-	typedef Dma::IdNone Commutation;
+	using Update = Dma::IdTim4Up;
+	using Trigger = Dma::IdNone;
+	using Commutation = Dma::IdNone;
 };
 
 // Template specialization for DMA Channel settings for TIM4_CH1>
@@ -151,9 +151,9 @@ template<> struct DmaChInfo<kTim4, Channel::k4> : Dma::IdTim4Ch4
 // Template specialization for DMA settings of TIM5>
 template<> struct DmaInfo<kTim5>
 {
-	typedef Dma::IdTim5Up Update;
-	typedef Dma::IdTim5Trig Trigger;
-	typedef Dma::IdNone Commutation;
+	using Update = Dma::IdTim5Up;
+	using Trigger = Dma::IdTim5Trig;
+	using Commutation = Dma::IdNone;
 };
 
 // Template specialization for DMA Channel settings for TIM5_CH1>
@@ -182,9 +182,9 @@ template<> struct DmaChInfo<kTim5, Channel::k4> : Dma::IdTim5Ch4
 // Template specialization for DMA settings of TIM6>
 template<> struct DmaInfo<kTim6>
 {
-	typedef Dma::IdTim6Up Update;
-	typedef Dma::IdNone Trigger;
-	typedef Dma::IdNone Commutation;
+	using Update = Dma::IdTim6Up;
+	using Trigger = Dma::IdNone;
+	using Commutation = Dma::IdNone;
 };
 
 #endif	// TIM6_BASE
@@ -193,9 +193,9 @@ template<> struct DmaInfo<kTim6>
 // Template specialization for DMA settings of TIM7>
 template<> struct DmaInfo<kTim7>
 {
-	typedef Dma::IdTim7Up Update;
-	typedef Dma::IdNone Trigger;
-	typedef Dma::IdNone Commutation;
+	using Update = Dma::IdTim7Up;
+	using Trigger = Dma::IdNone;
+	using Commutation = Dma::IdNone;
 };
 
 #endif	// TIM7_BASE
@@ -204,9 +204,9 @@ template<> struct DmaInfo<kTim7>
 // Template specialization for DMA settings of TIM8>
 template<> struct DmaInfo<kTim8>
 {
-	typedef Dma::IdTim8Up Update;
-	typedef Dma::IdTim8Trig Trigger;
-	typedef Dma::IdTim8Com Commutation;
+	using Update = Dma::IdTim8Up;
+	using Trigger = Dma::IdTim8Trig;
+	using Commutation = Dma::IdTim8Com;
 };
 
 // Template specialization for DMA Channel settings for TIM8_CH1>
@@ -235,9 +235,9 @@ template<> struct DmaChInfo<kTim8, Channel::k4> : Dma::IdTim8Ch4
 // Template specialization for DMA settings of TIM15>
 template<> struct DmaInfo<kTim15>
 {
-	typedef Dma::IdTim15Up Update;
-	typedef Dma::IdTim15Trig Trigger;
-	typedef Dma::IdTim15Com Commutation;
+	using Update = Dma::IdTim15Up;
+	using Trigger = Dma::IdTim15Trig;
+	using Commutation = Dma::IdTim15Com;
 };
 
 // Template specialization for DMA Channel settings for TIM15_CH1>
@@ -251,9 +251,9 @@ template<> struct DmaChInfo<kTim15, Channel::k1> : Dma::IdTim15Ch1
 // Template specialization for DMA settings of TIM16>
 template<> struct DmaInfo<kTim16>
 {
-	typedef Dma::IdTim16Up Update;
-	typedef Dma::IdNone Trigger;
-	typedef Dma::IdNone Commutation;
+	using Update = Dma::IdTim16Up;
+	using Trigger = Dma::IdNone;
+	using Commutation = Dma::IdNone;
 };
 
 // Template specialization for DMA Channel settings for TIM16_CH1>
@@ -267,9 +267,9 @@ template<> struct DmaChInfo<kTim16, Channel::k1> : Dma::IdTim16Ch1
 // Template specialization for DMA settings of TIM17>
 template<> struct DmaInfo<kTim17>
 {
-	typedef Dma::IdTim17Up Update;
-	typedef Dma::IdNone Trigger;
-	typedef Dma::IdNone Commutation;
+	using Update = Dma::IdTim17Up;
+	using Trigger = Dma::IdNone;
+	using Commutation = Dma::IdNone;
 };
 
 // Template specialization for DMA Channel settings for TIM17_CH1>
@@ -283,9 +283,9 @@ template<> struct DmaChInfo<kTim17, Channel::k1> : Dma::IdTim17Ch1
 // Template specialization for DMA settings of TIM20>
 template<> struct DmaInfo<kTim20>
 {
-	typedef Dma::IdTim20Up Update;
-	typedef Dma::IdTim20Trig Trigger;
-	typedef Dma::IdTim20Com Commutation;
+	using Update = Dma::IdTim20Up;
+	using Trigger = Dma::IdTim20Trig;
+	using Commutation = Dma::IdTim20Com;
 };
 
 // Template specialization for DMA Channel settings for TIM20_CH1>

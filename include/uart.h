@@ -5,6 +5,24 @@
 #include "critical_section.h"
 #include "irq.h"
 
+
+namespace Bmt
+{
+
+enum class Usart;
+
+using IrqForwarder = void (*)(void*);
+// Internal Library Header
+template <Usart U>
+struct UsartIntHandler
+{
+	static inline IrqForwarder func;
+	static inline void* cookie;
+};
+
+}	// namespace Bmt
+
+
 #if defined(STM32L4)
 #	include "l4xx/uart.h"
 #elif defined(STM32G4)

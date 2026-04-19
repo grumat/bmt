@@ -199,8 +199,7 @@ class AnySysTickEx : public AnySysTick<SysClk, kFrequency, kSysTickPollType>
 {
 public:
 	/// Base class
-	typedef AnySysTick<SysClk, kFrequency, kSysTickPollType> Base;
-	/// Soft frequency
+using Base = AnySysTick<SysClk, kFrequency, kSysTickPollType>;	/// Soft frequency
 	static constexpr uint32_t kFrequency_ = kSoftFreq;
 	/// Soft generated tick counter
 	static inline volatile uint32_t soft_tick_;

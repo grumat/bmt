@@ -7,43 +7,67 @@ the User's Guide for configurations supported by your hardware.
 > These template classes are only type definitions. No instance are 
 > required. Methods are all static.
 
-A good example is here:
+## Basic Clock Configuration Example
+
+Here's a complete example configuring an STM32F103 (BluePill) with 8 MHz external crystal to achieve 72 MHz system clock:
 
 ```cpp
 using namespace Bmt;
 
-// 8 MHz crystal
+// 8 MHz external crystal
 constexpr uint32_t kMyXtal = 8000000UL;
-// 80 MHz desired SYSCLK
-constexpr uint32_t kMySysClk = 80000000UL;
+// 72 MHz desired SYSCLK (max for STM32F103)
+constexpr uint32_t kMySysClk = 72000000UL;
 
-// The HSE drives the XTAL
-typedef Clocks::AnyHse<kMyXtal> Hse;
-// Calculator for PLLCLK/SYSCLK
-typedef Clocks::Range1 PllCalculator;
-// The Pll uses Hse and Calculator to obtain 72MHz
-typedef Clocks::AnyPll<
+// The HSE drives the external crystal
+using Hse = Clocks::AnyHse<kMyXtal>;
+
+// Calculator for PLL ratios (Range1 for full voltage)
+using PllCalculator = Clocks::Range1;
+
+// The PLL uses HSE and Calculator to obtain 72MHz
+using Pll = Clocks::AnyPll<
     Hse,                // clock source used for the PLL
     kMySysClk,          // desired PLL output
-    PllCalculator,      // calculator to obtain '/M', '/N' and '/R'
-    > Pll;
+    PllCalculator       // calculator to obtain '/M', '/N' and '/R'
+>;
 
-typedef Clocks::AnySysClk<
+// Configure the complete clock tree
+using SysClk = Clocks::AnySysClk<
     Pll,                // Uses the PLL as system clock
-    AhbPrscl::k1,       // No divisor for thw AHB bus
-    ApbPrscl::k2,       // 40 MHz for the APB1 bus
-    ApbPrscl::k1,       // 80 MHz for the APB2 bus
-    > SysClk;
+    AhbPrscl::k1,       // No divisor for AHB bus (72 MHz)
+    ApbPrscl::k2,       // 36 MHz for APB1 bus (timer clocks x2 = 72 MHz)
+    ApbPrscl::k1        // 72 MHz for APB2 bus
+>;
 
-void main()
+extern "C" void SystemInit()
 {
-    // ...
-
-    // This starts HSE, then setups and starts PLL and initializes the 
-    // clock tree
+    // Reset clock system
+    System::Init();
+    
+    // This starts HSE, configures PLL, and initializes the clock tree
     SysClk::Init();
+}
+```
 
-    // ...
+## Real-World Example from Firmware
+
+The glossy-msp430 firmware uses this clock configuration for STM32F103:
+
+```cpp
+// From target.bluepill/platform.h
+constexpr uint32_t kCrystal = 8000000UL;      // 8 MHz external crystal
+constexpr uint32_t kSysClk = 72000000UL;      // 72 MHz system clock
+
+using HSE = Clocks::AnyHse<kCrystal>;
+using PLL = Clocks::AnyPll<HSE, kSysClk, Clocks::Range1>;
+using SysClk = Clocks::AnySysClk<PLL, AhbPrscl::k1, ApbPrscl::k2, ApbPrscl::k1>;
+
+// System initialization
+extern "C" void SystemInit()
+{
+    System::Init();
+    SysClk::Init();
 }
 ```
 
@@ -58,15 +82,13 @@ name-space.
 ```cpp
 using namespace Bmt;
 
-typedef Clocks::Hse<> Hse; // ...etc...
+using Hse = Clocks::AnyHse<8000000UL>; // 8 MHz HSE
 ```
 
-or
+or with explicit namespace:
 
 ```cpp
-using namespace Bmt::Clocks;
-
-typedef Hse<> MyHse; // Naming *conflicts* may happen...
+using Hse = Bmt::Clocks::AnyHse<8000000UL>; // Avoids naming conflicts
 ```
 
 > In general it is recommended the first form, as the "`Clocks::...`" scope 
@@ -145,7 +167,7 @@ Example:
 using namespace Bmt;
 
 // The HSE clock has a 8MHz crystal soldered on the board
-typedef Clocks::AnyHse<8000000UL> HSE;
+using HSE = Clocks::AnyHse<8000000UL>;
 
 // STM32 startup files call this in the early firmware initialization 
 // before the C library is initialized. Do not trust static objects or 
@@ -250,11 +272,11 @@ Example:
 using namespace Bmt;
 
 // LSE using standard 32768 XTAL
-typedef Clocks::AnyLSE<> LSE;
+using LSE = Clocks::AnyLSE<>;
 // MSI 48 MHz using PLL feature
-typedef Clocks::AnyMSI<Clocks::MsiFreq::k48_MHz, true> MSI;
+using MSI = Clocks::AnyMSI<Clocks::MsiFreq::k48_MHz, true>;
 // System clock driven by MSI
-typedef Clocks::AnySycClk<MSI> SYSCLK;
+using SYSCLK = Clocks::AnySycClk<MSI>;
 
 void main()
 {
@@ -303,10 +325,10 @@ Example:
 using namespace Bmt;
 
 // HSE clock generator has as 12 MHz XTAL
-typedef Clocks::AnyHSE<12000000UL> HSE;
-typedef Clocks::AnySycClk<HSE  // Turns HSE into main clock
+using HSE = Clocks::AnyHSE<12000000UL>;
+using SYSCLK = Clocks::AnySycClk<HSE  // Turns HSE into main clock
     , Power::Mode::kRange1     // remove this line for STMF1xx
-    > SYSCLK;
+    >;
 void main()
 {
     // ...
@@ -421,18 +443,18 @@ constexpr uint32_t kMyXtal = 8000000UL;
 constexpr uint32_t kMySysClk = 72000000UL;
 
 // The HSE drives the XTAL
-typedef Clocks::AnyHse<kMyXtal> Hse;
+using Hse = Clocks::AnyHse<kMyXtal>;
 // Calculator using '/R = 4' for PLLCLK/SYSCLK
-typedef Clocks::AnyPllVco<Clocks::PllRange1, 4> PllCalculator;
+using PllCalculator = Clocks::AnyPllVco<Clocks::PllRange1, 4>;
 // The Pll uses Hse and Calculator to obtain 72MHz
-typedef Clocks::AnyPll<
+using Pll = Clocks::AnyPll<
     Hse,                // clock source used for the PLL
     kMySysClk,          // desired PLL output
     PllCalculator,      // calculator to obtain '/M', '/N' and '/R'
     true,               // enables the PLLCLK
     0,                  // do not enable the '/P' (PLLSAI2CLK) output
     6,                  // use '/Q = 6' to create 48 MHz for USB
-    > Pll;
+    >;
 
 void main()
 {
@@ -499,20 +521,20 @@ constexpr uint32_t kMyXtal = 8000000UL;
 constexpr uint32_t kMySysClk = 72000000UL;
 
 // The HSE drives the XTAL
-typedef Clocks::AnyHse<kMyXtal> Hse;
+using Hse = Clocks::AnyHse<kMyXtal>;
 // Calculator using '/R = 4' for PLLCLK/SYSCLK
-typedef Clocks::AnyPllVco<Clocks::PllRange1, 4> PllCalculator;
+using PllCalculator = Clocks::AnyPllVco<Clocks::PllRange1, 4>;
 // The Pll uses Hse and Calculator to obtain 72MHz
-typedef Clocks::AnyPll<
+using Pll = Clocks::AnyPll<
     Hse,                // clock source used for the PLL
     kMySysClk,          // desired PLL output
     PllCalculator,      // calculator to obtain '/M', '/N' and '/R'
     true,               // enables the PLLCLK
     0,                  // do not enable the '/P' (PLLSAI2CLK) output
     6,                  // use '/Q = 6' to create 48 MHz for USB
-    > Pll;
+    >;
 
-typedef Clocks::AnySysClk<
+using SysClk = Clocks::AnySysClk<
     Pll,                // Uses the PLL as system clock
     AhbPrscl::k1,       // No divisor for thw AHB bus
     ApbPrscl::k2,       // 36 MHz for the APB1 bus
@@ -520,7 +542,7 @@ typedef Clocks::AnySysClk<
     true,               // Turn RC clock off
     Mco::kSysClk,       // Configure MCO function to output the PLL frequency
     McoPrscl::k16       // 72 MHz / 16 = 4,5 MHz
-    > SysClk;
+    >;
 
 void main()
 {

@@ -93,7 +93,7 @@ following type definition:
 ```cpp
 // ...
 /// A template class to map SPI1 RX to DMA channel
-typedef AnyID<Itf::k1, Chan::k2> IdSpi1Rx;
+using IdSpi1Rx = AnyID<Itf::k1, Chan::k2>;
 // ...
 ```
 
@@ -104,7 +104,7 @@ find other signals associated to the DMA1 channels 2, like this:
 ```cpp
 // ...
 /// A template class to map USART3 TX to DMA channel
-typedef AnyID<Itf::k1, Chan::k2> IdUsart3Tx;
+using IdUsart3Tx = AnyID<Itf::k1, Chan::k2>;
 // ...
 ```
 
@@ -129,9 +129,9 @@ additional parameter is provided with the multiplexer value:
 ```cpp
 // ...
 /// A template class to map SPI1 RX to DMA channel
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::k1> IdSpi1Rx;
+using IdSpi1Rx = AnyID<Itf::k1, Chan::k2, PerifSel::k1>;
 /// A template class to map SPI1 RX to DMA channel (alternate)
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::k4> IdSpi1Rx_2;
+using IdSpi1Rx_2 = AnyID<Itf::k2, Chan::k3, PerifSel::k4>;
 // ...
 ```
 
@@ -172,7 +172,7 @@ So you can define a DMA channel identification, this way:
 
 ```cpp
 /// Use DMA1 Channel 1 with the SPI1 RX trigger signal
-typedef AnyID<Itf::k1, Chan::k1, PerifSel::kSpi1Rx> MySpi1RxDma;
+using MySpi1RxDma = AnyID<Itf::k1, Chan::k1, PerifSel::kSpi1Rx>;
 ```
 
 For backwards compatibility, the library provides a mapping with 
@@ -187,9 +187,9 @@ data types found on the `dma-cfgs.h` file is:
 ```cpp
 // ...
 /// A template class to map SPI1 RX to DMA1 channel 2
-typedef AnyID<Itf::k1, Chan::k2, PerifSel::kSpi1Rx> IdSpi1Rx;
+using IdSpi1Rx = AnyID<Itf::k1, Chan::k2, PerifSel::kSpi1Rx>;
 /// A template class to map SPI1 RX to DMA2 channel 3 (alternate)
-typedef AnyID<Itf::k2, Chan::k3, PerifSel::kSpi1Rx> IdSpi1Rx_2;
+using IdSpi1Rx_2 = AnyID<Itf::k2, Chan::k3, PerifSel::kSpi1Rx>;
 // ...
 ```
 
@@ -550,12 +550,12 @@ perform a DMA transfer:
 
 ```cpp
 // This DMA is triggered on every timer update
-typedef Dma::AnyChannel<
-	Dma::IdTim2Up					// Timer 2 update triggers the DMA
-	, Dma::Dir::kMemToPer			// runs samples in a single shot then stop
-	, Dma::PtrPolicy::kBytePtrInc	// source buffer are bytes
-	, Dma::PtrPolicy::kLongPtr		// destination CCR register
-> MyDma;
+using MyDma = Dma::AnyChannel<
+	Dma::IdTim2Up,					// Timer 2 update triggers the DMA
+	Dma::Dir::kMemToPer,			// runs samples in a single shot then stop
+	Dma::PtrPolicy::kBytePtrInc,	// source buffer are bytes
+	Dma::PtrPolicy::kLongPtr		// destination CCR register
+>;
 
 extern "C" void SystemInit()
 {

@@ -105,7 +105,7 @@ class Periph:
 		return 'Id' + self.CppName()
 	def CppTrigName(self):
 		return 'Any' + self.CppName()
-	def TypDefId(self):
+	def UsingTypeId(self):
 		s = 'AnyID<'
 		s += self.DmaItf()
 		s += ', ' + self.DmaChan()
@@ -181,7 +181,7 @@ class Generator:
 		elif t.opt > 2:
 			self.fh.write(" (alternate {0})".format(t.opt-1))
 		self.fh.write("\n")
-		self.fh.write("typedef {0} {1};\n".format(t.TypDefId(), t.CppIdName()))
+		self.fh.write("using {1} = {0};\n".format(t.UsingTypeId(), t.CppIdName()))
 	def MakeTrigger(self, t : Periph):
 		self.Begin(t.Macro(), True)
 		self.fh.write("/// A template class to configure {0} with DMA transfer".format(t.Describe()))
@@ -284,9 +284,9 @@ namespace Dma
 
 """)
 		if FORMAT == "L4":
-			self.fh.write("typedef AnyID<Itf::k1, Chan::kNone, PerifSel::k0> IdNone;\n\n")
+			self.fh.write("using IdNone = AnyID<Itf::k1, Chan::kNone, PerifSel::k0>;\n\n")
 		else:
-			self.fh.write("typedef AnyID<Itf::k1, Chan::kNone> IdNone;\n\n")
+			self.fh.write("using IdNone = AnyID<Itf::k1, Chan::kNone>;\n\n")
 
 
 	def MakeDmaFooter(self):
@@ -305,11 +305,11 @@ template<
 struct DmaInfo
 {
 	// Update Event
-	typedef Dma::IdNone Update;
+	using Update = Dma::IdNone;
 	// Trigger event
-	typedef Dma::IdNone Trigger;
+	using Trigger = Dma::IdNone;
 	// Communtation event
-	typedef Dma::IdNone Commutation;
+	using Commutation = Dma::IdNone;
 };
 
 template<
@@ -333,17 +333,17 @@ struct DmaChInfo : Dma::IdNone
 		self.fh.write("template<> struct DmaInfo<kTim{0}>\n".format(td.tim.unit))
 		self.fh.write("{\n")
 		if "UP" in td.group:
-			self.fh.write("\ttypedef Dma::IdTim{0}Up Update;\n".format(td.tim.unit))
+			self.fh.write("\tusing Update = Dma::IdTim{0}Up;\n".format(td.tim.unit))
 		else:
-			self.fh.write("\ttypedef Dma::IdNone Update;\n")
+			self.fh.write("\tusing Update = Dma::IdNone;\n")
 		if "TRIG" in td.group:
-			self.fh.write("\ttypedef Dma::IdTim{0}Trig Trigger;\n".format(td.tim.unit))
+			self.fh.write("\tusing Trigger = Dma::IdTim{0}Trig;\n".format(td.tim.unit))
 		else:
-			self.fh.write("\ttypedef Dma::IdNone Trigger;\n")
+			self.fh.write("\tusing Trigger = Dma::IdNone;\n")
 		if "COM" in td.group:
-			self.fh.write("\ttypedef Dma::IdTim{0}Com Commutation;\n".format(td.tim.unit))
+			self.fh.write("\tusing Commutation = Dma::IdTim{0}Com;\n".format(td.tim.unit))
 		else:
-			self.fh.write("\ttypedef Dma::IdNone Commutation;\n")
+			self.fh.write("\tusing Commutation = Dma::IdNone;\n")
 		self.fh.write("};\n")
 		self.fh.write("\n")
 		for i in range(1, 5):

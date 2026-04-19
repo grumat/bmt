@@ -393,14 +393,14 @@ A typical use case on a BluePill STM32F103 would be:
 
 ```cpp
 // A data-type for the 8 MHz HSE clock
-typedef Clocks::AnyHse<> Hse;			// BluePill has a 8MHz XTAL
+using Hse = Clocks::AnyHse<>;			// BluePill has a 8MHz XTAL
 // A data-type for the clock tree
-typedef Clocks::AnySycClk<Hse> SysClk;	// uses HSE for the clock tree
+using SysClk = Clocks::AnySycClk<Hse>;	// uses HSE for the clock tree
 
 // Computes the prescaler for 1 kHz counter speed (8MHz / 8000)
-typedef InternalClock <kTim1, SysClk, 8000UL-1UL> Millisec;
+using Millisec = InternalClock<kTim1, SysClk, 8000UL-1UL>;
 // Timer that overflows every 5 ms (200Hz) [note: count is 0-base]
-typedef Timer::Any<Millisec, Mode::kUpCounter, 5UL-1UL> FiveMs;
+using FiveMs = Timer::Any<Millisec, Mode::kUpCounter, 5UL-1UL>;
 ```
 
 In words:
@@ -485,14 +485,14 @@ modify the previous example like the code below:
 
 ```cpp
 // A data-type for the 8 MHz HSE clock
-typedef Clocks::AnyHse<> Hse;			// BluePill has a 8MHz XTAL
+using Hse = Clocks::AnyHse<>;			// BluePill has a 8MHz XTAL
 // A data-type for the clock tree
-typedef Clocks::AnySycClk<Hse> SysClk;	// uses HSE for the clock tree
+using SysClk = Clocks::AnySycClk<Hse>;	// uses HSE for the clock tree
 
-// Computes the prescaler for 1000 µS (1 kHz) counter speed 
-typedef InternalClock_us <kTim1, SysClk, 1000UL> Millisec;
+// Computes the prescaler for 1000 ï¿½S (1 kHz) counter speed 
+using Millisec = InternalClock_us <kTim1, SysClk, 1000UL>;
 // Timer that overflows every 5 ms (200Hz) [note: count is 0-base]
-typedef Timer::Any<Millisec, Mode::kUpCounter, 5UL-1UL> FiveMs;
+using FiveMs = Timer::Any<Millisec, Mode::kUpCounter, 5UL-1UL>;
 ```
 
 > This example produces effectively the same clock frequency on a typical 
@@ -562,20 +562,20 @@ class InternalClock_Hz : public AnyTimer_<kTimerNum>
 ```
 
 For example, using the same requirement of the previous example, to 
-obtain 1 kHz it is not necessary to compute the period (1 µs). Just 
+obtain 1 kHz it is not necessary to compute the period (1 ï¿½s). Just 
 providing the units in Hertz will be enough.
 So the example would look like this:
 
 ```cpp
 // A data-type for the 8 MHz HSE clock
-typedef Clocks::AnyHse<> Hse;			// BluePill has a 8MHz XTAL
+using Hse = Clocks::AnyHse<>;			// BluePill has a 8MHz XTAL
 // A data-type for the clock tree
-typedef Clocks::AnySycClk<Hse> SysClk;	// uses HSE for the clock tree
+using SysClk = Clocks::AnySycClk<Hse>;	// uses HSE for the clock tree
 
 // Computes the prescaler for 1000 Hz (1 us) counter speed 
-typedef InternalClock_Hz <kTim1, SysClk, 1000UL> OneKHz;
+using OneKHz = InternalClock_Hz <kTim1, SysClk, 1000UL>;
 // Timer that overflows every 5 ms (200Hz) [note: count is 0-base]
-typedef Timer::Any<OneKHz, Mode::kUpCounter, 5UL-1UL> FiveMs;
+using FiveMs = Timer::Any<OneKHz, Mode::kUpCounter, 5UL-1UL>;
 ```
 
 > This example shows another perspective for the solution. For a very 
@@ -780,15 +780,15 @@ ch1 -[hidden]-> ch2
 Below follows an example for **Timer 1** using **input 1** as clock source:
 
 ```cpp
-typedef Timer::ExternalClock<
+using Clk1 = Timer::ExternalClock<
 	kTim1						// Timer 1
 	, Timer::ExtClk::kTI1FP1;	// Timer Input 1 (PA8)
 	, 562500					// 562.5 khz
 	, 1							// no prescaler
 	, 0							// fastest input filter
-> Clk1;
+>;
 // A timer counting up to 100
-typedef Timer::Any<Clk1, Mode::kUpCounter, 100> MyTimer;
+using MyTimer = Timer::Any<Clk1, Mode::kUpCounter, 100>;
 ```
 
 
@@ -1083,14 +1083,14 @@ update event occurs.
 
 ```cpp
 // A data-type for the 8 MHz HSE clock
-typedef Clocks::AnyHse<> Hse;			// BluePill has a 8MHz XTAL
+using Hse = Clocks::AnyHse<>;			// BluePill has a 8MHz XTAL
 // A data-type for the clock tree
-typedef Clocks::AnySycClk<Hse> SysClk;	// uses HSE for the clock tree
+using SysClk = Clocks::AnySycClk<Hse>;	// uses HSE for the clock tree
 
 // Computes the prescaler for 1 MHz counter speed (8MHz / 8)
-typedef InternalClock_Hz <kTim1, SysClk, 8000UL-1UL> Microsec;
+using Microsec = InternalClock_Hz <kTim1, SysClk, 8000UL-1UL>;
 // Timer that overflows every 1 ms (1000Hz) [note: count is 0-base]
-typedef Timer::Any<Microsec, Mode::kUpCounter, 1000UL-1UL> OneMs;
+using OneMs = Timer::Any<Microsec, Mode::kUpCounter, 1000UL-1UL>;
 ```
 
 To initialize this setup, crystal clock and timer shall be done 
@@ -1147,7 +1147,7 @@ following STM32CubeMX subfolder:
   - `.\Repository\STM32Cube_FW_F1_V1.8.4\Drivers\CMSIS\Device\ST\STM32F1xx\Source\Templates\gcc\startup_stm32f103xb.s`
   - If you are a lucky user of the VisualGDB, the startup file is not 
   written in assembly language. It uses C and GCC extensions and the path 
-  is: `"C:\Users\Mathias\AppData\Local\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F1xxxx\StartupFiles\startup_stm32f103xg.c"`
+  is: `"%USERPROFILE%\AppData\Local\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F1xxxx\StartupFiles\startup_stm32f103xg.c"`
 - The interrupt routine needs to be declared `extern "C"` so compiler 
 knows how to bind the function with the startup file.
 
@@ -1157,6 +1157,236 @@ knows how to bind the function with the startup file.
 > coupled to a low-pass filter to produce an analog signal. The result is 
 > a ECG Simulator.
 
+
+# Practical Timing and Delay Patterns
+
+One of the most common requirements in embedded systems is precise timing and delay generation. The **bmt** library provides several elegant patterns for this purpose, centered around the `StopWatch` data-type.
+
+## The `StopWatch` Data-Type
+
+`StopWatch` is a template class that provides high-resolution timing capabilities using the system tick timer. It's perfect for creating precise delays, measuring intervals, and implementing timeouts.
+
+### Basic Delay Creation
+
+The most common use case is creating precise delays with compile-time verification:
+
+```cpp
+#include "bmt.h"
+
+using namespace Bmt;
+
+// Create a 5Âµs delay
+StopWatch().Delay<Usec(5)>();
+
+// Create a 10ms delay  
+StopWatch().Delay<Msec(10)>();
+
+// Create a complex timing sequence
+void InitializePeripheral()
+{
+    // Power up sequence with precise timing
+    EnablePower();
+    StopWatch().Delay<Usec(50)>();   // 50Âµs stabilization
+    
+    ResetChip();
+    StopWatch().Delay<Msec(2)>();    // 2ms reset pulse
+    
+    ConfigureRegisters();
+    StopWatch().Delay<Usec(100)>();  // 100Âµs configuration time
+}
+```
+
+### Timeout Pattern with `StopWatch`
+
+A powerful pattern is using `StopWatch` for operation timeouts, as seen in the `JtagDev::OnWriteJmbIn16()` method:
+
+```cpp
+bool JtagDev::OnWriteJmbIn16(uint16_t dataX)
+{
+    constexpr uint16_t sJMBINCTL = INREQ;
+    const uint16_t sJMBIN0 = dataX;
+
+    // Create a 25ms timeout stopwatch
+    StopWatch stopwatch(TickTimer::M2T<Msec(25)>::kTicks);
+
+    OnIrShift(IR_JMB_EXCHANGE);
+    do
+    {
+        // Check timeout - elegant negative logic
+        if (stopwatch.IsNotElapsed() == false)
+        {
+            #if DEBUG
+            McuCore::Abort();
+            #endif // DEBUG
+            return false;  // Timeout occurred
+        }
+    } while (!(OnDrShift16(0x0000) & IN0RDY));
+    
+    OnDrShift16(sJMBINCTL);
+    OnDrShift16(sJMBIN0);
+    return true;
+}
+```
+
+### Reusable Stopwatch for Multiple Operations
+
+You can create a stopwatch instance and reuse it for multiple timing operations:
+
+```cpp
+void CriticalSequence()
+{
+    // Create a stopwatch for 100ms total operation time
+    StopWatch totalTimeout(TickTimer::M2T<Msec(100)>::kTicks);
+    
+    // Phase 1: Must complete within 20ms
+    StopWatch phase1(TickTimer::M2T<Msec(20)>::kTicks);
+    PerformPhase1();
+    
+    if (!phase1.IsNotElapsed()) {
+        // Phase 1 took too long
+        HandleTimeout();
+        return;
+    }
+    
+    // Phase 2: Must complete within 30ms  
+    StopWatch phase2;
+    phase2.Start<Msec(30)>();
+    PerformPhase2();
+    
+    if (phase2.IsNotElapsed() == false) {
+        // Phase 2 timeout
+        HandleTimeout();
+        return;
+    }
+    
+    // Check total time constraint
+    if (totalTimeout.IsNotElapsed() == false) {
+        // Total operation timeout
+        HandleTotalTimeout();
+    }
+}
+```
+
+### Polled Stopwatch for Longer Intervals
+
+For longer delays (seconds or more), use `PolledStopWatch`:
+
+```cpp
+using LongStopWatch = Timer::PolledStopWatch<TickTimer>;
+
+void LongOperation()
+{
+    // Create a 5-second stopwatch
+    LongStopWatch longTimer(Msec(5000));
+    
+    while (longTimer.IsNotElapsed())
+    {
+        // Perform work in chunks
+        ProcessChunk();
+        
+        // You can check other conditions or yield here
+    }
+    
+    // Operation completed within 5 seconds
+    CompleteOperation();
+}
+```
+
+### Compile-Time Unit Conversions
+
+The library provides compile-time unit conversions for maximum efficiency:
+
+```cpp
+// These conversions happen at compile time
+constexpr auto kFiveMsInTicks = TickTimer::M2T<Msec(5)>::kTicks;
+constexpr auto kTenUsInTicks = TickTimer::U2T<Usec(10)>::kTicks;
+
+// Use in stopwatch creation
+StopWatch fastTimeout(kTenUsInTicks);
+StopWatch slowTimeout(kFiveMsInTicks);
+```
+
+### Real-World Example: Debouncing Input
+
+```cpp
+class DebouncedInput
+{
+    StopWatch debounceTimer_;
+    bool lastState_ = false;
+    bool stableState_ = false;
+    
+public:
+    bool ReadWithDebounce()
+    {
+        bool currentState = ReadPin();
+        
+        if (currentState != lastState_)
+        {
+            // State changed, start debounce timer
+            debounceTimer_.Start<Msec(10)>();
+            lastState_ = currentState;
+        }
+        else if (debounceTimer_.IsNotElapsed() == false)
+        {
+            // 10ms elapsed with stable state
+            stableState_ = currentState;
+        }
+        
+        return stableState_;
+    }
+};
+```
+
+### Performance Considerations
+
+1. **Zero Runtime Overhead**: All time constants (`Usec(5)`, `Msec(10)`) are resolved at compile time
+2. **Tick-Based**: Uses the system tick timer, so resolution depends on `TickTimer` configuration
+3. **Polling vs Interrupts**: `StopWatch` uses polling, so it's blocking but very precise
+4. **Resource Efficient**: No dynamic memory allocation, minimal stack usage
+
+### Best Practices
+
+```cpp
+// GOOD: Compile-time known delays
+StopWatch().Delay<Usec(5)>();
+
+// GOOD: Runtime delays when needed
+void DelayRuntime(uint32_t ms)
+{
+    StopWatch().Delay(Msec(ms));
+}
+
+// GOOD: Clear timeout checking
+if (timeout.IsNotElapsed() == false)
+{
+    // Handle timeout
+}
+
+// AVOID: Nested delays in time-critical sections
+void CriticalFunction()
+{
+    DoA();
+    StopWatch().Delay<Usec(1)>();  // OK - short delay
+    
+    DoB();
+    StopWatch().Delay<Msec(100)>(); // BAD - long blocking delay in critical section
+}
+```
+
+### Integration with System Design
+
+In the glossy-msp430 firmware, `StopWatch` is integrated with the system tick timer:
+
+```cpp
+// From stdproj.h
+using TickTimer = Timer::SysTickCounter<SysClk>;
+using StopWatch = Timer::MicroStopWatch<TickTimer>;
+
+// From target.bluepill/platform.h
+using SysClk = Clocks::AnySysClk<PLL, AhbPrscl::k1, ApbPrscl::k2, ApbPrscl::k1>;
+```
+
+This integration ensures that `StopWatch` uses the same time base as the rest of the system, maintaining consistency across all timing operations.
 
 # Timer as a Dedicated Delay Generator (`AnyTimerDelay<>`)
 
@@ -1418,24 +1648,24 @@ a low-pass filter it has the effect of an 8-bit D/A converter:
 
 ```cpp
 // A data-type for the 8 MHz HSE clock
-typedef Clocks::AnyHse<> Hse;	// BluePill has a 8MHz XTAL
+using Hse = Clocks::AnyHse<>;	// BluePill has a 8MHz XTAL
 // A data-type for the clock tree
-typedef Clocks::AnySycClk <
+using SysClk = Clocks::AnySycClk <
 	Hse							// uses HSE for the clock tree
-> SysClk;
+>;
 // Computes the prescaler for 1 MHz counter speed
-typedef InternalClock_Hz <kTim1, SysClk, 1000000> PwmFreq;
+using PwmFreq = InternalClock_Hz <kTim1, SysClk, 1000000>;
 // PWM should quantize a byte (0-255)
-typedef Any<PwmFreq, Mode::kUpCounter, 255> Pwm;
+using Pwm = Any<PwmFreq, Mode::kUpCounter, 255>;
 // The output channel, attached to PWM timer
-typedef AnyOutputChannel<Pwm
+using PwmOut = AnyOutputChannel<Pwm
 	, Channel::k1
 	, OutMode::kPWM1
 	, Output::kEnabled
 	, Output::kDisabled
 	, true
 	, true
-> PwmOut;
+>;
 ```
 
 > To complete this hardware setup one should define a GPIO output using 
@@ -1483,13 +1713,13 @@ DmaChInfo<kTim1, Channel::k2>
 
 Then you can specify a Dma channel data-type, like:
 ```cpp
-typedef Dma::AnyChannel<
+using MyDmaChannel = Dma::AnyChannel<
 	DmaChInfo<kTim1, Channel::k2>,	// This simply 'knows' what DMA to use
 	Dma::Dir::kMemToPer,			// Move data from memory to the peripheral
 	Dma::PtrPolicy::kLongPtrInc,	// Source will be incremented
 	Dma::PtrPolicy::kLongPtr,		// Destination is fixed
 	Dma::Prio::kMedium				// Use medium priority
-> MyDmaChannel;
+>;
 ```
 
 The example does not want to explain how the DMA works or can be used, 

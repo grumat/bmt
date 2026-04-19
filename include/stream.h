@@ -7,11 +7,8 @@ far more efficient than printf() formatting.
 
 Example:
 \code
-typedef SwoChannel<0> Debug_;
-typedef SwoTraceSetup <SysClk, kAsynchronous, 720000, Debug_> SwoTrace;
-// A stream object for the trace output
-typedef OutStream<Debug_> Debug;
-
+using Debug_ = SwoChannel<0>;using SwoTrace = SwoTraceSetup <SysClk, kAsynchronous, 720000, Debug_>;// A stream object for the trace output
+using Debug = OutStream<Debug_>;
 void MySystemInit()
 {
 	/// ...
@@ -110,7 +107,7 @@ struct K
 };
 
 /// Put char function
-typedef void (* PutC_Fn)(char ch);
+using PutC_Fn = void (*)(char ch);
 
 // static helpers used to lower code footprint of templates
 
@@ -309,8 +306,7 @@ class OutStream_
 {
 public:
 	/// Self data-type
-	typedef OutStream_<PutC> Self;
-
+using Self = OutStream_<PutC>;
 	/// Write char to the stream
 	constexpr Self operator <<(char ch) { if (PutC::kEnabled_) PutC::PutChar(ch); return *this;}
 	/// Write a string to the stream
@@ -432,12 +428,9 @@ all tracing code for a build other than the debug.
 See the example:
 \code
 #ifdef _DEBUG
-typedef SwoDummyChannel DebugStream;
-#else
-typedef SwoChannel<0> DebugStream;
-#endif
-typedef OutStream<DebugStream> Debug;
-
+using DebugStream = SwoDummyChannel;#else
+using DebugStream = SwoChannel<0>;#endif
+using Debug = OutStream<DebugStream>;
 void MyTestFunc()
 {
 	// Compiler efficiently discards all code and data necessary for this 

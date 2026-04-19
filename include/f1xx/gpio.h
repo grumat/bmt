@@ -33,8 +33,7 @@ class Implementation_
 {
 public:
 	/// A constant to record the mapping type
-	typedef Map MapType;
-	/// Constant storing the GPIO port number
+using MapType = Map;	/// Constant storing the GPIO port number
 	static constexpr Port kPort_ = kPort;
 	/// Base address of the port peripheral
 	static constexpr uint32_t kPortBase_ = (GPIOA_BASE + uint32_t(kPort_) * 0x400);
@@ -131,7 +130,7 @@ public:
 	static_assert(kImpl != Impl::kUnused || kPuPd_ != PuPd::kFloating, "Unused pins should specify PU/PD");
 
 	/// Apply default configuration for the pin.
-	constexpr static void SetupPinMode()
+	ALWAYS_INLINE constexpr static void SetupPinMode()
 	{
 		if (kImpl != Impl::kUnchanged)
 		{
@@ -143,7 +142,7 @@ public:
 		}
 	}
 	/// Apply default configuration for the pin.
-	constexpr static void Setup()
+	ALWAYS_INLINE constexpr static void Setup()
 	{
 		if (kImpl != Impl::kUnchanged)
 		{
@@ -151,13 +150,13 @@ public:
 			Map::Enable();
 			if (kODR_Mask_ != (uint16_t)~0U)
 			{
-				volatile GPIO_TypeDef* port = Io();
-				port->ODR = (port->ODR & kODR_Mask_) | kODR_;
+				volatile GPIO_TypeDef &port = Io();
+				port.ODR = (port.ODR & kODR_Mask_) | kODR_;
 			}
 		}
 	}
 	/// Apply a custom configuration to the pin
-	constexpr static void Setup(Mode mode, Speed speed, PuPd pupd)
+	ALWAYS_INLINE constexpr static void Setup(Mode mode, Speed speed, PuPd pupd)
 	{
 		if (kImpl == Impl::kNormal)
 		{
@@ -199,7 +198,7 @@ public:
 	}
 
 	/// Sets pin up. The pin will be high as long as it is configured as GPIO output
-	constexpr static void SetHigh()
+	ALWAYS_INLINE constexpr static void SetHigh()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -209,7 +208,7 @@ public:
 	};
 
 	/// Sets pin down. The pin will be low as long as it is configured as GPIO output
-	constexpr static void SetLow()
+	ALWAYS_INLINE constexpr static void SetLow()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -219,7 +218,7 @@ public:
 	}
 
 	/// Sets the pin to the given level. Note that optimizing compiler simplifies literal constants
-	constexpr static void Set(const bool value)
+	ALWAYS_INLINE constexpr static void Set(const bool value)
 	{
 		if (value)
 			SetHigh();
@@ -228,7 +227,7 @@ public:
 	}
 
 	/// Reads current Pin electrical state
-	constexpr static bool Get()
+	ALWAYS_INLINE constexpr static bool Get()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -240,7 +239,7 @@ public:
 	}
 
 	/// Checks if current pin electrical state is high
-	constexpr static bool IsHigh()
+	ALWAYS_INLINE constexpr static bool IsHigh()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -252,7 +251,7 @@ public:
 	}
 
 	/// Checks if current pin electrical state is low
-	constexpr static bool IsLow()
+	ALWAYS_INLINE constexpr static bool IsLow()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -264,7 +263,7 @@ public:
 	}
 
 	/// Toggles pin state
-	constexpr static void Toggle()
+	ALWAYS_INLINE constexpr static void Toggle()
 	{
 		if (kBitValue_ != 0)
 		{
@@ -290,7 +289,7 @@ public:
 **
 **	Example:
 **		// Sets a data-type to drive an SPI1 CLK output
-**		typedef AnyPin<Port::PA, 5, Mode::kOutput, Speed::kFast, Level::kHigh> MY_SPI_CLK;
+**		using MY_SPI_CLK = AnyPin<Port::PA, 5, Mode::kOutput, Speed::kFast, Level::kHigh>;
 **
 **	Also see the shortcut templates that reduces the clutter to declare common
 **	IO forms: AnyIn<>, Floating<>, AnyInPu<> and AnyInPd<>.
@@ -917,7 +916,7 @@ public:
 		, "PIN15: Inconsistent port number or pin number collision");
 
 	//! Apply state of pin group merging with previous GPI contents
-	constexpr static void Enable()
+	ALWAYS_INLINE constexpr static void Enable()
 	{
 		// Apply Alternate Function configuration
 		AnyAFR<kAfConf_, kAfMask_>::Enable();
@@ -937,7 +936,7 @@ public:
 			port.ODR = (port.ODR & kODR_Mask_) | kODR_;
 	}
 	//! Not an ideal approach, but float everything
-	constexpr static void Disable()
+	ALWAYS_INLINE constexpr static void Disable()
 	{
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
@@ -952,7 +951,7 @@ public:
 
 protected:
 	// Enables clock on the RCC peripheral
-	constexpr static void EnableClock()
+	ALWAYS_INLINE constexpr static void EnableClock()
 	{
 		// Base address of the peripheral registers
 		// Don't turn alternate function clock on if not required
@@ -977,9 +976,8 @@ This configuration is a sample code to setup the GPIO for the USART1 through PA9
 and a LED on PA0.
 \code{.cpp}
 /// Pin for green LED
-typedef AnyOut<Port::PA, 0, Speed::kOutput2MHz, Level::kHigh> GREEN_LED;
-/// Initial configuration for PORTA
-typedef AnyPortSetup <Port::PA
+using GREEN_LED = AnyOut<Port::PA, 0, Speed::kOutput2MHz, Level::kHigh>;/// Initial configuration for PORTA
+using PORTA = AnyPortSetup <Port::PA
 	, GREEN_LED			///< bit bang
 	, Unused<1>			///< not used
 	, Unused<2>			///< not used
@@ -996,7 +994,7 @@ typedef AnyPortSetup <Port::PA
 	, Unused<13>		///< STM32 TMS/SWDIO
 	, Unused<14>		///< STM32 TCK/SWCLK
 	, Unused<15>		///< STM32 TDI
-> PORTA;
+>;
 
 void MyHardwareInit()
 {
@@ -1033,13 +1031,13 @@ class AnyPortSetup : public AnyPinGroup<
 	>
 {
 public:
-	typedef AnyPinGroup<
+	using SUPER = AnyPinGroup<
 		kPort,
 		Pin0,	Pin1,	Pin2,	Pin3, 
 		Pin4,	Pin5,	Pin6,	Pin7,
 		Pin8,	Pin9,	Pin10,	Pin11,
 		Pin12,	Pin13,	Pin14,	Pin15
-	> SUPER;
+	>;
 
 	// Compilation will fail here if one GPIO pin number does not match its **position**
 	static_assert(
@@ -1052,7 +1050,7 @@ public:
 
 	/// Initialize to GPIO overwriting all previous configuration of the port
 	/// This means that Unchanged<> pins have the same behavior as Unused<>.
-	constexpr static void Init()
+	ALWAYS_INLINE constexpr static void Init()
 	{
 		SUPER::EnableClock();
 		// Apply Alternate Function configuration
@@ -1081,7 +1079,7 @@ public:
 	constexpr static volatile GPIO_TypeDef& Io() { return *(volatile GPIO_TypeDef*)kPortBase_; }
 
 	/// Keeps a copy of the current GPIO state and restores on scope exit
-	SaveGpio()
+	ALWAYS_INLINE SaveGpio()
 	{
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
@@ -1091,7 +1089,7 @@ public:
 		crh_ = port.CRH;
 		mapr_ = AFIO->MAPR;
 	}
-	~SaveGpio()
+	ALWAYS_INLINE ~SaveGpio()
 	{
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();

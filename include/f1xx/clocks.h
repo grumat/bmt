@@ -238,8 +238,7 @@ public:
 	/// Clock required by the USB peripheral
 	static constexpr uint32_t kUsbClock_ = (kOpts_ & SysClkOpts::kUsbClock) == SysClkOpts::kUsbClock
 		? 48000000UL : 0UL;
-	typedef System::WaitState < kFrequency_, ClockSource::kClockSource_ == Id::kPLL> WaitState;
-
+using WaitState = System::WaitState < kFrequency_, ClockSource::kClockSource_ == Id::kPLL>;
 	/// Starts associated oscillator, initializes clock tree prescalers and use oscillator for system clock
 	constexpr static void Init()
 	{

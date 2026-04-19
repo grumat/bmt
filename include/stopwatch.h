@@ -122,8 +122,7 @@ template<
 	class ALIGNED PolledStopWatch : public MicroStopWatch<Timer>
 	{
 	public:
-		typedef MicroStopWatch<Timer> SUPER;
-
+using SUPER = MicroStopWatch<Timer>;
 	public:
 		PolledStopWatch(Msec total_ms)
 			: ms_((uint32_t)total_ms)

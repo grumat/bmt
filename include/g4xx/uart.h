@@ -1,7 +1,5 @@
 #pragma once
 
-#if 1
-
 #include "fifo.h"
 #include "mcu-system.h"
 #include "critical_section.h"
@@ -15,7 +13,7 @@ enum class Usart
 	k1 = 0	///< USART 1 peripheral
 	, k2	///< USART 2 peripheral
 	, k3	///< USART 3 peripheral
-#ifdef RCC_APB1ENR_UART4EN
+#ifdef USART4_BASE
 	, k4	///< USART 4 peripheral
 	, k5	///< USART 5 peripheral
 #endif
@@ -97,10 +95,8 @@ public:
 		: stopbits;
 
 	/// IRQ for that port
-	typedef IrqTemplate<kNvicUsartIrqn_> UartIrq;
-	/// A scoped critical section class data type
-	typedef CriticalSectionIrq<UartIrq> IrqLock;
-
+using UartIrq = IrqTemplate<kNvicUsartIrqn_>;	/// A scoped critical section class data type
+using IrqLock = CriticalSectionIrq<UartIrq>;
 	/// Access to the hardware IO data structure
 	ALWAYS_INLINE static volatile USART_TypeDef &Io()	{ return *(volatile USART_TypeDef*)kUsartBase_; }
 
@@ -271,9 +267,7 @@ class UartFifo
 {
 public:
 	/// Datatype for the hardware instance
-	typedef UsartHwInstance HwInstance;
-	typedef typename UsartHwInstance::UartIrq UsartIrqLock;
-	/// Input buffer with specified size
+using HwInstance = UsartHwInstance;using UsartIrqLock = typename UsartHwInstance::UartIrq;	/// Input buffer with specified size
 	static inline Fifo<buf_in> m_BufIn;
 	/// Output buffer with specified size
 	static inline Fifo<buf_out> m_BufOut;
@@ -380,18 +374,12 @@ at 115200 bauds:
 
 \code{.cpp}
 // Crystal on external clock for this project
-typedef AnyHse<8000000UL> HSE;
-// 72 MHz is Max freq
-typedef AnyPll<HSE, 72000000UL> PLL;
-// Set the clock tree
-typedef AnySycClk<PLL, 1, 2, 1> SysClk;
-// USART1 for GDB port
-typedef UsartTemplate<Usart::k1, SysClk, 115200> MyUsartSettings;
-// Dual FIFO buffers for the USART1
-typedef UartFifo<MyUsartSettings, 64, 64> MyUsartWithBuffers;
-// A driver model using interrupts
-typedef UsartIntDriverModel<MyUsartWithBuffers> UsartDriver;
-// A singleton exists on the implementation file as UART instance
+using HSE = AnyHse<8000000UL>;// 72 MHz is Max freq
+using PLL = AnyPll<HSE, 72000000UL>;// Set the clock tree
+using SysClk = AnySycClk<PLL, 1, 2, 1>;// USART1 for GDB port
+using MyUsartSettings = UsartTemplate<Usart::k1, SysClk, 115200>;// Dual FIFO buffers for the USART1
+using MyUsartWithBuffers = UartFifo<MyUsartSettings, 64, 64>;// A driver model using interrupts
+using UsartDriver = UsartIntDriverModel<MyUsartWithBuffers>;// A singleton exists on the implementation file as UART instance
 extern UsartDriver g_UartSingleton;
 \endcode
 */
@@ -400,11 +388,18 @@ template<
 >
 class UsartIntDriverModel
 {
-public:	
+public:
+	using T = UsartIntDriverModel<UsartIntEvents>;
 	//! The hardware instance
-	typedef typename UsartIntEvents::HwInstance HwInstance;
+	using HwInstance = typename UsartIntEvents::HwInstance;
 	//! UART buffer and interrupt events handler
 	UsartIntEvents events_;
+
+	UsartIntDriverModel()
+	{
+		UsartIntHandler<Usart::k1>::func = &HandleIrq;
+		UsartIntHandler<Usart::k1>::cookie = this;
+	}
 
 	//! Initialize instance
 	ALWAYS_INLINE void Init()
@@ -437,7 +432,11 @@ public:
 	}
 
 	/// Handles IRQ interrupts
-	ALWAYS_INLINE void HandleIrq()
+	static void HandleIrq(void *cookie) NO_INLINE
+	{
+		((T*)cookie)->HandleIrq_();
+	}
+	ALWAYS_INLINE void HandleIrq_()
 	{
 		uint32_t status = HwInstance::GetCommStatus();
 		bool xmit = true;
@@ -467,5 +466,3 @@ public:
 
 
 }	// namespace Bmt
-
-#endif

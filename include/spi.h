@@ -149,8 +149,7 @@ struct SpiTemplate
 		SPI1_IRQn
 		;
 	/// A data-type to control IRQ settings
-	typedef IrqTemplate<kNvicSpiIrqn_> SpiIrq;
-
+using SpiIrq = IrqTemplate<kNvicSpiIrqn_>;
 	/// The DMA instance for the peripheral
 	static constexpr Dma::Itf DmaInstance_ =
 		(kSpi == Iface::k1) ? Dma::Itf::k1 :

@@ -114,5 +114,128 @@ public:
 };
 
 
+// Combine two port configuration for setup
+template <
+	typename P0
+	, typename P1
+>
+struct PortMerge
+{
+	ALWAYS_INLINE constexpr static void Enable()
+	{
+		P0::Enable();
+		P1::Enable();
+	}
+	ALWAYS_INLINE constexpr static void Disable()
+	{
+		P0::Disable();
+		P1::Disable();
+	}
+};
+
+
+// Combines two or more pins and apply exac the same states
+template <
+	typename Bit0
+	, typename Bit1
+	, typename Bit2 = Gpio::Unchanged<2>
+	, typename Bit3 = Gpio::Unchanged<3>
+>
+struct PinCopy
+{
+	/// Combined bit value constant
+	static constexpr uint32_t kBitValue_ =
+		Bit0::kBitValue_ | Bit1::kBitValue_
+		| Bit2::kBitValue_ | Bit3::kBitValue_
+		;
+
+	/// Sets pin up. The pin will be high as long as it is configured as GPIO output
+	ALWAYS_INLINE constexpr static void SetHigh()
+	{
+		if (kBitValue_ != 0)
+		{
+			volatile GPIO_TypeDef& port = Bit0::Io();
+			port.BSRR = kBitValue_;
+		}
+	};
+
+	/// Sets pin down. The pin will be low as long as it is configured as GPIO output
+	ALWAYS_INLINE constexpr static void SetLow()
+	{
+		if (kBitValue_ != 0)
+		{
+			volatile GPIO_TypeDef& port = Bit0::Io();
+			port.BRR = kBitValue_;
+		}
+	}
+
+	/// Sets the pin to the given level. Note that optimizing compiler simplifies literal constants
+	ALWAYS_INLINE constexpr static void Set(const bool value)
+	{
+		if (value)
+			SetHigh();
+		else
+			SetLow();
+	}
+
+	/// Reads current Pin electrical state
+	ALWAYS_INLINE constexpr static bool Get()
+	{
+		if (kBitValue_ != 0)
+		{
+			volatile GPIO_TypeDef& port = Bit0::Io();
+			return (port.IDR & kBitValue_) != 0;
+		}
+		else
+			return false;
+	}
+	/// Reads current Pin electrical state
+	ALWAYS_INLINE constexpr static uint16_t GetRaw()
+	{
+		if (kBitValue_ != 0)
+		{
+			volatile GPIO_TypeDef& port = Bit0::Io();
+			return (port.IDR & kBitValue_);
+		}
+		else
+			return 0;
+	}
+
+	/// Checks if current pin electrical state is high
+	ALWAYS_INLINE constexpr static bool IsHigh()
+	{
+		if (kBitValue_ != 0)
+		{
+			volatile GPIO_TypeDef& port = Bit0::Io();
+			return (port.IDR & kBitValue_) != 0;
+		}
+		else
+			return false;	// an unused pin always returns false here
+	}
+
+	/// Checks if current pin electrical state is low
+	ALWAYS_INLINE constexpr static bool IsLow()
+	{
+		if (kBitValue_ != 0)
+		{
+			volatile GPIO_TypeDef& port = Bit0::Io();
+			return (port.IDR & kBitValue_) == 0;
+		}
+		else
+			return false;	// an unused pin always returns false here
+	}
+
+	/// Toggles pin state
+	ALWAYS_INLINE constexpr static void Toggle()
+	{
+		if (kBitValue_ != 0)
+		{
+			volatile GPIO_TypeDef& port = Bit0::Io();
+			port.ODR ^= kBitValue_;
+		}
+	}
+};
+
+
 }	// namespace Gpio
 }	// namespace Bmt

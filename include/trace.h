@@ -86,8 +86,7 @@ public:
 
 
 // A dummy SWO channel (disabled)
-typedef SwoChannel<-1> SwoDummyChannel;
-
+using SwoDummyChannel = SwoChannel<-1>;
 
 template<
 	typename SysClk

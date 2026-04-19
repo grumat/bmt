@@ -41,8 +41,7 @@ struct AnyAFR
 };
 
 /// No pin remapping (for regular GPIO function)
-typedef AnyAFR<0x00000000U, 0xFFFFFFFF> AfNoRemap;
-
+using AfNoRemap = AnyAFR<0x00000000U, 0xFFFFFFFF>;
 
 
 #else
@@ -127,8 +126,7 @@ struct AnyAFR
 };
 
 // Used to deactivate remapping
-typedef AnyAFR<Port::kUnusedPort, 0, AF::k0> AfNoRemap;
-
+using AfNoRemap = AnyAFR<Port::kUnusedPort, 0, AF::k0>;
 
 #endif
 

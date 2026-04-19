@@ -14,6 +14,8 @@
 #define DEPRECATED	__attribute__((deprecated))
 /// Tag to force a function/method to optimized, single instanced, even multiply defined
 #define BMT_STATIC_API	__attribute__((optimize("Os"),noinline,weak))
+/// Tag to force a function/method to be optimized even in Debug builds
+#define IRQ	__attribute__((interrupt("IRQ")))
 
 /// Returns element count of compound items
 #define _countof(t)		(sizeof(t)/sizeof(t[0]))

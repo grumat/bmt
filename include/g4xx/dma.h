@@ -18,10 +18,8 @@ class AnyChannel
 {
 public:
 	/// A DMA::AnyID<> definition that identifies the DMA
-	typedef kDmaID DmaID_;
-	/// A data-type for the DMAMUX
-	typedef AnyMux<DmaID_> Mux_;
-	/// A constant with the DMA controller instance number
+using DmaID_ = kDmaID;	/// A data-type for the DMAMUX
+using Mux_ = AnyMux<DmaID_>;	/// A constant with the DMA controller instance number
 	static constexpr Itf kDma_ = kDmaID::kItf_;
 	/// A constant with the DMA channel number
 	static constexpr Chan kChan_ = kDmaID::kChan_;
@@ -157,8 +155,7 @@ public:
 #endif
 		: DMA1_Channel1_IRQn;
 	/// The IRQ configuration template for that DMA channel
-	typedef IrqTemplate<kNvicDmaIrqn_> DmaIrq;
-
+using DmaIrq = IrqTemplate<kNvicDmaIrqn_>;
 	/// Returns root device structure
 	ALWAYS_INLINE static DMA_TypeDef *GetDeviceRoot() { return (DMA_TypeDef *)kDmaBase_; }
 	/// Returns device structure for the channel

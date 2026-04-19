@@ -77,23 +77,25 @@ using template data-types like below:
 
 ```cpp
 // A data-type for the 48 MHz MSI clock
-typedef Clocks::AnyMsi<
+using Msi = Clocks::AnyMsi<
     Clocks::MsiFreq::k48_MHz    // Change STM32L432KC internal oscillator from 4 MHz 
                                 // to 48MHz (good for USB)
     , true                      // Nucleo32 has an 32768 LSE Xtal that we will use 
                                 // for accurate MSI frequency
-	> Msi;
+	>;
+
 // Configure the PLL for 80 MHz
-typedef Clocks::AnyPll<
-	Msi								// link to 48MHz MSI clock
-	, 80000000UL					// Max is 80 MHz
-	, Clocks::AutoRange1			// Full voltage range calculator
-	> Pll;
+using Pll = Clocks::AnyPll<
+	Msi,							// link to 48MHz MSI clock
+	80000000UL,						// Max is 80 MHz
+	Clocks::AutoRange1				// Full voltage range calculator
+	>;
+
 // A data-type for the clock tree
-typedef Clocks::AnySycClk <
+using SysClk = Clocks::AnySysClk <
 	Pll,							// uses PLL for the clock tree
 	Power::Mode::kRange1			// Full Voltage for Max performance
-	> SysClk;
+	>;
 
 extern "C" void SystemInit()
 {
@@ -147,12 +149,12 @@ the first definition and changes will propagate:
 
 ```cpp
 // A data-type for the 8 MHz MSI clock
-typedef Clocks::AnyMsi<
+using Msi = Clocks::AnyMsi<
     Clocks::MsiFreq::k8_MHz     // Change STM32L432KC internal oscillator from 4MHz 
                                 // to 8MHz
     , true                      // Nucleo32 has an 32768 LSE Xtal that we will use 
                                 // for accurate MSI frequency
-> Msi;
+>;
 
 // ... propagates to dependants ...
 ```
@@ -167,10 +169,10 @@ your clock tree, the change would be as simple as:
 // ...
 
 // A data-type for the clock tree
-typedef Clocks::AnySycClk <
+using SysClk = Clocks::AnySysClk <
 	Msi,							// uses MSI for the clock tree
 	Power::Mode::kRange1			// Full Voltage for Max performance
-> SysClk;
+>;
 
 // ...
 ```
@@ -234,9 +236,9 @@ extern "C" const Clocks::PllFraction *g_Test;
 void Test()
 {
     using namespace Bmt::Clocks;
-    typedef AnyHse<> HSE;
-    typedef PllVcoAuto<> Calculator;	// STM32L432 only
-    typedef AnyPll<HSE, 11500000UL, Calculator> PLL;
+    using HSE = AnyHse<>;
+    using Calculator = PllVcoAuto<>;	// STM32L432 only
+    using PLL = AnyPll<HSE, 11500000UL, Calculator>;
     PLL::Init();
     // This adds a reference that linker cannot discard the 
     // resulting PllFraction record

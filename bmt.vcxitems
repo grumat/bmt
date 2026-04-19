@@ -18,6 +18,7 @@
     <None Include="$(MSBuildThisFileDirectory)include\f1xx\tim_dma_id.inl" />
     <None Include="$(MSBuildThisFileDirectory)include\g4xx\tim_dma_id.inl" />
     <None Include="$(MSBuildThisFileDirectory)include\l4xx\tim_dma_id.inl" />
+    <None Include="$(MSBuildThisFileDirectory)include\main.inl" />
     <None Include="$(MSBuildThisFileDirectory)LICENSE" />
     <None Include="$(MSBuildThisFileDirectory)README.md" />
   </ItemGroup>

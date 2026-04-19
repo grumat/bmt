@@ -3,57 +3,104 @@
 The template classes exposed by this namespace shows the real advantage 
 of combining templates with the `constexpr` C++ keyword.
 
-A good example of an blue-pill application using the LCD1602 and a LED:
+## GPIO Configuration Examples
+
+### Basic LED Control (BluePill Example)
+
 ```cpp
 using namespace Bmt;
 
-// A data-type to setup the Port A GPIO
-typedef Gpio::AnyPortSetup<
-	Gpio::Port::PA,
-	Gpio::Unused<0>,					// unused pin (input + pull-down)
-	Gpio::AnyOut<Gpio::Port::PA, 1>,	// LCD1602 RS pin
-	Gpio::AnyOut<Gpio::Port::PA, 2>,	// LCD1602 RW pin
-	Gpio::AnyOut<Gpio::Port::PA, 3>,	// LCD1602 EN pin
-	Gpio::AnyOut<Gpio::Port::PA, 4>,	// LCD1602 D4 pin
-	Gpio::AnyOut<Gpio::Port::PA, 5>,	// LCD1602 D5 pin
-	Gpio::AnyOut<Gpio::Port::PA, 6>,	// LCD1602 D6 pin
-	Gpio::AnyOut<Gpio::Port::PA, 7>,	// LCD1602 D7 pin
-	Gpio::Unused<8>,					// unused pin (input + pull-down)
-	Gpio::Unused<9>,					// unused pin (input + pull-down)
-	Gpio::Unused<10>,					// unused pin (input + pull-down)
-	Gpio::Unused<11>,					// unused pin (input + pull-down)
-	Gpio::Unused<12>,					// unused pin (input + pull-down)
-	Gpio::Unchanged<13>,				// unchanged pin used for debugger
-	Gpio::Unchanged<14>,				// unchanged pin used for debugger
-	Gpio::Unchanged<15>					// unchanged pin used for debugger
-> InitPA;
+// LED on PC13 (BluePill)
+using Led = Gpio::AnyOut<Gpio::Port::PC, 13>;
 
-// Port B is entirely unused
-typedef Gpio::AnyPortSetup <
-	Gpio::Port::PB
-> InitPB;
+// Configure Port C with LED output
+using InitPC = Gpio::AnyPortSetup<
+    Gpio::Port::PC,
+    Gpio::Unused<0>,        // Pin 0: Unused (input with pull-down)
+    Gpio::Unused<1>,        // Pin 1: Unused
+    Gpio::Unused<2>,        // Pin 2: Unused  
+    Gpio::Unused<3>,        // Pin 3: Unused
+    Gpio::Unused<4>,        // Pin 4: Unused
+    Gpio::Unused<5>,        // Pin 5: Unused
+    Gpio::Unused<6>,        // Pin 6: Unused
+    Gpio::Unused<7>,        // Pin 7: Unused
+    Gpio::Unused<8>,        // Pin 8: Unused
+    Gpio::Unused<9>,        // Pin 9: Unused
+    Gpio::Unused<10>,       // Pin 10: Unused
+    Gpio::Unused<11>,       // Pin 11: Unused
+    Gpio::Unused<12>,       // Pin 12: Unused
+    Led,                    // Pin 13: LED output
+    Gpio::Unchanged<14>,    // Pin 14: Leave unchanged (debugger)
+    Gpio::Unchanged<15>     // Pin 15: Leave unchanged (debugger)
+>;
 
-//! LED is connected to PC13 on BluePill
-typedef Gpio::AnyOut<Gpio::Port::PC, 13> Led;
-typedef Gpio::AnyPortSetup <
-	Gpio::Port::PC,
-	Gpio::Unused<0>,		// unused pin (input + pull-down)
-	Gpio::Unused<1>,		// unused pin (input + pull-down)
-	Gpio::Unused<2>,		// unused pin (input + pull-down)
-	Gpio::Unused<3>,		// unused pin (input + pull-down)
-	Gpio::Unused<4>,		// unused pin (input + pull-down)
-	Gpio::Unused<5>,		// unused pin (input + pull-down)
-	Gpio::Unused<6>,		// unused pin (input + pull-down)
-	Gpio::Unused<7>,		// unused pin (input + pull-down)
-	Gpio::Unused<8>,		// unused pin (input + pull-down)
-	Gpio::Unused<9>,		// unused pin (input + pull-down)
-	Gpio::Unused<10>,		// unused pin (input + pull-down)
-	Gpio::Unused<11>,		// unused pin (input + pull-down)
-	Gpio::Unused<12>,		// unused pin (input + pull-down)
-	Led,					// LED on PC13
-	Gpio::Unchanged<14>,
-	Gpio::Unchanged<15>
-> InitPC;
+void InitializeGpio()
+{
+    // Configure all pins on Port C
+    InitPC::Init();
+    
+    // Toggle LED
+    Led::Toggle();
+    
+    // Set LED high
+    Led::SetHigh();
+    
+    // Set LED low  
+    Led::SetLow();
+    
+    // Read LED state
+    bool isHigh = Led::IsHigh();
+}
+```
+
+### Real-World Example from Firmware
+
+The glossy-msp430 firmware uses comprehensive GPIO configuration for JTAG debugging:
+
+```cpp
+// From target.bluepill/platform.h
+
+// USART1 pins for GDB communication
+using USART1_TX_PA9 = AnyAltOut<Port::PA, 9, AfUsart1TxPa9>;
+using USART1_RX_PA10 = AnyAltOut<Port::PA, 10, AfUsart1RxPa10>;
+
+// USART2 pins for MSP430 communication  
+using USART2_TX_PA2 = AnyAltOut<Port::PA, 2, AfUsart2TxPa2>;
+using USART2_RX_PA3 = AnyAltOut<Port::PA, 3, AfUsart2RxPa3>;
+
+// JTAG control pins
+using JTAG_ENA = AnyOut<Port::PA, 8>;      // JTAG enable
+using JTAG_TDI = AnyOut<Port::PB, 1>;      // JTAG TDI
+using JTAG_TMS = AnyOut<Port::PB, 0>;      // JTAG TMS
+using JTAG_TCK = AnyOut<Port::PB, 10>;     // JTAG TCK
+using JTAG_TDO = AnyIn<Port::PB, 11>;      // JTAG TDO (input)
+
+// Complete port configuration
+using PORTA = AnyPortSetup<Port::PA
+    , AnyOut<Port::PA, 0>                  // Green LED
+    , AnyOut<Port::PA, 1>                  // Test pin
+    , USART2_TX_PA2                        // UART2 TX
+    , USART2_RX_PA3                        // UART2 RX
+    , AnyOut<Port::PA, 4>                  // RESET output
+    , AnyOut<Port::PA, 5>                  // TEST output
+    , AnyOut<Port::PA, 6>                  // Unused
+    , AnyOut<Port::PA, 7>                  // Unused
+    , JTAG_ENA                             // JTAG enable
+    , USART1_TX_PA9                        // GDB UART TX
+    , USART1_RX_PA10                       // GDB UART RX
+    , AnyUnused<11>                        // USB-
+    , AnyUnused<12>                        // USB+
+    , AnyUnchanged<13>                     // SWDIO (debugger)
+    , AnyUnchanged<14>                     // SWCLK (debugger)
+    , AnyUnchanged<15>                     // TDI (debugger)
+>;
+
+// Initialize all GPIO
+void InitializeHardware()
+{
+    PORTA::Init();
+    // ... other ports
+}
 ```
 
 At the center of this design is the `AnyPinGroup<>` template, which is 
@@ -97,7 +144,7 @@ are configured using the least possible number of instructions, almost
 exactly if you code everything in assembly and lots of manual 
 bit-constant calculation for the values involved for each case.
 
-In C++, you work with many `typedef`, combining them as much as possible, 
+In C++, you work with many `using` type aliases, combining them as much as possible, 
 which are *abstractions* that compute in *compile-time* each of the 
 constant involved on a specific operation.
 
@@ -303,7 +350,7 @@ struct AnyAFR
 };
 
 /// No pin remapping (for regular GPIO function)
-typedef AnyAFR<0x00000000U, 0xFFFFFFFF> AfNoRemap;
+using AfNoRemap = AnyAFR<0x00000000U, 0xFFFFFFFF>;
 
 ```
 
@@ -328,22 +375,22 @@ namespace Gpio
 
 // SPI1
 /// SPI1 alternate configuration 1 using PA4, PA5, PA6 and PA7
-typedef AnyAFR<0x00000000U, ~AFIO_MAPR_SPI1_REMAP_Msk> AfSpi1_PA4_5_6_7;
+using AfSpi1_PA4_5_6_7 = AnyAFR<0x00000000U, ~AFIO_MAPR_SPI1_REMAP_Msk>;
 /// SPI1 alternate configuration 2 using PA15, PB3, PB4 and PB5
-typedef AnyAFR<AFIO_MAPR_SPI1_REMAP, ~AFIO_MAPR_SPI1_REMAP_Msk> AfSpi1_PA15_PB3_4_5;
+using AfSpi1_PA15_PB3_4_5 = AnyAFR<AFIO_MAPR_SPI1_REMAP, ~AFIO_MAPR_SPI1_REMAP_Msk>;
 
 //...
 
 // USART1
 /// USART1 alternate configuration 1 using PA9 and PA10
-typedef AnyAFR<0x00000000U, ~AFIO_MAPR_USART1_REMAP_Msk> AfUsart1_PA9_10;
+using AfUsart1_PA9_10 = AnyAFR<0x00000000U, ~AFIO_MAPR_USART1_REMAP_Msk>;
 
 //...
 
 /// 2-pin JTAG bus active (3-pin with optional SWO)
-typedef AnyAFR<AFIO_MAPR_SWJ_CFG_JTAGDISABLE, ~AFIO_MAPR_SWJ_CFG_Msk> AfSwd3;
+using AfSwd3 = AnyAFR<AFIO_MAPR_SWJ_CFG_JTAGDISABLE, ~AFIO_MAPR_SWJ_CFG_Msk>;
 /// No emulation active
-typedef AnyAFR<AFIO_MAPR_SWJ_CFG_DISABLE, ~AFIO_MAPR_SWJ_CFG_Msk> AfSwd2;
+using AfSwd2 = AnyAFR<AFIO_MAPR_SWJ_CFG_DISABLE, ~AFIO_MAPR_SWJ_CFG_Msk>;
 
 }	// namespace Gpio
 }	// namespace Bmt
@@ -395,7 +442,7 @@ struct AnyAFR
 };
 
 // Used to deactivate remapping
-typedef AnyAFR<Port::kUnusedPort, 0, AF::k0> AfNoRemap;
+using AfNoRemap = AnyAFR<Port::kUnusedPort, 0, AF::k0>;
 ```
 
 The template definition for this family is quite different from the older 
@@ -422,21 +469,21 @@ namespace Gpio
 {
 
 // SYS
-typedef AnyAFR<Port::PA, 8, AF::k0>		AfMCO_PA8;
-typedef AnyAFR<Port::PA, 14, AF::k0>	AfJTCK_PA14;
-typedef AnyAFR<Port::PA, 15, AF::k0>	AfJTDI_PA15;
+using AfMCO_PA8 = AnyAFR<Port::PA, 8, AF::k0>;
+using AfJTCK_PA14 = AnyAFR<Port::PA, 14, AF::k0>;
+using AfJTDI_PA15 = AnyAFR<Port::PA, 15, AF::k0>;
 
 //...
 
 // I2C1
-typedef AnyAFR<Port::PA, 9, AF::k4>		AfI2C1_SCL_PA9;
-typedef AnyAFR<Port::PB, 6, AF::k4>		AfI2C1_SCL_PB6;
-typedef AnyAFR<Port::PB, 8, AF::k4>		AfI2C1_SCL_PB8;
+using AfI2C1_SCL_PA9 = AnyAFR<Port::PA, 9, AF::k4>;
+using AfI2C1_SCL_PB6 = AnyAFR<Port::PB, 6, AF::k4>;
+using AfI2C1_SCL_PB8 = AnyAFR<Port::PB, 8, AF::k4>;
 
 //...
 
-typedef AnyAFR<Port::PI, 10, AF::k15>	AfEVENTOUT_PI10;
-typedef AnyAFR<Port::PI, 11, AF::k15>	AfEVENTOUT_PI11;
+using AfEVENTOUT_PI10 = AnyAFR<Port::PI, 10, AF::k15>;
+using AfEVENTOUT_PI11 = AnyAFR<Port::PI, 11, AF::k15>;
 #endif	// defined(GPIOI_BASE)
 
 
@@ -593,7 +640,7 @@ The classical LED blink application:
 using namespace Bmt::Gpio;
 
 //! LED is connected to PC13 on BluePill
-typedef AnyPin<Port::PC, 13, Mode::kOutput, Speed::kSlow> Led;
+using Led = AnyPin<Port::PC, 13, Mode::kOutput, Speed::kSlow>;
 
 /*
 This assumes that the PC13 was properly initialized 
@@ -677,8 +724,7 @@ CH1 function:
 
 ```cpp
 /// A configuration to map TIM1 CH1 floating pin on PA8
-typedef AnyPin<Port::PA, 8, PuPd::kFloating, AfTim1_PA12_8_9_10_11_PB12_13_14_15>
-	TimCh1In;
+using TimCh1In = AnyPin<Port::PA, 8, PuPd::kFloating, AfTim1_PA12_8_9_10_11_PB12_13_14_15>;
 ```
 
 > A similar setting is already available on the **gpio-types.h** file.
@@ -712,8 +758,7 @@ definition less verbosely:
 
 ```cpp
 /// A configuration to map TIM1 CH1 floating pin on PA8
-typedef Floating<Port::PA, 8, AfTim1_PA12_8_9_10_11_PB12_13_14_15>
-	TimCh1In;
+using TimCh1In = Floating<Port::PA, 8, AfTim1_PA12_8_9_10_11_PB12_13_14_15>;
 ```
 
 
@@ -782,7 +827,7 @@ For example, a valid configuration for the LED on a blue-pill is:
 using namespace Bmt::Gpio;
 
 //! LED is connected to PC13 on BluePill
-typedef AnyOut<Port::PC, 13, Speed::kSlow> Led;
+using Led = AnyOut<Port::PC, 13, Speed::kSlow>;
 ```
 
 
@@ -888,7 +933,7 @@ configuration, this pin is tied to the **PA5** pin.
 
 ```cpp
 /// A default configuration to map SPI1 SCK on PA5 pin (master)
-typedef AnyAltOut<Port::PA, 5, AfSpi1_PA4_5_6_7> SPI1_SCK_PA5;
+using SPI1_SCK_PA5 = AnyAltOut<Port::PA, 5, AfSpi1_PA4_5_6_7>;
 ```
 
 
@@ -1071,21 +1116,21 @@ we define the following data-type:
 ```cpp
 using namespace Bmt::Gpio;
 // Note these template used ready-made definitions found on 'gpio-types.h'
-typedef AnyPinGroup<
+using SpiOn = AnyPinGroup<
 	Port::PA,
 	SPI1_NSS_PA4,
 	SPI1_SCK_PA5,
 	SPI1_MISO_PA6,
 	SPI1_MOSI_PA7
-> SpiOn;
+>;
 // Configuration to disable SPI1
-typedef AnyPinGroup<
+using SpiOff = AnyPinGroup<
 	Port::PA,
 	Unused<4, PuPd::kPullUp>,
 	Unused<5>,
 	Unused<6>,
-	Unused<7>,
-> SpiOff;
+	Unused<7>
+>;
 
 void Test()
 {
@@ -1154,14 +1199,14 @@ This is the type definitions for this example:
 
 ```cpp
 // A data-type to setup the Port A GPIO
-typedef Gpio::AnyPortSetup<
+using SetupPortA = Gpio::AnyPortSetup<
 	Gpio::Port::PA,
 	Gpio::Unused<0>,					// unused pin (input + pull-down)
 	Gpio::AnyOut<Gpio::Port::PA, 1>,	// LCD1602 RS pin
 	Gpio::AnyOut<Gpio::Port::PA, 2>,	// LCD1602 RW pin
 	Gpio::AnyOut<Gpio::Port::PA, 3>,	// LCD1602 EN pin
 	Gpio::AnyOut<Gpio::Port::PA, 4>,	// LCD1602 D4 pin
-	Gpio::AnyOut<Gpio::Port::PA, 5>,	// LCD1602 D5 pin
+	Gpio::AnyOut<Gpio::Port::PA, 5>	// LCD1602 D5 pin
 	Gpio::AnyOut<Gpio::Port::PA, 6>,	// LCD1602 D6 pin
 	Gpio::AnyOut<Gpio::Port::PA, 7>,	// LCD1602 D7 pin
 	Gpio::Unused<8>,					// unused pin (input + pull-down)
@@ -1175,20 +1220,20 @@ typedef Gpio::AnyPortSetup<
 > InitPA;
 
 // Port B is entirely unused
-typedef Gpio::AnyPortSetup <
+using InitPB = Gpio::AnyPortSetup <
 	Gpio::Port::PB
-> InitPB;
+>;
 
 //! LED is connected to PC13 on BluePill
-typedef Gpio::AnyOut<Gpio::Port::PC, 13> Led;
-typedef Gpio::AnyPortSetup <
+using Led = Gpio::AnyOut<Gpio::Port::PC, 13>;
+using InitPC = Gpio::AnyPortSetup <
 	Gpio::Port::PC,
 	Gpio::Unused<0>,		// unused pin (input + pull-down)
 	Gpio::Unused<1>,		// unused pin (input + pull-down)
 	Gpio::Unused<2>,		// unused pin (input + pull-down)
 	Gpio::Unused<3>,		// unused pin (input + pull-down)
 	Gpio::Unused<4>,		// unused pin (input + pull-down)
-	Gpio::Unused<5>,		// unused pin (input + pull-down)
+	Gpio::Unused<5>		// unused pin (input + pull-down)
 	Gpio::Unused<6>,		// unused pin (input + pull-down)
 	Gpio::Unused<7>,		// unused pin (input + pull-down)
 	Gpio::Unused<8>,		// unused pin (input + pull-down)
@@ -1272,33 +1317,33 @@ groups for input and output of the D4-D7 pins;
 ```cpp
 using namespace Bmt::Gpio;
 // Definition for each bus bit
-typedef AnyOut<Gpio::Port::PA, 4> LCD1602_D4;
-typedef AnyOut<Gpio::Port::PA, 5> LCD1602_D5;
-typedef AnyOut<Gpio::Port::PA, 6> LCD1602_D6;
-typedef AnyOut<Gpio::Port::PA, 7> LCD1602_D7;
+using LCD1602_D4 = AnyOut<Gpio::Port::PA, 4>;
+using LCD1602_D5 = AnyOut<Gpio::Port::PA, 5>;
+using LCD1602_D6 = AnyOut<Gpio::Port::PA, 6>;
+using LCD1602_D7 = AnyOut<Gpio::Port::PA, 7>;
 // Bus configuration for output
-typedef AnyPinGroup<
+using LcdOut = AnyPinGroup<
 	Port::PA,
 	LCD1602_D4,						// LCD1602 D4 pin configured as output
 	LCD1602_D5,						// LCD1602 D5 pin configured as output
 	LCD1602_D6,						// LCD1602 D6 pin configured as output
 	LCD1602_D7						// LCD1602 D7 pin configured as output
-> LcdOut;
+>;
 // Bus configuration for input
-typedef AnyPinGroup<
+using LcdIn = AnyPinGroup<
 	Port::PA,
 	AnyIn<Gpio::Port::PA, 4>,		// LCD1602 D4 pin configured as input
 	AnyIn<Gpio::Port::PA, 5>,		// LCD1602 D5 pin configured as input
 	AnyIn<Gpio::Port::PA, 6>,		// LCD1602 D6 pin configured as input
 	AnyIn<Gpio::Port::PA, 7>		// LCD1602 D7 pin configured as input
-> LcdIn;
+>;
 // Access to the 4 bits as a counter
-typedef AnyCounter<
+using LcdBus = AnyCounter<
 	LCD1602_D4,
 	LCD1602_D5,
 	LCD1602_D6,
 	LCD1602_D7
-> LcdBus;
+>;
 ```
 
 A write routine could look like this:

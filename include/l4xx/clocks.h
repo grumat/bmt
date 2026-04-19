@@ -122,14 +122,10 @@ using PllRange2 = Private::AnyPllVco<
 
 
 // General PLL calculator for Range 1 core voltage
-typedef AnyPllVco<PllRange1> Range1;
-// General PLL calculator for Range 2 core voltage
-typedef AnyPllVco<PllRange2> Range2;
-// Most flexible PLL calculator ('/R' auto-selected)
-typedef AnyPllVcoAuto<PllRange1> AutoRange1;
-// Most flexible PLL calculator ('/R' auto-selected)
-typedef AnyPllVcoAuto<PllRange2> AutoRange2;
-
+using Range1 = AnyPllVco<PllRange1>;// General PLL calculator for Range 2 core voltage
+using Range2 = AnyPllVco<PllRange2>;// Most flexible PLL calculator ('/R' auto-selected)
+using AutoRange1 = AnyPllVcoAuto<PllRange1>;// Most flexible PLL calculator ('/R' auto-selected)
+using AutoRange2 = AnyPllVcoAuto<PllRange2>;
 
 /// These are the possible values to source the MCO output with clock
 enum class Mco : uint32_t
@@ -208,8 +204,7 @@ public:
 	static constexpr Mco kMco_ = kClockOut;
 	/// Clock output mode
 	static constexpr McoPrscl kMcoPrscl_ = kMcoPrscl;
-	typedef System::WaitState<kFrequency_, kMode> WaitState;
-
+using WaitState = System::WaitState<kFrequency_, kMode>;
 	// System clock restricts sources
 	static_assert(
 		ClockSource::kClockSource_ == Id::kMSI
@@ -428,8 +423,7 @@ class AnyUsbSycClk : public AnySycClk<ClockSource, kAhbPrs, kApb1Prs, kApb2Prs, 
 {
 public:
 	/// Alias for the Base class
-	typedef AnySycClk<ClockSource, kAhbPrs, kApb1Prs, kApb2Prs, kAdcPrs, kHsiRcOff, kClockOut> super;
-	/// Clock required by the USB peripheral
+using super = AnySycClk<ClockSource, kAhbPrs, kApb1Prs, kApb2Prs, kAdcPrs, kHsiRcOff, kClockOut>;	/// Clock required by the USB peripheral
 	static constexpr uint32_t kUsbClock = 48000000UL;
 	/// Starts associated oscillator, initializes system clock prescalers and use oscillator for system clock
 	constexpr static void Init()
