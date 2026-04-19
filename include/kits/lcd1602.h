@@ -154,11 +154,27 @@ private:
 		kRdData			= 0b11,	// Reads data from the RAM (LCD out, MCU in)
 	};
 public:
-using Delay_ = Delay;using RS_ = Gpio::AnyOut<kPort, kRS>;using RW_ = Gpio::AnyOut<kPort, kRW>;using EN_ = Gpio::AnyOut<kPort, kEN>;using D4_ = Gpio::AnyOut<kPort, kD4>;using D5_ = Gpio::AnyOut<kPort, kD5>;using D6_ = Gpio::AnyOut<kPort, kD6>;using D7_ = Gpio::AnyOut<kPort, kD7>;using D4in_ = Gpio::AnyIn<kPort, kD4, Gpio::PuPd::kPullDown>;using D5in_ = Gpio::AnyIn<kPort, kD5, Gpio::PuPd::kPullDown>;using D6in_ = Gpio::AnyIn<kPort, kD6, Gpio::PuPd::kPullDown>;using D7in_ = Gpio::AnyIn<kPort, kD7, Gpio::PuPd::kPullDown>;	// Output for control pins
-using Mode_ = Gpio::AnyCounter<RW_, RS_>;	// Output control for data bus
-using DataBus_ = Gpio::AnyCounter<D4_, D5_, D6_, D7_>;	// Output direction data-type
-using OutPin_ = Gpio::AnyPinGroup<kPort, D4_, D5_, D6_, D7_>;	// Output direction data-type
-using InPins_ = Gpio::AnyPinGroup<kPort, D4in_, D5in_, D6in_, D7in_>;	// Describes the hardware attached to controller
+	using Delay_ = Delay;
+	using RS_ = Gpio::AnyOut<kPort, kRS>;
+	using RW_ = Gpio::AnyOut<kPort, kRW>;
+	using EN_ = Gpio::AnyOut<kPort, kEN>;
+	using D4_ = Gpio::AnyOut<kPort, kD4>;
+	using D5_ = Gpio::AnyOut<kPort, kD5>;
+	using D6_ = Gpio::AnyOut<kPort, kD6>;
+	using D7_ = Gpio::AnyOut<kPort, kD7>;
+	using D4in_ = Gpio::AnyIn<kPort, kD4, Gpio::PuPd::kPullDown>;
+	using D5in_ = Gpio::AnyIn<kPort, kD5, Gpio::PuPd::kPullDown>;
+	using D6in_ = Gpio::AnyIn<kPort, kD6, Gpio::PuPd::kPullDown>;
+	using D7in_ = Gpio::AnyIn<kPort, kD7, Gpio::PuPd::kPullDown>;
+	// Output for control pins
+	using Mode_ = Gpio::AnyCounter<RW_, RS_>;
+	// Output control for data bus
+	using DataBus_ = Gpio::AnyCounter<D4_, D5_, D6_, D7_>;
+	// Output direction data-type
+	using OutPin_ = Gpio::AnyPinGroup<kPort, D4_, D5_, D6_, D7_>;
+	// Output direction data-type
+	using InPins_ = Gpio::AnyPinGroup<kPort, D4in_, D5in_, D6in_, D7in_>;
+	// Describes the hardware attached to controller
 	static constexpr FuncSetOpts kFormat_
 		= ((kOpts & Options::k1Line) == Options::k1Line ? FuncSetOpts::k1Line : FuncSetOpts::k2Line)
 		| ((kOpts & Options::k5x10Char) == Options::k5x10Char ? FuncSetOpts::k5x10Char : FuncSetOpts::k5x8Char)
@@ -173,7 +189,8 @@ using InPins_ = Gpio::AnyPinGroup<kPort, D4in_, D5in_, D6in_, D7in_>;	// Describ
 	// Enables bus (not necessary if you initialized bus elsewhere)
 	static void Enable()
 	{
-using AllPins = Gpio::AnyPinGroup<kPort, RS_, RW_, EN_, D4_, D5_, D6_, D7_>;		AllPins::Enable();
+		using AllPins = Gpio::AnyPinGroup<kPort, RS_, RW_, EN_, D4_, D5_, D6_, D7_>;
+		AllPins::Enable();
 	}
 	// Ensure that 40ms have passed after power on, before calling this
 	void InitLcd()

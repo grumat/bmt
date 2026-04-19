@@ -12,6 +12,7 @@ namespace Bmt
 enum class Usart;
 
 using IrqForwarder = void (*)(void*);
+
 // Internal Library Header
 template <Usart U>
 struct UsartIntHandler

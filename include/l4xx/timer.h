@@ -210,7 +210,8 @@ template <
 class AnyTimer_
 {
 public:
-using TypCnt = uint16_t;	static constexpr Unit kTimerNum_ = kTimerNum;
+	using TypCnt = uint16_t;
+	static constexpr Unit kTimerNum_ = kTimerNum;
 	static constexpr uintptr_t kTimerBase_ = (uintptr_t)kTimerNum;
 	// 
 	static constexpr bool kIsValid_ = kTimerNum_ != kTimInvalid;
@@ -284,7 +285,8 @@ using TypCnt = uint16_t;	static constexpr Unit kTimerNum_ = kTimerNum;
 		(HasCC1() | HasCC2() | HasCC3() | HasCC4()) == false
 		;
 	// Type definition with Timer DMA info
-using DmaInfo_ = DmaInfo<kTimerNum_>;
+	using DmaInfo_ = DmaInfo<kTimerNum_>;
+
 	ALWAYS_INLINE static volatile TIM_TypeDef *GetDevice()
 	{
 		static_assert(kIsValid_, "Invalid timer instance selected");
@@ -358,7 +360,8 @@ template <
 class InternalClock : public AnyTimer_<kTimerNum>
 {
 public:
-using BASE = AnyTimer_<kTimerNum>;	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
+	using BASE = AnyTimer_<kTimerNum>;
+	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
@@ -382,7 +385,8 @@ template <
 class InternalClock_us : public AnyTimer_<kTimerNum>
 {
 public:
-using BASE = AnyTimer_<kTimerNum>;	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
+	using BASE = AnyTimer_<kTimerNum>;
+	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
 		;
@@ -408,7 +412,8 @@ template <
 class InternalClock_Hz : public AnyTimer_<kTimerNum>
 {
 public:
-using BASE = AnyTimer_<kTimerNum>;	static constexpr uint32_t kFrequency_ = kHz;
+	using BASE = AnyTimer_<kTimerNum>;
+	static constexpr uint32_t kFrequency_ = kHz;
 	static constexpr uint32_t kClkTick_ = (BASE::kTimerNum_ == kTim1)
 		? SysClk::kApb2TimerClock_
 		: SysClk::kApb1TimerClock_
@@ -435,7 +440,8 @@ template <
 class ExternalClock : public AnyTimer_<kTimerNum>
 {
 public:
-using BASE = AnyTimer_<kTimerNum>;	static constexpr ExtClk kExtIn_ = kExtIn;
+	using BASE = AnyTimer_<kTimerNum>;
+	static constexpr ExtClk kExtIn_ = kExtIn;
 	static constexpr uint32_t kFrequency_ = kFreq;
 	static constexpr uint32_t kPrescaler_ = kPrescaler;
 	static constexpr uint32_t kEtrPrescaler_ = kEtrPrescaler;
@@ -541,7 +547,8 @@ Following parameters are configurable:
 
 Examples:
 	// TIM1 is master and updates on it will be used as clock for TIM2
-using Tim1PrescalerToTim2 = MasterSlaveTimers<kTim1, kTim2>;	Tim1PrescalerToTim2::Setup();
+	using Tim1PrescalerToTim2 = MasterSlaveTimers<kTim1, kTim2>;
+	Tim1PrescalerToTim2::Setup();
 	// Use Output Compare of Timer 1 to enable Timer 2
 	// Note: TIM1 clock and Compare register needs to be setup
 	MasterSlaveTimers<kTim1, kTim2, kCompare1, kGatedMode>::Setup();
@@ -556,7 +563,9 @@ template <
 class MasterSlaveTimers : public AnyTimer_<kSlaveTimer>
 {
 public:
-using BASE = AnyTimer_<kSlaveTimer>;using MASTER = AnyTimer_<kMasterTimer>;	static constexpr Unit kMasterTimer_ = kMasterTimer;
+	using BASE = AnyTimer_<kSlaveTimer>;
+	using MASTER = AnyTimer_<kMasterTimer>;
+	static constexpr Unit kMasterTimer_ = kMasterTimer;
 	static constexpr uint32_t kPrescaler_ = kPrescaler;
 	static constexpr uint32_t kTS_ =
 		// TIM1
@@ -718,7 +727,9 @@ template <
 class Any : public AnyTimer_<TimeBase::kTimerNum_>
 {
 public:
-using BASE = AnyTimer_<TimeBase::kTimerNum_>;using TypCnt = typename BASE::TypCnt;	static constexpr uint32_t kPrescaler_ = TimeBase::kPrescaler_;
+	using BASE = AnyTimer_<TimeBase::kTimerNum_>;
+	using TypCnt = typename BASE::TypCnt;
+	static constexpr uint32_t kPrescaler_ = TimeBase::kPrescaler_;
 	static constexpr uint32_t kFrequency_ = TimeBase::kFrequency_;
 	static constexpr Mode kTimerMode_ = kTimerMode;
 	static constexpr uint32_t kCr1Mask = TIM_CR1_CEN_Msk | TIM_CR1_UDIS_Msk | TIM_CR1_URS_Msk
@@ -1188,7 +1199,8 @@ template <
 class AnyTimerDelay : public Any<TimeBase, Mode::kSingleShot>
 {
 public:
-using Base = Any<TimeBase, Mode::kSingleShot>;	// An rough overhead based on CPU speed for the us tick
+	using Base = Any<TimeBase, Mode::kSingleShot>;
+	// An rough overhead based on CPU speed for the us tick
 	static constexpr uint32_t kOverhead_ = (70 / (Base::kPrescaler_ + 1));
 
 	ALWAYS_INLINE static void Delay(const uint16_t num)
@@ -1227,9 +1239,12 @@ template <
 class AnyChannel_ : public AnyTimer_<kTimerNum>
 {
 public:
-using BASE = AnyTimer_<kTimerNum>;using TypCnt = typename BASE::TypCnt;	static constexpr Channel kChannelNum_ = kChannelNum;
+	using BASE = AnyTimer_<kTimerNum>;
+	using TypCnt = typename BASE::TypCnt;
+	static constexpr Channel kChannelNum_ = kChannelNum;
 	// Data type with DMA information about this timer channel
-using DmaChInfo_ = DmaChInfo <kTimerNum, kChannelNum>;	
+	using DmaChInfo_ = DmaChInfo <kTimerNum, kChannelNum>;	
+
 	static_assert(kChannelNum_ != Channel::k1 || BASE::HasCC1(), "Basic timer does not feature CC1 module");
 	static_assert(kChannelNum_ != Channel::k2 || BASE::HasCC2(), "Basic timer does not feature CC2 module");
 	static_assert(kChannelNum_ != Channel::k3 || BASE::HasCC3(), "Basic timer does not feature CC3 module");
@@ -1446,7 +1461,9 @@ template <
 class AnyInputChannel : public AnyChannel_<kTimerNum, kChannelNum>
 {
 public:
-using BASE = AnyChannel_<kTimerNum, kChannelNum>;using TypCnt = typename BASE::TypCnt;	static constexpr int kNumber_ = (int)kChannelNum;		///< Timer channel number
+	using BASE = AnyChannel_<kTimerNum, kChannelNum>;
+	using TypCnt = typename BASE::TypCnt;
+	static constexpr int kNumber_ = (int)kChannelNum;		///< Timer channel number
 	static constexpr InputCapture kInputSrc_ = kInputSrc;	///< Selectable Input Source
 	static constexpr int kShift4_ = 4 * kNumber_;			///< Bit shift for CCER register
 	static constexpr int kShift8_ = 8 * (kNumber_ & 1);		///< Bit shift for CCMRx register
@@ -1638,7 +1655,9 @@ template <
 class AnyOutputChannel : public AnyChannel_<TimType::kTimerNum_, kChannelNum>
 {
 public:
-using BASE = AnyChannel_<TimType::kTimerNum_, kChannelNum>;using TypCnt = typename BASE::TypCnt;	static constexpr uint32_t kCcmr_Mask =
+	using BASE = AnyChannel_<TimType::kTimerNum_, kChannelNum>;
+	using TypCnt = typename BASE::TypCnt;
+	static constexpr uint32_t kCcmr_Mask =
 		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCMR1_CC1S_Msk | TIM_CCMR1_OC1FE_Msk | TIM_CCMR1_OC1PE_Msk | TIM_CCMR1_OC1M_Msk | TIM_CCMR1_OC1CE_Msk
 		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCMR1_CC2S_Msk | TIM_CCMR1_OC2FE_Msk | TIM_CCMR1_OC2PE_Msk | TIM_CCMR1_OC2M_Msk | TIM_CCMR1_OC2CE_Msk
 		: (BASE::kChannelNum_ == Channel::k3) ? TIM_CCMR2_CC3S_Msk | TIM_CCMR2_OC3FE_Msk | TIM_CCMR2_OC3PE_Msk | TIM_CCMR2_OC3M_Msk | TIM_CCMR2_OC3CE_Msk

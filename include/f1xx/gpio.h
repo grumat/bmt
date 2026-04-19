@@ -33,7 +33,8 @@ class Implementation_
 {
 public:
 	/// A constant to record the mapping type
-using MapType = Map;	/// Constant storing the GPIO port number
+	using MapType = Map;
+	/// Constant storing the GPIO port number
 	static constexpr Port kPort_ = kPort;
 	/// Base address of the port peripheral
 	static constexpr uint32_t kPortBase_ = (GPIOA_BASE + uint32_t(kPort_) * 0x400);
@@ -976,7 +977,8 @@ This configuration is a sample code to setup the GPIO for the USART1 through PA9
 and a LED on PA0.
 \code{.cpp}
 /// Pin for green LED
-using GREEN_LED = AnyOut<Port::PA, 0, Speed::kOutput2MHz, Level::kHigh>;/// Initial configuration for PORTA
+using GREEN_LED = AnyOut<Port::PA, 0, Speed::kOutput2MHz, Level::kHigh>;
+/// Initial configuration for PORTA
 using PORTA = AnyPortSetup <Port::PA
 	, GREEN_LED			///< bit bang
 	, Unused<1>			///< not used

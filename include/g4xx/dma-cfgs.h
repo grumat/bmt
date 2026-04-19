@@ -256,6 +256,7 @@ enum class PerifSel : uint8_t
 
 
 using IdNone = AnyID<Itf::k1, Chan::kNone, PerifSel::kMem2Mem>;
+
 /* The type definitions below are, wherever possible, based on DMA settings of STM32L4xx. */
 
 #ifdef ADC1_BASE

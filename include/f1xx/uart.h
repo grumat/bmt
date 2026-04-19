@@ -95,8 +95,9 @@ public:
 		: stopbits;
 
 	/// IRQ for that port
-using UartIrq = IrqTemplate<kNvicUsartIrqn_>;	/// A scoped critical section class data type
-using IrqLock = CriticalSectionIrq<UartIrq>;
+	using UartIrq = IrqTemplate<kNvicUsartIrqn_>;
+	/// A scoped critical section class data type
+	using IrqLock = CriticalSectionIrq<UartIrq>;
 	/// Access to the hardware IO data structure
 	ALWAYS_INLINE static volatile USART_TypeDef &Io()	{ return *(volatile USART_TypeDef*)kUsartBase_; }
 
@@ -267,7 +268,8 @@ class UartFifo
 {
 public:
 	/// Datatype for the hardware instance
-using HwInstance = UsartHwInstance;using UsartIrqLock = typename UsartHwInstance::UartIrq;	/// Input buffer with specified size
+	using HwInstance = UsartHwInstance;using UsartIrqLock = typename UsartHwInstance::UartIrq;
+	/// Input buffer with specified size
 	static inline Fifo<buf_in> m_BufIn;
 	/// Output buffer with specified size
 	static inline Fifo<buf_out> m_BufOut;
@@ -374,12 +376,18 @@ at 115200 bauds:
 
 \code{.cpp}
 // Crystal on external clock for this project
-using HSE = AnyHse<8000000UL>;// 72 MHz is Max freq
-using PLL = AnyPll<HSE, 72000000UL>;// Set the clock tree
-using SysClk = AnySycClk<PLL, 1, 2, 1>;// USART1 for GDB port
-using MyUsartSettings = UsartTemplate<Usart::k1, SysClk, 115200>;// Dual FIFO buffers for the USART1
-using MyUsartWithBuffers = UartFifo<MyUsartSettings, 64, 64>;// A driver model using interrupts
-using UsartDriver = UsartIntDriverModel<MyUsartWithBuffers>;// A singleton exists on the implementation file as UART instance
+using HSE = AnyHse<8000000UL>;
+// 72 MHz is Max freq
+using PLL = AnyPll<HSE, 72000000UL>;
+// Set the clock tree
+using SysClk = AnySycClk<PLL, 1, 2, 1>;
+// USART1 for GDB port
+using MyUsartSettings = UsartTemplate<Usart::k1, SysClk, 115200>;
+// Dual FIFO buffers for the USART1
+using MyUsartWithBuffers = UartFifo<MyUsartSettings, 64, 64>;
+// A driver model using interrupts
+using UsartDriver = UsartIntDriverModel<MyUsartWithBuffers>;
+// A singleton exists on the implementation file as UART instance
 extern UsartDriver g_UartSingleton;
 \endcode
 */

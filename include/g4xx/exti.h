@@ -378,7 +378,12 @@ operations are performed in bulk.
 
 An hypothetical device with 4 button connected on PA5, PB6, PA7 and PB8:
 \code{.cpp}
-using ButtonLeft = ExtiSource<Exti5, Gpio::Port::PA, ExtiTrigger::kFalling, true>;using ButtonRight = ExtiSource<Exti6, Gpio::Port::PB, ExtiTrigger::kFalling, true>;using ButtonUp = ExtiSource<Exti7, Gpio::Port::PA, ExtiTrigger::kFalling, true>;using ButtonDown = ExtiSource<Exti8, Gpio::Port::PB, ExtiTrigger::kFalling, true>;using Joystick = ExtiTemplate<ButtonLeft, ButtonRight, ButtonUp, ButtonDown>;
+using ButtonLeft = ExtiSource<Exti5, Gpio::Port::PA, ExtiTrigger::kFalling, true>;
+using ButtonRight = ExtiSource<Exti6, Gpio::Port::PB, ExtiTrigger::kFalling, true>;
+using ButtonUp = ExtiSource<Exti7, Gpio::Port::PA, ExtiTrigger::kFalling, true>;
+using ButtonDown = ExtiSource<Exti8, Gpio::Port::PB, ExtiTrigger::kFalling, true>;
+using Joystick = ExtiTemplate<ButtonLeft, ButtonRight, ButtonUp, ButtonDown>;
+
 void Initialize()
 {
 	...
@@ -717,7 +722,8 @@ public:
 \par Example
 \code{.cpp}
 // A button on PA0 using a falling edge interrupt
-using MyButtonOnPA0 = ExtiSource<Exti::k0, Gpio::Port::PA, ExtiTrigger::kFalling, true>;void MyCriticalCode()
+using MyButtonOnPA0 = ExtiSource<Exti::k0, Gpio::Port::PA, ExtiTrigger::kFalling, true>;
+void MyCriticalCode()
 {
 	CriticalSectionIrq<ExtiSet<MyButtonOnPA0>> crit_sec;
 	// Now do critical code while interruption on MyButtonOnPA0 is suspended

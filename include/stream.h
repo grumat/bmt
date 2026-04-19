@@ -7,8 +7,11 @@ far more efficient than printf() formatting.
 
 Example:
 \code
-using Debug_ = SwoChannel<0>;using SwoTrace = SwoTraceSetup <SysClk, kAsynchronous, 720000, Debug_>;// A stream object for the trace output
+using Debug_ = SwoChannel<0>;
+using SwoTrace = SwoTraceSetup <SysClk, kAsynchronous, 720000, Debug_>;
+// A stream object for the trace output
 using Debug = OutStream<Debug_>;
+
 void MySystemInit()
 {
 	/// ...
@@ -306,7 +309,7 @@ class OutStream_
 {
 public:
 	/// Self data-type
-using Self = OutStream_<PutC>;
+	using Self = OutStream_<PutC>;
 	/// Write char to the stream
 	constexpr Self operator <<(char ch) { if (PutC::kEnabled_) PutC::PutChar(ch); return *this;}
 	/// Write a string to the stream
@@ -428,9 +431,12 @@ all tracing code for a build other than the debug.
 See the example:
 \code
 #ifdef _DEBUG
-using DebugStream = SwoDummyChannel;#else
-using DebugStream = SwoChannel<0>;#endif
+using DebugStream = SwoDummyChannel;
+#else
+using DebugStream = SwoChannel<0>;
+#endif
 using Debug = OutStream<DebugStream>;
+
 void MyTestFunc()
 {
 	// Compiler efficiently discards all code and data necessary for this 

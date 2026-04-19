@@ -96,7 +96,8 @@ class CriticalSectionIrq
 {
 public:
 	/// Datatype for the hardware instance
-using IrqHandler = irq_set;	/// Disables specific interrupt during object scope
+	using IrqHandler = irq_set;
+	/// Disables specific interrupt during object scope
 	CriticalSectionIrq() { IrqHandler::Disable(); }
 	/// Reenables specific interrupt
 	~CriticalSectionIrq() { IrqHandler::Enable(); }
