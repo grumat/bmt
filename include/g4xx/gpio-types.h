@@ -897,12 +897,12 @@ using LPUART1_TX_PC1 = AnyAltOut<Port::PC, 1, AfLPUART1_TX_PC1>;
 /// A default configuration to map LPUART1 CTS on PG5 pin
 using LPUART1_CTS_PG5 = AnyAltOutOD<Port::PG, 5, AfLPUART1_CTS_PG5>;
 /// A default configuration to map LPUART1 RTS_DE on PG6 pin
-using LPUART1_RTS_DE_PG6 = AnyAltOut<Port::PG, 6, AfLPUART1_RTS_DE_PG6>
-;/// A default configuration to map LPUART1 RX on PG8 pin
-using LPUART1_RX_PG8 = AnyAltOutOD<Port::PG, 8, AfLPUART1_RX_PG8>
-;/// A default configuration to map LPUART1 TX on PG7 pin
-using LPUART1_TX_PG7 = AnyAltOut<Port::PG, 7, AfLPUART1_TX_PG7>
-;#endif	// defined(GPIOG_BASE)
+using LPUART1_RTS_DE_PG6 = AnyAltOut<Port::PG, 6, AfLPUART1_RTS_DE_PG6>;
+/// A default configuration to map LPUART1 RX on PG8 pin
+using LPUART1_RX_PG8 = AnyAltOutOD<Port::PG, 8, AfLPUART1_RX_PG8>;
+/// A default configuration to map LPUART1 TX on PG7 pin
+using LPUART1_TX_PG7 = AnyAltOut<Port::PG, 7, AfLPUART1_TX_PG7>;
+#endif	// defined(GPIOG_BASE)
 #endif	// defined(LPUART1_BASE)
 
 //////////////////////////////////////////////////////////////////////

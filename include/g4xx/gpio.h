@@ -1088,20 +1088,20 @@ public:
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
 		// Reset values according to data-sheet
-		if (kPort_ = Port::PA)
+		if (kPort_ == Port::PA)
 			port.MODER = 0xABFFFFFF;
-		else if (kPort_ = Port::PB)
+		else if (kPort_ == Port::PB)
 			port.MODER = 0xFFFFFEBF;
 		else
 			port.MODER = 0xFFFFFFFF;
 		port.OTYPER = 0;
-		if (kPort_ = Port::PA)
+		if (kPort_ == Port::PA)
 			port.OSPEEDR = 0x0C000000;
 		else
 			port.OSPEEDR = 0;
-		if (kPort_ = Port::PA)
+		if (kPort_ == Port::PA)
 			port.PUPDR = 0x64000000;
-		else if (kPort_ = Port::PB)
+		else if (kPort_ == Port::PB)
 			port.PUPDR = 0x00000100;
 		else
 			port.PUPDR = 0;

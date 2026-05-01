@@ -22,3 +22,5 @@
 
 /// Breaks CPU flow if conditions aren´t met
 #define assert(cond)	if ((cond) == false) { __BKPT(255); }
+
+#define ASSUME_ALIGNED(ptr, cnt)	__builtin_assume_aligned(ptr, cnt)

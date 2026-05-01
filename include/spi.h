@@ -90,6 +90,36 @@ constexpr Props operator&(const Props l, const Props r)
 enum class RawSpiSpeed : uint32_t;
 
 
+/// Maps an SPI instance to its DMA channel pair; specialised per-peripheral using the platform IdSpiXRx/Tx aliases
+template<Iface kSpi>
+struct DmaSpiInfo
+{
+	using Rx = Dma::IdNone;
+	using Tx = Dma::IdNone;
+};
+#ifdef SPI1_BASE
+template<> struct DmaSpiInfo<Iface::k1>
+{
+	using Rx = Dma::IdSpi1Rx;
+	using Tx = Dma::IdSpi1Tx;
+};
+#endif
+#ifdef SPI2_BASE
+template<> struct DmaSpiInfo<Iface::k2>
+{
+	using Rx = Dma::IdSpi2Rx;
+	using Tx = Dma::IdSpi2Tx;
+};
+#endif
+#ifdef SPI3_BASE
+template<> struct DmaSpiInfo<Iface::k3>
+{
+	using Rx = Dma::IdSpi3Rx;
+	using Tx = Dma::IdSpi3Tx;
+};
+#endif
+
+
 /// A template class for an SPI peripheral configuration
 template<
 	const Iface kSpi						///< The SPI instance
@@ -103,6 +133,8 @@ template<
 >
 struct SpiTemplate
 {
+	/// The interface
+	static constexpr Iface kSpi_ = kSpi;
 	/// The peripheral base address as a constant
 	static constexpr uintptr_t kSpiBase_ =
 		(kSpi == Iface::k1) ? SPI1_BASE
@@ -150,37 +182,16 @@ struct SpiTemplate
 		;
 	/// A data-type to control IRQ settings
 	using SpiIrq = IrqTemplate<kNvicSpiIrqn_>;
+	/// Data type with DMA information for the TX channel
+	using DmaChInfoTx_ = typename DmaSpiInfo<kSpi>::Tx;
+	/// Data type with DMA information for the RX channel
+	using DmaChInfoRx_ = typename DmaSpiInfo<kSpi>::Rx;
 	/// The DMA instance for the peripheral
-	static constexpr Dma::Itf DmaInstance_ =
-		(kSpi == Iface::k1) ? Dma::Itf::k1 :
-#ifdef SPI2_BASE
-		(kSpi == Iface::k2) ? Dma::Itf::k1 :
-#endif
-#ifdef SPI3_BASE
-		(kSpi == Iface::k3) ? Dma::Itf::k2 :
-#endif
-		Dma::Itf::k1
-		;
+	static constexpr Dma::Itf DmaInstance_ = DmaChInfoRx_::kItf_;
 	/// The DMA channel Transmit instance for the peripheral
-	static constexpr Dma::Chan DmaTxCh_ =
-		(kSpi == Iface::k1) ? Dma::Chan::k3 :
-#ifdef SPI2_BASE
-		(kSpi == Iface::k2) ? Dma::Chan::k5 :
-#endif
-#ifdef SPI3_BASE
-		(kSpi == Iface::k3) ? Dma::Chan::k2 :
-#endif
-		Dma::Chan::k5;
+	static constexpr Dma::Chan DmaTxCh_ = DmaChInfoTx_::kChan_;
 	/// The DMA channel Receive instance for the peripheral
-	static constexpr Dma::Chan DmaRxCh_ =
-		(kSpi == Iface::k1) ? Dma::Chan::k2 :
-#ifdef SPI2_BASE
-		(kSpi == Iface::k2) ? Dma::Chan::k4 :
-#endif
-#ifdef SPI3_BASE
-		(kSpi == Iface::k3) ? Dma::Chan::k1 :
-#endif
-		Dma::Chan::k4;
+	static constexpr Dma::Chan DmaRxCh_ = DmaChInfoRx_::kChan_;
 
 	/// Returns peripheral register structure
 	ALWAYS_INLINE static volatile SPI_TypeDef * GetDevice() { return (volatile SPI_TypeDef *)kSpiBase_; }

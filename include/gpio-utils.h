@@ -121,15 +121,23 @@ template <
 >
 struct PortMerge
 {
-	ALWAYS_INLINE constexpr static void Enable()
+	// Apply configuration and set default output levels
+	ALWAYS_INLINE constexpr static void Setup()
 	{
-		P0::Enable();
-		P1::Enable();
+		P0::Setup();
+		P1::Setup();
 	}
-	ALWAYS_INLINE constexpr static void Disable()
+	// Apply configuration and keep current output levels
+	ALWAYS_INLINE constexpr static void SetupPinMode()
 	{
-		P0::Disable();
-		P1::Disable();
+		P0::SetupPinMode();
+		P1::SetupPinMode();
+	}
+	// Enter tri-state (not recomended: it is recomended to define a set with the desired "inactive" state)
+	ALWAYS_INLINE constexpr static void TriState()
+	{
+		P0::TriState();
+		P1::TriState();
 	}
 };
 

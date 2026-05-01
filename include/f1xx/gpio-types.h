@@ -112,37 +112,37 @@ using I2C2_SMBAI_PB12 = AnyAltOutOD<Port::PB, 12, AfNoRemap>;
 // SPI1 - Configuration 1
 //////////////////////////////////////////////////////////////////////
 /// A default configuration to map SPI1 NSS on PA4 pin (master)
-using SPI1_NSS_PA4 = AnyAltOut<Port::PA, 4, AfSpi1_PA4_5_6_7>;
+using SPI1_NSS_PA4 = AnyAltOut<Port::PA, 4, AfSpi1_PA4_5_6_7, Speed::kMedium>;
 /// A default configuration to map SPI1 NSS on PA4 pin (slave)
 using SPI1_NSS_PA4_SLAVE = Floating<Port::PA, 4, AfSpi1_PA4_5_6_7>;
 /// A default configuration to map SPI1 SCK on PA5 pin (master)
-using SPI1_SCK_PA5 = AnyAltOut<Port::PA, 5, AfSpi1_PA4_5_6_7>;
+using SPI1_SCK_PA5 = AnyAltOut<Port::PA, 5, AfSpi1_PA4_5_6_7, Speed::kMedium>;
 /// A default configuration to map SPI1 SCK on PA5 pin (slave)
 using SPI1_SCK_PA5_SLAVE = Floating<Port::PA, 5, AfSpi1_PA4_5_6_7>;
 /// A default configuration to map SPI1 MISO on PA6 pin (master)
 using SPI1_MISO_PA6 = Floating<Port::PA, 6, AfSpi1_PA4_5_6_7>;
 /// A default configuration to map SPI1 MISO on PA6 pin (slave)
-using SPI1_MISO_PA6_SLAVE = AnyAltOut<Port::PA, 6, AfSpi1_PA4_5_6_7>;
+using SPI1_MISO_PA6_SLAVE = AnyAltOut<Port::PA, 6, AfSpi1_PA4_5_6_7, Speed::kMedium>;
 /// A default configuration to map SPI1 MOSI on PA7 pin (master)
-using SPI1_MOSI_PA7 = AnyAltOut<Port::PA, 7, AfSpi1_PA4_5_6_7>;
+using SPI1_MOSI_PA7 = AnyAltOut<Port::PA, 7, AfSpi1_PA4_5_6_7, Speed::kMedium>;
 /// A default configuration to map SPI1 MOSI on PA7 pin (slave)
 using SPI1_MOSI_PA7_SLAVE = Floating<Port::PA, 7, AfSpi1_PA4_5_6_7>;
 
 // SPI1 - Configuration 2
 /// A default configuration to map SPI1 NSS on PA15 pin (master)
-using SPI1_NSS_PA15 = AnyAltOut<Port::PA, 15, AfSpi1_PA15_PB3_4_5>;
+using SPI1_NSS_PA15 = AnyAltOut<Port::PA, 15, AfSpi1_PA15_PB3_4_5, Speed::kMedium>;
 /// A default configuration to map SPI1 NSS on PA15 pin (slave)
 using SPI1_NSS_PA15_SLAVE = Floating<Port::PA, 15, AfSpi1_PA15_PB3_4_5>;
 /// A default configuration to map SPI1 SCK on PB3 pin (master)
-using SPI1_SCK_PB3 = AnyAltOut<Port::PB, 3, AfSpi1_PA15_PB3_4_5>;
+using SPI1_SCK_PB3 = AnyAltOut<Port::PB, 3, AfSpi1_PA15_PB3_4_5, Speed::kMedium>;
 /// A default configuration to map SPI1 SCK on PB3 pin (slave)
 using SPI1_SCK_PB3_SLAVE = Floating<Port::PB, 3, AfSpi1_PA15_PB3_4_5>;
 /// A default configuration to map SPI1 MISO on PB4 pin (master)
 using SPI1_MISO_PB4 = Floating<Port::PB, 4, AfSpi1_PA15_PB3_4_5>;
 /// A default configuration to map SPI1 MISO on PB4 pin (slave)
-using SPI1_MISO_PB4_SLAVE = AnyAltOut<Port::PB, 4, AfSpi1_PA15_PB3_4_5>;
+using SPI1_MISO_PB4_SLAVE = AnyAltOut<Port::PB, 4, AfSpi1_PA15_PB3_4_5, Speed::kMedium>;
 /// A default configuration to map SPI1 MOSI on PB5 pin (master)
-using SPI1_MOSI_PB5 = AnyAltOut<Port::PB, 5, AfSpi1_PA15_PB3_4_5>;
+using SPI1_MOSI_PB5 = AnyAltOut<Port::PB, 5, AfSpi1_PA15_PB3_4_5, Speed::kMedium>;
 /// A default configuration to map SPI1 MOSI on PB5 pin (slave)
 using SPI1_MOSI_PB5_SLAVE = Floating<Port::PB, 5, AfSpi1_PA15_PB3_4_5>;
 
@@ -150,19 +150,19 @@ using SPI1_MOSI_PB5_SLAVE = Floating<Port::PB, 5, AfSpi1_PA15_PB3_4_5>;
 // SPI2
 //////////////////////////////////////////////////////////////////////
 /// A default configuration to map SPI2 NSS on PB12 pin (master)
-using SPI2_NSS_PB12 = AnyAltOut<Port::PB, 12, AfNoRemap>;
+using SPI2_NSS_PB12 = AnyAltOut<Port::PB, 12, AfNoRemap, Speed::kMedium>;
 /// A default configuration to map SPI2 NSS on PB12 pin (slave)
 using SPI2_NSS_PB12_SLAVE = Floating<Port::PB, 12, AfNoRemap>;
 /// A default configuration to map SPI2 SCK on PB13 pin (master)
-using SPI2_SCK_PB13 = AnyAltOut<Port::PB, 13, AfNoRemap>;
+using SPI2_SCK_PB13 = AnyAltOut<Port::PB, 13, AfNoRemap, Speed::kMedium>;
 /// A default configuration to map SPI2 SCK on PB13 pin (slave)
 using SPI2_SCK_PB13_SLAVE = Floating<Port::PB, 13, AfNoRemap>;
 /// A default configuration to map SPI2 MISO on PB14 pin (master)
 using SPI2_MISO_PB14 = Floating<Port::PB, 14, AfNoRemap>;
 /// A default configuration to map SPI2 MISO on PB14 pin (slave)
-using SPI2_MISO_PB14_SLAVE = AnyAltOut<Port::PB, 14, AfNoRemap>;
+using SPI2_MISO_PB14_SLAVE = AnyAltOut<Port::PB, 14, AfNoRemap, Speed::kMedium>;
 /// A default configuration to map SPI2 MOSI on PB15 pin (master)
-using SPI2_MOSI_PB15 = AnyAltOut<Port::PB, 15, AfNoRemap>;
+using SPI2_MOSI_PB15 = AnyAltOut<Port::PB, 15, AfNoRemap, Speed::kMedium>;
 /// A default configuration to map SPI2 MOSI on PB15 pin (slave)
 using SPIs_MOSI_PB15_SLAVE = Floating<Port::PB, 15, AfNoRemap>;
 

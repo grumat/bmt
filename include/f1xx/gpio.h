@@ -136,6 +136,7 @@ public:
 		if (kImpl != Impl::kUnchanged)
 		{
 			volatile GPIO_TypeDef &port = Io();
+			Map::Enable();
 			if (kCRL_Mask_ != ~0UL)
 				port.CRL = (port.CRL & kCRL_Mask_) | kCRL_;
 			if (kCRH_Mask_ != ~0UL)
@@ -148,7 +149,6 @@ public:
 		if (kImpl != Impl::kUnchanged)
 		{
 			SetupPinMode();
-			Map::Enable();
 			if (kODR_Mask_ != (uint16_t)~0U)
 			{
 				volatile GPIO_TypeDef &port = Io();
@@ -916,8 +916,8 @@ public:
 	static_assert(Pin15::kPort_ == Port::kUnusedPort || Pin15::kPort_ == kPort_
 		, "PIN15: Inconsistent port number or pin number collision");
 
-	//! Apply state of pin group merging with previous GPI contents
-	ALWAYS_INLINE constexpr static void Enable()
+	//! Initialize group of pins
+	ALWAYS_INLINE constexpr static void Setup()
 	{
 		// Apply Alternate Function configuration
 		AnyAFR<kAfConf_, kAfMask_>::Enable();
@@ -936,18 +936,30 @@ public:
 		else if (kODR_Mask_ != (uint16_t)~0U)
 			port.ODR = (port.ODR & kODR_Mask_) | kODR_;
 	}
+
+	//! Apply state of pin group merging with previous GPI contents, preserving levels
+	ALWAYS_INLINE constexpr static void SetupPinMode()
+	{
+		// Apply Alternate Function configuration
+		AnyAFR<kAfConf_, kAfMask_>::Enable();
+		// Base address of the peripheral registers
+		volatile GPIO_TypeDef& port = Io();
+		if (kCRL_Mask_ == 0UL)
+			port.CRL = kCRL_;
+		else if (kCRL_Mask_ != ~0UL)
+			port.CRL = (port.CRL & kCRL_Mask_) | kCRL_;
+		if (kCRH_Mask_ == 0UL)
+			port.CRH = kCRH_;
+		else if (kCRH_Mask_ != ~0UL)
+			port.CRH = (port.CRH & kCRH_Mask_) | kCRH_;
+	}
 	//! Not an ideal approach, but float everything
-	ALWAYS_INLINE constexpr static void Disable()
+	ALWAYS_INLINE constexpr static void TriState()
 	{
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
-		RCC->APB2ENR |= (1 << (uint32_t(kPort_) + RCC_APB2ENR_IOPAEN_Pos));
-		volatile uint32_t delay = RCC->APB2ENR & (1 << (uint32_t(kPort_) + RCC_APB2ENR_IOPAEN_Pos));
-		port.CRL = 0x44444444;
-		port.CRH = 0x44444444;
-		// Remove bits applying inverted Alternate Function configuration mask constant
-		AFIO->MAPR &= kAfMask_;
-		RCC->APB2ENR &= ~(1 << (uint32_t(kPort_) + RCC_APB2ENR_IOPAEN_Pos));
+		port.CRL = (port.CRL & kCRL_Mask_) | (0x44444444 & kCRL_Mask_);
+		port.CRH = (port.CRH & kCRH_Mask_) | (0x44444444 & kCRH_Mask_);
 	}
 
 protected:
@@ -1054,11 +1066,10 @@ public:
 	/// This means that Unchanged<> pins have the same behavior as Unused<>.
 	ALWAYS_INLINE constexpr static void Init()
 	{
+		// Enable GPIO clock
 		SUPER::EnableClock();
-		// Apply Alternate Function configuration
-		AnyAFR<SUPER::kAfConf_, SUPER::kAfMask_>::Enable();
-		// Apply
-		SUPER::Enable();
+		// Apply settings
+		SUPER::Setup();
 	}
 };
 
