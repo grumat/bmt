@@ -76,7 +76,13 @@ enum class Level
 
 
 #	include "mcu-system.h"
+// Architecture defined pin mapping multiplexers
 #	include "pinremap.h"
+
+/*
+gpio.h: General GPIO templates
+gpio-types.h: Architecture defined specific pin configurations
+*/
 
 #if defined(STM32L4)
 #	include "l4xx/gpio.h"

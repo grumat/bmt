@@ -584,6 +584,12 @@ struct SpiTemplate
 		return spi->DR;
 	}
 
+	/// Reads a byte from the device
+	ALWAYS_INLINE static void DummyRead()
+	{
+		(void)GetDevice()->DR;
+	}
+
 	/// Writes a half-word from the device
 	ALWAYS_INLINE static uint16_t ReadWord()
 	{

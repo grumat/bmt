@@ -12,7 +12,11 @@ public:
 	static constexpr size_t kBufSize = SZ_;
 
 	/// Reset/empties the FIFO
-	ALWAYS_INLINE void Reset() { m_nPut = m_nGet = 0; }
+	ALWAYS_INLINE void Reset()
+	{
+		m_nPut = 0;
+		m_nGet = 0;
+	}
 	/// Checks if FIFO is full
 	ALWAYS_INLINE bool IsFull() const { return GetCount() >= (kBufSize - 1); }
 	/// Return total bytes in buffer

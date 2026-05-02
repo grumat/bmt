@@ -36,6 +36,8 @@ template<
 class Implementation_
 {
 public:
+	// A constant to record the mapping type
+	using MapType = Map;
 	/// Constant storing the GPIO port number
 	static constexpr Port kPort_ = kPort;
 	/// Base address of the port peripheral
@@ -157,10 +159,18 @@ public:
 	/// Access to the peripheral memory space
 	static volatile GPIO_TypeDef &Io() { return *(volatile GPIO_TypeDef *)kPortBase_; }
 
+	// Selected alternate function does not match pin. Functionality will break!
+	static_assert(Map::kNoRemap_ || (Map::kPort_ == kPort_ && Map::kPin_ == kPin_), "pin remapping applies to a different pin");
+	// Input pin cannot set a pin speed
+	static_assert(!kIsInput_ || kSpeed_ == Speed::kInput, "Cannot select a speed for input pin");
+	// Pull-up resistor not allowed in Analog mode
+	static_assert(kMode_ != Mode::kAnalog || kPuPd_ != PuPd::kPullUp, "Pull-up not allowed in Analog mode");
+
 	/// Apply default configuration for the pin.
 	ALWAYS_INLINE constexpr static void SetupPinMode()
 	{
 		volatile GPIO_TypeDef &port = Io();
+		Map::Enable();
 		if (kMODER_Mask_ != ~0UL)
 			port.MODER = (port.MODER & kMODER_Mask_) | kMODER_;
 		if (kOTYPER_Mask_ != (uint16_t)~0UL)
@@ -170,18 +180,10 @@ public:
 		if (kPUPDR_Mask_ != ~0UL)
 			port.PUPDR = (port.PUPDR & kPUPDR_Mask_) | kPUPDR_;
 	}
-	// Selected alternate function does not match pin. Functionality will break!
-	static_assert(Map::kNoRemap_ || (Map::kPort_ == kPort_ && Map::kPin_ == kPin_), "pin remapping applies to a different pin");
-	// Input pin cannot set a pin speed
-	static_assert(!kIsInput_ || kSpeed_ == Speed::kInput, "Cannot select a speed for input pin");
-	// Pull-up resistor not allowed in Analog mode
-	static_assert(kMode_ != Mode::kAnalog || kPuPd_ != PuPd::kPullUp, "Pull-up not allowed in Analog mode");
-
 	/// Apply default configuration for the pin.
 	ALWAYS_INLINE constexpr static void Setup()
 	{
 		SetupPinMode();
-		Map::Enable();
 		if (kODR_Mask_ != (uint16_t)~0UL)
 		{
 			volatile GPIO_TypeDef &port = Io();
@@ -558,7 +560,7 @@ class AnyOutOD : public AnyOut<
 	, kPin
 	, kSpeed
 	, kLevel
-	, PuPd::kPullUp
+	, PuPd::kFloating
 	, Mode::kOpenDrain
 	, Map
 >
@@ -626,7 +628,7 @@ class AnyAltOutOD : public AnyAltOut <
 	, Map
 	, kSpeed
 	, kLevel
-	, PuPd::kPullUp
+	, PuPd::kFloating
 	, Mode::kOpenDrainAlt
 >
 {
@@ -1048,8 +1050,8 @@ public:
 	static_assert(Pin15::kPort_ == Port::kUnusedPort || Pin15::kPort_ == kPort_
 		, "PIN15: Inconsistent port number or pin number collision");
 
-	//! Apply state of pin group merging with previous GPI contents
-	constexpr static void Enable()
+	//! Apply state of pin group merging with previous GPIO contents
+	ALWAYS_INLINE constexpr static void Setup()
 	{
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
@@ -1082,8 +1084,39 @@ public:
 		else if (kODR_Mask_ != (uint16_t)~0UL)
 			port.ODR = (port.ODR & kODR_Mask_) | kODR_;
 	}
+
+	//! Apply state of pin group merging with previous GPIO contents, preserving levels
+	ALWAYS_INLINE constexpr static void SetupPinMode()
+	{
+		// Base address of the peripheral registers
+		volatile GPIO_TypeDef& port = Io();
+		if (kMODER_Mask_ == 0UL)
+			port.MODER = kMODER_;
+		else if (kMODER_Mask_ != ~0UL)
+			port.MODER = (port.MODER & kMODER_Mask_) | kMODER_;
+		if (kOTYPER_Mask_ == 0UL)
+			port.OTYPER = kOTYPER_;
+		else if (kOTYPER_Mask_ != (uint16_t)~0UL)
+			port.OTYPER = (port.OTYPER & kOTYPER_Mask_) | kOTYPER_;
+		if (kOSPEEDR_Mask_ == 0UL)
+			port.OSPEEDR = kOSPEEDR_;
+		else if (kOSPEEDR_Mask_ != ~0UL)
+			port.OSPEEDR = (port.OSPEEDR & kOSPEEDR_Mask_) | kOSPEEDR_;
+		if (kPUPDR_Mask_ == 0UL)
+			port.PUPDR = kPUPDR_;
+		else if (kPUPDR_Mask_ != ~0UL)
+			port.PUPDR = (port.PUPDR & kPUPDR_Mask_) | kPUPDR_;
+		if (kAFRL_Mask_ == 0UL)
+			port.AFR[0] = kAFRL_;
+		else if (kAFRL_Mask_ != ~0UL)
+			port.AFR[0] = (port.AFR[0] & kAFRL_Mask_) | kAFRL_;
+		if (kAFRH_Mask_ == 0UL)
+			port.AFR[1] = kAFRH_;
+		else if (kAFRH_Mask_ != ~0UL)
+			port.AFR[1] = (port.AFR[1] & kAFRH_Mask_) | kAFRH_;
+	}
 	//! Sets the reset values (according to data-sheet)
-	constexpr static void Disable()
+	ALWAYS_INLINE constexpr static void TriState()
 	{
 		// Base address of the peripheral registers
 		volatile GPIO_TypeDef& port = Io();
@@ -1210,7 +1243,7 @@ public:
 	{
 		SUPER::EnableClock();
 		// Apply
-		SUPER::Enable();
+		SUPER::Setup();
 	}
 };
 
@@ -1223,7 +1256,7 @@ configuration for a short period and later restore to the previous state.
 
 Note that this affects all bits of the port.
 */
-template<const Port kPort>
+template <const Port kPort, bool dummy = true>
 class SaveGpio
 {
 public:

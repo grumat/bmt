@@ -142,7 +142,7 @@ protected:
 	/// Simple tick counter is implemented here
 	ALWAYS_INLINE static void Handler()
 	{
-		++soft_tick_;
+		soft_tick_ += 1;
 	}
 
 public:
@@ -236,7 +236,7 @@ protected:
 				soft_counter_ -= Base::kFrequency_;
 			}
 			// update soft tick
-			++soft_tick_;
+			soft_tick_ += 1;
 		}
 	}
 };
