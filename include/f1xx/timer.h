@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
+
 namespace Bmt
 {
 namespace Timer
@@ -283,6 +285,8 @@ struct TimerDescriptor
 		|| kTimerNum == kTim17
 #endif
 		;
+	// Legacy register-pointer helpers; kept for any out-of-tree code still
+	// touching RCC directly. New code uses RccTrait_ (below) + Clocks::Enabler.
 	static constexpr uint32_t kApbEnR = RCC_BASE + (kIsApb2_ ? offsetof(RCC_TypeDef, APB2ENR) : offsetof(RCC_TypeDef, APB1ENR));
 	ALWAYS_INLINE static volatile uint32_t &GetApbEnReg()
 	{
@@ -399,6 +403,11 @@ struct TimerDescriptor
 		(kTimerNum == kTim17) ? RCC_APB2RSTR_TIM17RST :
 #endif
 		0;
+	/// RCC enable + reset trait — feed this (the descriptor) to Clocks::Enabler.
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<kIsApb2_ ? Clocks::RccReg::kApb2En  : Clocks::RccReg::kApb1En,  kEnBit>,
+		Clocks::RccBit<kIsApb2_ ? Clocks::RccReg::kApb2Rst : Clocks::RccReg::kApb1Rst, kRstBit>
+	>;
 	static constexpr IRQn_Type kIrqNum =
 #if defined(TIM1_BASE)
 		(kTimerNum == kTim1) ? TIM1_UP_IRQn :
@@ -467,6 +476,7 @@ public:
 	using TypCnt = uint16_t;
 	static constexpr Unit kTimerNum_ = kTimerNum;
 	using TD = TimerDescriptor<kTimerNum_>;
+	using RccTrait_ = typename TD::RccTrait_;
 	static constexpr uintptr_t kTimerBase_ = (uintptr_t)kTimerNum;
 	// 
 	static constexpr bool kIsValid_ = kTimerNum_ != kTimInvalid;
@@ -930,11 +940,13 @@ public:
 	static constexpr bool kBuffered_ = kBuffered;
 	static constexpr bool kStrictUpdate_ = kStrictUpdate;
 
+	/// DEPRECATED — clock enable + peripheral reset are now done once at boot
+	/// via the platform's `PeripheralEnabler` (see `target.*/platform.h`). Call
+	/// `Setup()` directly. Kept temporarily so legacy callers still compile.
+	[[deprecated("Use platform PeripheralEnabler at boot, then call Setup() directly")]]
 	ALWAYS_INLINE static void Init()
 	{
-		TD::GetApbEnReg() |= TD::kEnBit;
-		TD::GetApbReg() |= TD::kRstBit;
-		TD::GetApbReg() &= ~TD::kRstBit;
+		Clocks::Enabler<TD>::Init();
 		Setup();
 	}
 

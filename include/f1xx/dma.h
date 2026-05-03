@@ -1,9 +1,38 @@
 #pragma once
 
+#include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
+
 namespace Bmt
 {
 namespace Dma
 {
+
+/// Trait carrier for a whole DMA controller — list this in `PeripheralEnabler`
+/// once per controller used (DMA1, DMA2). Cheaper than listing every channel.
+template <Itf kItf>
+struct Controller
+{
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<Clocks::RccReg::kAhb1En,
+#ifdef RCC_AHBENR_DMA1EN
+			(kItf == Itf::k1) ? RCC_AHBENR_DMA1EN
+#	ifdef RCC_AHBENR_DMA2EN
+			: (kItf == Itf::k2) ? RCC_AHBENR_DMA2EN
+#	endif
+			: 0
+#elif defined(RCC_AHB1ENR_DMA1EN)
+			(kItf == Itf::k1) ? RCC_AHB1ENR_DMA1EN
+#	ifdef RCC_AHB1ENR_DMA2EN
+			: (kItf == Itf::k2) ? RCC_AHB1ENR_DMA2EN
+#	endif
+			: 0
+#else
+			0
+#endif
+		>
+	>;
+};
+
 
 /// Template class that describes a DMA configuration
 template <
@@ -121,6 +150,26 @@ public:
 		: (kChan_ == Chan::k8) ? DMA_ISR_GIF8
 #endif
 		: 0;
+	/// RCC enable trait — DMA on F1 has no reset bit, only AHBENR enable.
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<Clocks::RccReg::kAhb1En,
+#ifdef RCC_AHBENR_DMA1EN
+			(kDma_ == Itf::k1) ? RCC_AHBENR_DMA1EN
+#	ifdef RCC_AHBENR_DMA2EN
+			: (kDma_ == Itf::k2) ? RCC_AHBENR_DMA2EN
+#	endif
+			: 0
+#elif defined(RCC_AHB1ENR_DMA1EN)
+			(kDma_ == Itf::k1) ? RCC_AHB1ENR_DMA1EN
+#	ifdef RCC_AHB1ENR_DMA2EN
+			: (kDma_ == Itf::k2) ? RCC_AHB1ENR_DMA2EN
+#	endif
+			: 0
+#else
+			0
+#endif
+		>
+	>;
 	/// NVIC initialization flag
 	static constexpr bool kDoInitNvic = doInitNvic;
 	/// NVIC Interrupt flag for the DMA channel
@@ -157,57 +206,32 @@ public:
 	/// The IRQ configuration template for that DMA channel
 	using DmaIrq = IrqTemplate<kNvicDmaIrqn_>;
 	/// Returns root device structure
-	ALWAYS_INLINE static DMA_TypeDef *GetDeviceRoot() { return (DMA_TypeDef *)kDmaBase_; }
+	ALWAYS_INLINE static volatile DMA_TypeDef *GetDeviceRoot() { return (DMA_TypeDef *)kDmaBase_; }
 	/// Returns device structure for the channel
-	ALWAYS_INLINE static DMA_Channel_TypeDef *GetDevice() { return (DMA_Channel_TypeDef *)kChBase_; }
+	ALWAYS_INLINE static volatile DMA_Channel_TypeDef *GetDevice() { return (DMA_Channel_TypeDef *)kChBase_; }
 
-	/// Enables the DMA controller and performs initialization
+	/// DEPRECATED — DMA clock is enabled at boot via the platform's
+	/// `PeripheralEnabler`. Call `Setup()` (and `EnableNvic()` if needed).
+	[[deprecated("Add this DMA channel to platform PeripheralEnabler, then call Setup()")]]
 	ALWAYS_INLINE static void Init()
 	{
-#ifdef RCC_AHBENR_DMA1EN
-		if (kDma_ == Itf::k1)
-			RCC->AHBENR |= RCC_AHBENR_DMA1EN;
-#endif
-#ifdef RCC_AHB1ENR_DMA1EN
-		if (kDma_ == Itf::k1)
-			RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-#endif
-#ifdef RCC_AHBENR_DMA2EN
-		if (kDma_ == Itf::k2)
-			RCC->AHBENR |= RCC_AHBENR_DMA2EN;
-#endif
-#ifdef RCC_AHB1ENR_DMA2EN
-		if (kDma_ == Itf::k2)
-			RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-#endif
-		// Optional NVIC initialization
+		Clocks::Enabler<AnyChannel>::Enable();
 		if (kDoInitNvic)
-		{
-			DmaIrq::ClearPending();
-			DmaIrq::Enable();
-		}
+			EnableNvic();
 		Setup();
+	}
+
+	/// Enables the channel's NVIC line. Idempotent — safe to call from Setup().
+	ALWAYS_INLINE static void EnableNvic()
+	{
+		DmaIrq::ClearPending();
+		DmaIrq::Enable();
 	}
 
 	/// Stops the entire DMA controller
 	ALWAYS_INLINE static void Stop()
 	{
-#ifdef RCC_AHBENR_DMA1EN
-		if (kDma_ == Itf::k1)
-			RCC->AHBENR &= ~RCC_AHBENR_DMA1EN;
-#endif
-#ifdef RCC_AHB1ENR_DMA1EN
-		if (kDma_ == Itf::k1)
-			RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
-#endif
-#ifdef RCC_AHBENR_DMA2EN
-		if (kDma_ == Itf::k2)
-			RCC->AHBENR &= ~RCC_AHBENR_DMA2EN;
-#endif
-#ifdef RCC_AHB1ENR_DMA2EN
-		if (kDma_ == Itf::k2)
-			RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA2EN;
-#endif
+		Clocks::Enabler<AnyChannel>::Disable();
 	}
 
 	/// DMA controller initialization
@@ -323,42 +347,42 @@ public:
 				break;
 			}
 		}
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR = tmp;
 	}
 
 	/// Enables the DMA channel
 	ALWAYS_INLINE static void Enable()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR |= DMA_CCR_EN;
 	}
 
 	/// Disables the DMA channel
 	ALWAYS_INLINE static void Disable()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR &= ~DMA_CCR_EN;
 	}
 
 	/// Sets the number of transfers that will occur
 	ALWAYS_INLINE static void SetTransferCount(uint16_t cnt)
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CNDTR = cnt;
 	}
 
 	/// Returns current transfer count
 	ALWAYS_INLINE static uint16_t GetTransferCount()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		return (uint16_t)dma->CNDTR;
 	}
 
 	/// Sets the source pointer address
 	ALWAYS_INLINE static void SetSourceAddress(const volatile void *addr)
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		if (kDir == Dir::kMemToPer || kDir == Dir::kMemToPerCircular)
 			dma->CMAR = (uint32_t)addr;
 		else
@@ -368,7 +392,7 @@ public:
 	/// Sets the destination pointer address
 	ALWAYS_INLINE static void SetDestAddress(volatile void *addr)
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		if (kDir == Dir::kMemToPer || kDir == Dir::kMemToPerCircular)
 			dma->CPAR = (uint32_t)addr;
 		else
@@ -388,101 +412,101 @@ public:
 	/// Enables transfer error interrupt
 	ALWAYS_INLINE static void EnableTransferErrorInt()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR |= DMA_CCR_TEIE;
 	}
 	/// Disables transfer error interrupt
 	ALWAYS_INLINE static void DisableTransferErrorInt()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR &= ~DMA_CCR_TEIE;
 	}
 	/// Checks if transfer error interrupt flag is signaled
 	ALWAYS_INLINE static bool IsTransferError()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		return (dma->ISR & kTeif) != 0;
 	}
 	/// Clears the transfer error interrupt flag
 	ALWAYS_INLINE static void ClearTransferErrorFlag()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		dma->IFCR |= kTeif;
 	}
 
 	/// Enables the half transfer interrupt
 	ALWAYS_INLINE static void EnableHalfTransferInt()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR |= DMA_CCR_HTIE;
 	}
 	/// Disables the half transfer interrupt
 	ALWAYS_INLINE static void DisableHalfTransferInt()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR &= ~DMA_CCR_HTIE;
 	}
 	/// Checks if the half transfer interrupt flag is signaled
 	ALWAYS_INLINE static bool IsHalfTransfer()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		return (dma->ISR & kHtif) != 0;
 	}
 	/// Clears the half transfer interrupt flag
 	ALWAYS_INLINE static void ClearHalfTransferFlag()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		dma->IFCR |= kHtif;
 	}
 
 	/// Enables the transfer complete interrupt
 	ALWAYS_INLINE static void EnableTransferCompleteInt()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR |= DMA_CCR_TCIE;
 	}
 	/// Disables the transfer complete interrupt
 	ALWAYS_INLINE static void DisableTransferCompleteInt()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR &= ~DMA_CCR_TCIE;
 	}
 	/// Checks if the transfer complete interrupt flag was signaled
 	ALWAYS_INLINE static bool IsTransferComplete()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		return (dma->ISR & kTcif) != 0;
 	}
 	/// Clears the transfer complete interrupt flag
 	ALWAYS_INLINE static void ClearTransferCompleteFlag()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		dma->IFCR |= kTcif;
 	}
 
 	/// Disables all interrupts
 	ALWAYS_INLINE static void DisableAllInterrupts()
 	{
-		DMA_Channel_TypeDef *dma = GetDevice();
+		volatile DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR &= ~(DMA_CCR_TEIE | DMA_CCR_HTIE | DMA_CCR_TCIE);
 	}
 
 	/// Checks if global interrupt flag is signaled
 	ALWAYS_INLINE static bool IsGlobalInterrupt()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		return (dma->ISR & kGif) != 0;
 	}
 	/// Clears the global interrupt flag
 	ALWAYS_INLINE static void ClearGlobalInterruptFlag()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		dma->IFCR |= kGif;
 	}
 	/// Clears all interrupt flags for that channel
 	ALWAYS_INLINE static void ClearAllFlags()
 	{
-		DMA_TypeDef *dma = GetDeviceRoot();
+		volatile DMA_TypeDef *dma = GetDeviceRoot();
 		dma->IFCR |= kTeif | kHtif | kTcif | kGif;
 	}
 

@@ -5,12 +5,33 @@
 
 
 #include "pinremap.h"
+#include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
 
 
 namespace Bmt
 {
 namespace Gpio
 {
+
+/// Trait carrier for AFIO — list this in `PeripheralEnabler` whenever the
+/// firmware uses pin remap or any EXTI line. AFIO has no reset bit on F1.
+struct Afio
+{
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<Clocks::RccReg::kApb2En, RCC_APB2ENR_AFIOEN>
+	>;
+};
+
+/// Trait carrier for a single GPIO port's clock — list this for every port
+/// the firmware uses (PA, PB, ...). No reset bit (would wipe pad configuration).
+template <Port kPort>
+struct PortClock
+{
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<Clocks::RccReg::kApb2En,
+			(1u << (uint32_t(kPort) + RCC_APB2ENR_IOPAEN_Pos))>
+	>;
+};
 
 namespace Private
 {
@@ -625,6 +646,14 @@ public:
 	static constexpr Port kPort_ = kPort;
 	// The base address for the GPIO peripheral registers
 	static constexpr uint32_t kPortBase_ = (GPIOA_BASE + uint32_t(kPort_) * 0x400);
+	/// RCC enable trait — IOPxEN on APB2 (F1). AFIO is a separate item; list
+	/// `Bmt::Gpio::Afio` in your `PeripheralEnabler` if any pin uses remap/AF.
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<Clocks::RccReg::kApb2En,
+			(1u << (uint32_t(kPort_) + RCC_APB2ENR_IOPAEN_Pos))>
+		// GPIO port reset bits exist in APB2RSTR but pulsing them is rarely
+		// what you want at boot (resets all pad config). Omitted intentionally.
+	>;
 	// Combined constant value for CRL hardware register
 	static constexpr uint32_t kCRL_ =
 		Pin0::kCRL_ | Pin1::kCRL_
@@ -991,15 +1020,15 @@ public:
 	}
 
 protected:
-	// Enables clock on the RCC peripheral
+	/// DEPRECATED — clock-enable now lives in the platform's `PeripheralEnabler`.
+	/// Kept as a no-op so existing `AnyPortSetup::Init()` callers still link;
+	/// remove the call once the platform does it at boot.
+	[[deprecated("Add this port (and Bmt::Gpio::Afio if pins use AF) to platform PeripheralEnabler")]]
 	ALWAYS_INLINE constexpr static void EnableClock()
 	{
-		// Base address of the peripheral registers
-		// Don't turn alternate function clock on if not required
-		if (kAfMask_ == ~0UL)
-			RCC->APB2ENR |= (1 << (uint32_t(kPort_) + RCC_APB2ENR_IOPAEN_Pos));
-		else
-			RCC->APB2ENR |= (1 << (uint32_t(kPort_) + RCC_APB2ENR_IOPAEN_Pos)) | RCC_APB2ENR_AFIOEN;
+		Clocks::Enabler<AnyPinGroup>::Enable();
+		if (kAfMask_ != ~0UL)
+			RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 	}
 };
 

@@ -3,6 +3,7 @@
 #include "fifo.h"
 #include "mcu-system.h"
 #include "critical_section.h"
+#include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
 #include "irq.h"
 
 namespace Bmt
@@ -17,6 +18,29 @@ enum class Usart
 	, k4	///< USART 4 peripheral
 	, k5	///< USART 5 peripheral
 #endif
+};
+
+
+/// Trait carrier for one USART peripheral — list this in `PeripheralEnabler`
+/// (spares you the UsartTemplate<...> template-argument cascade).
+template <Usart kUsart>
+struct UsartHardware
+{
+private:
+	static constexpr uint32_t kBit_ =
+		(kUsart == Usart::k1) ? RCC_APB2ENR_USART1EN
+		: (kUsart == Usart::k2) ? RCC_APB1ENR_USART2EN
+		: (kUsart == Usart::k3) ? RCC_APB1ENR_USART3EN
+#ifdef USART4_BASE
+		: (kUsart == Usart::k4) ? RCC_APB1ENR_USART4EN
+		: (kUsart == Usart::k5) ? RCC_APB1ENR_USART5EN
+#endif
+		: 0;
+public:
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<(kUsart == Usart::k1) ? Clocks::RccReg::kApb2En  : Clocks::RccReg::kApb1En,  kBit_>,
+		Clocks::RccBit<(kUsart == Usart::k1) ? Clocks::RccReg::kApb2Rst : Clocks::RccReg::kApb1Rst, kBit_>
+	>;
 };
 
 /// Parity options
@@ -94,6 +118,14 @@ public:
 			: StopBits::k0_5
 		: stopbits;
 
+	/// RCC enable + reset trait. USART1 sits on APB2; USART2/3/4/5 on APB1.
+	/// On F1 the enable and reset bit values share the same bit position, so
+	/// `kRccUsartFlag_` doubles as both masks.
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<(kUsartInstance_ == Usart::k1) ? Clocks::RccReg::kApb2En  : Clocks::RccReg::kApb1En,  kRccUsartFlag_>,
+		Clocks::RccBit<(kUsartInstance_ == Usart::k1) ? Clocks::RccReg::kApb2Rst : Clocks::RccReg::kApb1Rst, kRccUsartFlag_>
+	>;
+
 	/// IRQ for that port
 	using UartIrq = IrqTemplate<kNvicUsartIrqn_>;
 	/// A scoped critical section class data type
@@ -111,27 +143,15 @@ public:
 		static_assert(kUsartInstance_ <= Usart::k3 || (kStopBits_ != StopBits::k0_5 && kStopBits_ != StopBits::k1_5, "Hardware does not support the selected combination"));
 		
 		volatile USART_TypeDef &uart = Io();
-		// INFO: Only one of these branches are generated, since kUsartInstance_ is constexpr
+		// Clock-enable + peripheral-reset are now done at boot via the platform's
+		// PeripheralEnabler. Setup() proper just configures the registers.
+		// (kept for legacy callers; remove once platform owns the boot sequence)
+		Clocks::Enabler<UsartTemplate>::Init();
+		// Baud rate depends on peripheral clock
 		if (kUsartInstance_ == Usart::k1)
-		{
-			// Enable device
-			RCC->APB2ENR |= kRccUsartFlag_;
-			// Reset device
-			RCC->APB2RSTR |= kRccUsartFlag_;
-			RCC->APB2RSTR &= ~kRccUsartFlag_;
-			// Baud rate depends on peripheral clock
 			uart.BRR = Clock::kApb2Clock_ / kBaud_;
-		}
 		else
-		{
-			// Enable device
-			RCC->APB1ENR |= kRccUsartFlag_;
-			// Reset device
-			RCC->APB1RSTR |= kRccUsartFlag_;
-			RCC->APB1RSTR &= ~kRccUsartFlag_;
-			// Baud rate depends on peripheral clock
 			uart.BRR = Clock::kApb1Clock_ / kBaud_;
-		}
 		// Parity selection
 		uint32_t tmp = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
 		if (kParity_ != Parity::kNone)
@@ -161,14 +181,13 @@ public:
 	/// Enable the peripheral by activating clock
 	ALWAYS_INLINE static void Enable()
 	{
-		(kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR) |= kRccUsartFlag_;
-		volatile uint32_t delay = (kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR) & kRccUsartFlag_;
+		Clocks::Enabler<UsartTemplate>::Enable();
 	}
 
 	/// Turns clock off, disabling the peripheral
 	ALWAYS_INLINE static void Disable()
 	{
-		(kUsartInstance_ == Usart::k1 ? RCC->APB2ENR : RCC->APB1ENR) &= ~kRccUsartFlag_;
+		Clocks::Enabler<UsartTemplate>::Disable();
 	}
 
 	/// Enables the TX interrupt

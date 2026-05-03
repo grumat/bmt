@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
+
 namespace Bmt
 {
 
@@ -490,11 +492,12 @@ public:
 		| Source16::kExtiCR4_Mask | Source17::kExtiCR4_Mask | Source18::kExtiCR4_Mask
 		;
 
-	/// Starts module clock and enables configuration
+	/// DEPRECATED — AFIO clock is now enabled at boot via the platform's
+	/// `PeripheralEnabler` (list `Bmt::Gpio::Afio` in it). Call `Enable()`.
+	[[deprecated("Add Bmt::Gpio::Afio to platform PeripheralEnabler, then call Enable()")]]
 	ALWAYS_INLINE static void Init()
 	{
-		RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-		volatile uint32_t delay = RCC->APB2ENR & RCC_APB2ENR_AFIOEN;
+		Clocks::Enabler<Bmt::Gpio::Afio>::Enable();
 		Enable();
 	}
 	/// Applies settings to an already initialized EXTI
@@ -529,7 +532,7 @@ public:
 	ALWAYS_INLINE static void Disable(const bool kDeInit = false)
 	{
 		if (kDeInit)
-			RCC->APB2ENR &= ~RCC_APB2ENR_AFIOEN;
+			Clocks::Enabler<Bmt::Gpio::Afio>::Disable();
 		// Apply constant on Rising trigger selection register
 		if (kExtiTriggerRising)
 			EXTI->RTSR &= ~kExtiTriggerRising;

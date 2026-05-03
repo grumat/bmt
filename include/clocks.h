@@ -5,6 +5,7 @@
 #include "gpio.h"
 
 #include "shared/AnyPllVco.h"
+#include "shared/RccEnabler.h"
 
 #if defined(STM32L4)
 #	include "l4xx/clocks.h"

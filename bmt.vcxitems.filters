@@ -233,5 +233,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\dummy.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\RccEnabler.h">
+      <Filter>include\shared</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

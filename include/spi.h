@@ -2,6 +2,7 @@
 
 #include "dma.h"
 #include "irq.h"
+#include "shared/RccEnabler.h"	// required for `Clocks::RccTrait`
 
 namespace Bmt
 {
@@ -18,6 +19,42 @@ enum class Iface
 #ifdef SPI3_BASE
 	, k3			///< SPI3 peripheral
 #endif
+};
+
+
+/// Trait carrier for one SPI peripheral — list this in `PeripheralEnabler`
+/// (spares you the SpiTemplate<...> template-argument cascade).
+template <Iface kSpi>
+struct Hardware
+{
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<(kSpi == Iface::k1) ? Clocks::RccReg::kApb2En : Clocks::RccReg::kApb1En,
+			(kSpi == Iface::k1) ? RCC_APB2ENR_SPI1EN
+#if defined(RCC_APB1ENR_SPI2EN)
+			: (kSpi == Iface::k2) ? RCC_APB1ENR_SPI2EN
+#elif defined(RCC_APB1ENR1_SPI2EN)
+			: (kSpi == Iface::k2) ? RCC_APB1ENR1_SPI2EN
+#endif
+#if defined(RCC_APB1ENR_SPI3EN)
+			: (kSpi == Iface::k3) ? RCC_APB1ENR_SPI3EN
+#elif defined(RCC_APB1ENR1_SPI3EN)
+			: (kSpi == Iface::k3) ? RCC_APB1ENR1_SPI3EN
+#endif
+			: 0>,
+		Clocks::RccBit<(kSpi == Iface::k1) ? Clocks::RccReg::kApb2Rst : Clocks::RccReg::kApb1Rst,
+			(kSpi == Iface::k1) ? RCC_APB2ENR_SPI1EN
+#if defined(RCC_APB1ENR_SPI2EN)
+			: (kSpi == Iface::k2) ? RCC_APB1ENR_SPI2EN
+#elif defined(RCC_APB1ENR1_SPI2EN)
+			: (kSpi == Iface::k2) ? RCC_APB1ENR1_SPI2EN
+#endif
+#if defined(RCC_APB1ENR_SPI3EN)
+			: (kSpi == Iface::k3) ? RCC_APB1ENR_SPI3EN
+#elif defined(RCC_APB1ENR1_SPI3EN)
+			: (kSpi == Iface::k3) ? RCC_APB1ENR1_SPI3EN
+#endif
+			: 0>
+	>;
 };
 
 
@@ -182,6 +219,37 @@ struct SpiTemplate
 		;
 	/// A data-type to control IRQ settings
 	using SpiIrq = IrqTemplate<kNvicSpiIrqn_>;
+	/// RCC enable + reset trait. SPI1 lives on APB2; SPI2/SPI3 on APB1.
+	/// Enable and reset bit positions match on F1 — `kSpi*EN` doubles as the mask.
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<(kSpi == Iface::k1) ? Clocks::RccReg::kApb2En : Clocks::RccReg::kApb1En,
+			(kSpi == Iface::k1) ? RCC_APB2ENR_SPI1EN
+#if defined(RCC_APB1ENR_SPI2EN)
+			: (kSpi == Iface::k2) ? RCC_APB1ENR_SPI2EN
+#elif defined(RCC_APB1ENR1_SPI2EN)
+			: (kSpi == Iface::k2) ? RCC_APB1ENR1_SPI2EN
+#endif
+#if defined(RCC_APB1ENR_SPI3EN)
+			: (kSpi == Iface::k3) ? RCC_APB1ENR_SPI3EN
+#elif defined(RCC_APB1ENR1_SPI3EN)
+			: (kSpi == Iface::k3) ? RCC_APB1ENR1_SPI3EN
+#endif
+			: 0>,
+		Clocks::RccBit<(kSpi == Iface::k1) ? Clocks::RccReg::kApb2Rst : Clocks::RccReg::kApb1Rst,
+			(kSpi == Iface::k1) ? RCC_APB2ENR_SPI1EN
+#if defined(RCC_APB1ENR_SPI2EN)
+			: (kSpi == Iface::k2) ? RCC_APB1ENR_SPI2EN
+#elif defined(RCC_APB1ENR1_SPI2EN)
+			: (kSpi == Iface::k2) ? RCC_APB1ENR1_SPI2EN
+#endif
+#if defined(RCC_APB1ENR_SPI3EN)
+			: (kSpi == Iface::k3) ? RCC_APB1ENR_SPI3EN
+#elif defined(RCC_APB1ENR1_SPI3EN)
+			: (kSpi == Iface::k3) ? RCC_APB1ENR1_SPI3EN
+#endif
+			: 0>
+	>;
+
 	/// Data type with DMA information for the TX channel
 	using DmaChInfoTx_ = typename DmaSpiInfo<kSpi>::Tx;
 	/// Data type with DMA information for the RX channel
@@ -196,105 +264,27 @@ struct SpiTemplate
 	/// Returns peripheral register structure
 	ALWAYS_INLINE static volatile SPI_TypeDef * GetDevice() { return (volatile SPI_TypeDef *)kSpiBase_; }
 
-	/// Initialize hardware configuration (including RCC)
+	/// DEPRECATED — SPI clock + reset are now done at boot via the platform's
+	/// `PeripheralEnabler`. Call `Setup()` directly. NVIC is still managed here
+	/// when `Props::kUseIrq` is set.
+	[[deprecated("Add this SPI to platform PeripheralEnabler, then call Setup()")]]
 	ALWAYS_INLINE static void Init()
 	{
-		// Invalid SPI device selected
 		static_assert(kSpiBase_ != 0, "An invalid SPI device was selected");
-
-		// Conditional compilation for specific peripheral
-		switch (kSpi)
+		Clocks::Enabler<SpiTemplate>::Init();
+		if ((kProps & Props::kUseIrq) == Props::kUseIrq)
 		{
-		case Iface::k1:
-			RCC->APB2RSTR |= RCC_APB2ENR_SPI1EN;
-			RCC->APB2RSTR &= ~RCC_APB2ENR_SPI1EN;
-			if ((kProps & Props::kUseIrq) == Props::kUseIrq)
-			{
-				SpiIrq::ClearPending();
-				SpiIrq::Enable();
-			}
-			break;
-#if defined(RCC_APB1ENR_SPI2EN)
-		case Iface::k2:
-			RCC->APB1RSTR |= RCC_APB1ENR_SPI2EN;
-			RCC->APB1RSTR &= ~RCC_APB1ENR_SPI2EN;
-			if ((kProps & Props::kUseIrq) == Props::kUseIrq)
-			{
-				SpiIrq::ClearPending();
-				SpiIrq::Enable();
-			}
-			break;
-#elif defined(RCC_APB1ENR1_SPI2EN)
-		case Iface::k2:
-			RCC->APB1RSTR1 |= RCC_APB1ENR1_SPI2EN;
-			RCC->APB1RSTR1 &= ~RCC_APB1ENR1_SPI2EN;
-			if ((kProps & Props::kUseIrq) == Props::kUseIrq)
-			{
-				SpiIrq::ClearPending();
-				SpiIrq::Enable();
-			}
-			break;
-#endif
-#if defined(RCC_APB1ENR_SPI3EN)
-		case Iface::k3:
-			RCC->APB1RSTR |= RCC_APB1ENR1_SPI3EN;
-			RCC->APB1RSTR &= ~RCC_APB1ENR1_SPI3EN;
-			if ((kProps & Props::kUseIrq) == Props::kUseIrq)
-			{
-				NVIC_EnableIRQ(SPI3_IRQn);
-				NVIC_ClearPendingIRQ(SPI3_IRQn);
-			}
-			break;
-#elif defined(RCC_APB1ENR1_SPI3EN)
-		case Iface::k3:
-			RCC->APB1RSTR1 |= RCC_APB1ENR1_SPI3EN;
-			RCC->APB1RSTR1 &= ~RCC_APB1ENR1_SPI3EN;
-			if ((kProps & Props::kUseIrq) == Props::kUseIrq)
-			{
-				NVIC_EnableIRQ(SPI3_IRQn);
-				NVIC_ClearPendingIRQ(SPI3_IRQn);
-			}
-			break;
-#endif
+			SpiIrq::ClearPending();
+			SpiIrq::Enable();
 		}
 		Setup();
 	}
 
-	/// Setup the SPI device
+	/// Setup the SPI device. Clock-enable is owned by the platform's
+	/// `PeripheralEnabler` — make sure this SpiTemplate is listed there.
 	ALWAYS_INLINE static void Setup()
 	{
-		// Enable clock
-		volatile SPI_TypeDef*spi = GetDevice();
-		volatile uint32_t delay;	// inserts delay instructions
-		switch (kSpi)
-		{
-		case Iface::k1:
-			RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-			delay = RCC->APB2ENR & RCC_APB2ENR_SPI1EN;
-			break;
-#if defined(RCC_APB1ENR_SPI2EN)
-		case Iface::k2:
-			RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
-			delay = RCC->APB1ENR & RCC_APB1ENR_SPI2EN;
-			break;
-#elif defined(RCC_APB1ENR1_SPI2EN)
-		case Iface::k2:
-			RCC->APB1ENR1 |= RCC_APB1ENR1_SPI2EN;
-			delay = RCC->APB1ENR1 & RCC_APB1ENR1_SPI2EN;
-			break;
-#endif
-#if defined(RCC_APB1ENR_SPI3EN)
-		case Iface::k3:
-			RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
-			delay = RCC->APB1ENR & RCC_APB1ENR_SPI3EN;
-			break;
-#elif defined (RCC_APB1ENR1_SPI3EN)
-		case Iface::k3:
-			RCC->APB1ENR1 |= RCC_APB1ENR1_SPI3EN;
-			delay = RCC->APB1ENR1 & RCC_APB1ENR1_SPI3EN;
-			break;
-#endif
-		}
+		volatile SPI_TypeDef *spi = GetDevice();
 		// Clock Polarity, phase, speed
 		uint32_t tmp = ((uint32_t(kPol) & 0x1) ? SPI_CR1_CPHA : 0)
 			| ((uint32_t(kPol) & 0x2) ? SPI_CR1_CPOL : 0)
@@ -468,30 +458,7 @@ struct SpiTemplate
 	ALWAYS_INLINE static void Stop()
 	{
 		Disable();
-		switch (kSpi)
-		{
-		case Iface::k1:
-			RCC->APB2ENR &= ~RCC_APB2ENR_SPI1EN;
-			break;
-#if defined(RCC_APB1ENR_SPI2EN)
-		case Iface::k2:
-			RCC->APB1ENR &= ~RCC_APB1ENR_SPI2EN;
-			break;
-#elif defined(RCC_APB1ENR1_SPI2EN)
-		case Iface::k2:
-			RCC->APB1ENR1 &= ~RCC_APB1ENR1_SPI2EN;
-			break;
-#endif
-#if defined(RCC_APB1ENR_SPI3EN)
-		case Iface::k3:
-			RCC->APB1ENR &= ~RCC_APB1ENR_SPI3EN;
-			break;
-#elif defined(RCC_APB1ENR1_SPI3EN)
-		case Iface::k3:
-			RCC->APB1ENR1 &= ~RCC_APB1ENR1_SPI3EN;
-			break;
-#endif
-		}
+		Clocks::Enabler<SpiTemplate>::Disable();
 	}
 
 	/// Activates all IRQs for device
@@ -634,7 +601,7 @@ struct SpiTemplate
 			}
 			if (spi->SR & SPI_SR_RXNE)
 			{
-				uint8_t tmp = spi->DR;
+				(void)spi->DR;
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "irq.h"
+#include "shared/RccEnabler.h"
 
 #if DMAMUX1_BASE
 	// Latest DMA specification: a flexible DMAMUX is present

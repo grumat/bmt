@@ -81,6 +81,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyMsi.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyPllVco.4xx.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\AnyPllVco.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\shared\RccEnabler.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\spi.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\stopwatch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\stream.h" />
