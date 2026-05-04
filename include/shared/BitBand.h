@@ -26,10 +26,12 @@ constexpr bool IsBitBandable(uintptr_t addr)
 
 
 /// Computes the alias word address for bit `bit` (0..31) of the word at `addr`.
-/// Works for both SRAM and peripheral regions in one expression.
+/// Works for both SRAM (0x20000000) and peripheral (0x40000000) regions:
+///   alias_base = (region_base | 0x02000000)   // 0x20… → 0x22…, 0x40… → 0x42…
+///   alias      = alias_base + (offset × 32) + (bit × 4)
 constexpr uintptr_t Alias(uintptr_t addr, unsigned bit)
 {
-	return ((addr & 0xF00FFFFFU) | 0x02000000U)
+	return ((addr & 0xF0000000U) | 0x02000000U)
 		+ ((addr & 0x000FFFFFU) << 5)
 		+ (bit << 2);
 }
