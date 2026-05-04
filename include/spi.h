@@ -3,6 +3,7 @@
 #include "dma.h"
 #include "irq.h"
 #include "shared/RccEnabler.h"	// required for `Clocks::RccTrait`
+#include "shared/BitBand.h"		// for EnableFast()
 
 namespace Bmt
 {
@@ -428,6 +429,15 @@ struct SpiTemplate
 	{
 		volatile SPI_TypeDef*spi = GetDevice();
 		spi->CR1 |= SPI_CR1_SPE;
+	}
+
+	/// Bit-band variant of Enable(): single-cycle store, no read-modify-write.
+	/// Use when deterministic timing matters (e.g. phase-locked startup with TIM1).
+	/// Available on Cortex-M3/M4 only — the static_assert in BitBand::Ref<> will
+	/// fail at compile time on cores without a peripheral bit-band region.
+	ALWAYS_INLINE static void EnableFast()
+	{
+		BitBand::Ref<kSpiBase_ + offsetof(SPI_TypeDef, CR1), SPI_CR1_SPE_Pos>::Set();
 	}
 
 	/// Disables the SPI device

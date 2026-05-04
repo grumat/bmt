@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
+#include "../shared/BitBand.h"		// for CounterResumeFast()
 
 namespace Bmt
 {
@@ -259,6 +260,9 @@ struct TimerDescriptor
 		static_assert(kTimerNum != kTimInvalid, "Invalid timer instance selected");
 		return (volatile TIM_TypeDef *)kTimerNum;
 	}
+
+	/// Peripheral base address as a constexpr literal (needed for bit-band aliasing).
+	static constexpr uintptr_t kBaseAddr_ = (uintptr_t)kTimerNum;
 
 	// APB2 timers (F1xx): TIM1, TIM8-TIM11, TIM15-TIM17; all others are APB1
 	static constexpr bool kIsApb2_ =
@@ -1065,6 +1069,15 @@ public:
 	{
 		volatile TIM_TypeDef* timer = TD::GetDevice();
 		timer->CR1 |= TIM_CR1_CEN;
+	}
+
+	/// Bit-band variant of CounterResume(): single-cycle store, no read-modify-write.
+	/// Use when deterministic timing matters (e.g. phase-locked startup with SPI).
+	/// Available on Cortex-M3/M4 only — the static_assert in BitBand::Ref<> will
+	/// fail at compile time on cores without a peripheral bit-band region.
+	ALWAYS_INLINE static void CounterResumeFast()
+	{
+		BitBand::Ref<TD::kBaseAddr_ + offsetof(TIM_TypeDef, CR1), TIM_CR1_CEN_Pos>::Set();
 	}
 
 	ALWAYS_INLINE static void SetupRepetition(const uint8_t rep)

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../shared/BitBand.h"		// for CounterResumeFast()
+
 namespace Bmt
 {
 namespace Timer
@@ -1050,6 +1052,15 @@ public:
 	{
 		volatile TIM_TypeDef* timer = BASE::GetDevice();
 		timer->CR1 |= TIM_CR1_CEN;
+	}
+
+	/// Bit-band variant of CounterResume(): single-cycle store, no read-modify-write.
+	/// Use when deterministic timing matters (e.g. phase-locked startup with SPI).
+	/// Available on Cortex-M3/M4 only — the static_assert in BitBand::Ref<> will
+	/// fail at compile time on cores without a peripheral bit-band region.
+	ALWAYS_INLINE static void CounterResumeFast()
+	{
+		BitBand::Ref<BASE::kTimerBase_ + offsetof(TIM_TypeDef, CR1), TIM_CR1_CEN_Pos>::Set();
 	}
 
 	ALWAYS_INLINE static void SetupRepetition(const uint8_t rep)

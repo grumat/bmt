@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../shared/BitBand.h"		// for EnableFast()
+
 namespace Bmt
 {
 namespace Dma
@@ -346,6 +348,15 @@ public:
 	{
 		DMA_Channel_TypeDef *dma = GetDevice();
 		dma->CCR |= DMA_CCR_EN;
+	}
+
+	/// Bit-band variant of Enable(): single-cycle store, no read-modify-write.
+	/// Use when deterministic timing matters (e.g. phase-locked startup with a timer).
+	/// Available on Cortex-M3/M4 only — the static_assert in BitBand::Ref<> will
+	/// fail at compile time on cores without a peripheral bit-band region.
+	ALWAYS_INLINE static void EnableFast()
+	{
+		BitBand::Ref<kChBase_ + offsetof(DMA_Channel_TypeDef, CCR), DMA_CCR_EN_Pos>::Set();
 	}
 
 	/// Disables the DMA channel
