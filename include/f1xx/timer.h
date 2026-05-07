@@ -1,5 +1,6 @@
 #pragma once
 
+#include <type_traits>
 #include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
 #include "../shared/BitBand.h"		// for CounterResumeFast()
 
@@ -264,6 +265,25 @@ struct TimerDescriptor
 	/// Peripheral base address as a constexpr literal (needed for bit-band aliasing).
 	static constexpr uintptr_t kBaseAddr_ = (uintptr_t)kTimerNum;
 
+	// Bit-band Refs for hot-path single-bit operations on TIMx registers.
+	// Each Set()/Clear() is a 1-cycle store that replaces a 3-cycle RMW
+	// (load / OR-or-AND / store) and never collides with concurrent ISR writes
+	// to *other* bits in the same register. Available on Cortex-M3/M4 cores
+	// with a peripheral bit-band region (BitBand::Ref<> static_asserts otherwise).
+	using BbCen_   = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, CR1),  TIM_CR1_CEN_Pos>;
+	using BbUg_    = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, EGR),  TIM_EGR_UG_Pos>;
+	using BbMsm_   = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, SMCR), TIM_SMCR_MSM_Pos>;
+	using BbTde_   = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_TDE_Pos>;
+	using BbUde_   = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_UDE_Pos>;
+	using BbCc1Ie_ = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_CC1IE_Pos>;
+	using BbCc2Ie_ = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_CC2IE_Pos>;
+	using BbCc3Ie_ = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_CC3IE_Pos>;
+	using BbCc4Ie_ = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_CC4IE_Pos>;
+	using BbCc1De_ = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_CC1DE_Pos>;
+	using BbCc2De_ = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_CC2DE_Pos>;
+	using BbCc3De_ = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_CC3DE_Pos>;
+	using BbCc4De_ = BitBand::Ref<kBaseAddr_ + offsetof(TIM_TypeDef, DIER), TIM_DIER_CC4DE_Pos>;
+
 	// APB2 timers (F1xx): TIM1, TIM8-TIM11, TIM15-TIM17; all others are APB1
 	static constexpr bool kIsApb2_ =
 		kTimerNum == kTim1 
@@ -482,6 +502,22 @@ public:
 	using TD = TimerDescriptor<kTimerNum_>;
 	using RccTrait_ = typename TD::RccTrait_;
 	static constexpr uintptr_t kTimerBase_ = (uintptr_t)kTimerNum;
+	// Re-export bit-band Refs from TimerDescriptor so member functions can use
+	// them as non-dependent names (BbCen_::Set() rather than typename-prefixed
+	// dependent access on every call site).
+	using BbCen_   = typename TD::BbCen_;
+	using BbUg_    = typename TD::BbUg_;
+	using BbMsm_   = typename TD::BbMsm_;
+	using BbTde_   = typename TD::BbTde_;
+	using BbUde_   = typename TD::BbUde_;
+	using BbCc1Ie_ = typename TD::BbCc1Ie_;
+	using BbCc2Ie_ = typename TD::BbCc2Ie_;
+	using BbCc3Ie_ = typename TD::BbCc3Ie_;
+	using BbCc4Ie_ = typename TD::BbCc4Ie_;
+	using BbCc1De_ = typename TD::BbCc1De_;
+	using BbCc2De_ = typename TD::BbCc2De_;
+	using BbCc3De_ = typename TD::BbCc3De_;
+	using BbCc4De_ = typename TD::BbCc4De_;
 	// 
 	static constexpr bool kIsValid_ = kTimerNum_ != kTimInvalid;
 	// Advanced timer
@@ -559,57 +595,33 @@ public:
 	ALWAYS_INLINE static void EnableTriggerDma()
 	{
 		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
-		{
-			volatile TIM_TypeDef* timer = TD::GetDevice();
-			timer->DIER |= TIM_DIER_TDE;
-		}
+			BbTde_::Set();
 		else
-		{
-			// MCU does not support this DMA channel
-			McuCore::Abort();
-		}
+			McuCore::Abort();		// MCU does not support this DMA channel
 	}
 
 	ALWAYS_INLINE static void DisableTriggerDma()
 	{
 		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)
-		{
-			volatile TIM_TypeDef* timer = TD::GetDevice();
-			timer->DIER &= ~TIM_DIER_TDE;
-		}
+			BbTde_::Clear();
 		else
-		{
-			// MCU does not support this DMA channel
-			McuCore::Abort();
-		}
+			McuCore::Abort();		// MCU does not support this DMA channel
 	}
 
 	ALWAYS_INLINE static void EnableUpdateDma()
 	{
 		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
-		{
-			volatile TIM_TypeDef* timer = TD::GetDevice();
-			timer->DIER |= TIM_DIER_UDE;
-		}
+			BbUde_::Set();
 		else
-		{
-			// MCU does not support this DMA channel
-			McuCore::Abort();
-		}
+			McuCore::Abort();		// MCU does not support this DMA channel
 	}
 
 	ALWAYS_INLINE static void DisableUpdateDma()
 	{
 		if (DmaInfo_::Update.kChan_ != Dma::Chan::kNone)
-		{
-			volatile TIM_TypeDef* timer = TD::GetDevice();
-			timer->DIER &= ~TIM_DIER_UDE;
-		}
+			BbUde_::Clear();
 		else
-		{
-			// MCU does not support this DMA channel
-			McuCore::Abort();
-		}
+			McuCore::Abort();		// MCU does not support this DMA channel
 	}
 };
 
@@ -903,7 +915,8 @@ public:
 		TD::GetDevice()->SMCR = kTS_ | kSMS_;
 		// Master timer trigger generation
 		volatile TIM_TypeDef* master = TDM::GetDevice();
-		master->SMCR |= TIM_SMCR_MSM;
+		using MasterBbMsm = typename TDM::BbMsm_;
+		MasterBbMsm::Set();
 		// Master timer mode
 		master->CR2 = (master->CR2 & ~TIM_CR2_MMS_Msk) | kMMS_;
 	}
@@ -934,6 +947,11 @@ public:
 	using BASE = AnyTimer_<TimeBase::kTimerNum_>;
 	using TD = TimerDescriptor<TimeBase::kTimerNum_>;
 	using TypCnt = typename BASE::TypCnt;
+	// Re-export bit-band Refs so member functions can use them without typename.
+	using BbCen_ = typename BASE::BbCen_;
+	using BbUg_  = typename BASE::BbUg_;
+	using BbTde_ = typename BASE::BbTde_;
+	using BbUde_ = typename BASE::BbUde_;
 	static constexpr uint32_t kPrescaler_ = TimeBase::kPrescaler_;
 	static constexpr uint32_t kFrequency_ = TimeBase::kFrequency_;
 	static constexpr Mode kTimerMode_ = kTimerMode;
@@ -1011,34 +1029,14 @@ public:
 	}
 
 	/// Enable "update" DMA
-	ALWAYS_INLINE static void EnableUpdateDma()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		timer->DIER |= TIM_DIER_UDE;
-		// Main Timer Interrupt settings controlled by timer device
-	}
+	ALWAYS_INLINE static void EnableUpdateDma()  { BbUde_::Set(); }
 	/// Disable "update" DMA
-	ALWAYS_INLINE static void DisableUpdateDma()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		timer->DIER &= ~TIM_DIER_UDE_Msk;
-		// Main Timer Interrupt settings controlled by timer device
-	}
+	ALWAYS_INLINE static void DisableUpdateDma() { BbUde_::Clear(); }
 
 	/// Enable "trigger" DMA
-	ALWAYS_INLINE static void EnableTriggerDma()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		timer->DIER |= TIM_DIER_TDE;
-		// Main Timer Interrupt settings controlled by timer device
-	}
+	ALWAYS_INLINE static void EnableTriggerDma()  { BbTde_::Set(); }
 	/// Disable "trigger" DMA
-	ALWAYS_INLINE static void DisableTriggerDma()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		timer->DIER &= ~TIM_DIER_TDE_Msk;
-		// Main Timer Interrupt settings controlled by timer device
-	}
+	ALWAYS_INLINE static void DisableTriggerDma() { BbTde_::Clear(); }
 
 	//! Clear ststus flags
 	ALWAYS_INLINE static void ClearStatus()
@@ -1054,31 +1052,18 @@ public:
 		timer->CNT = 0;
 		if (kBuffered_)
 			timer->EGR = TIM_EGR_UG;	// UG Event
-		timer->CR1 |= TIM_CR1_CEN;
+		BbCen_::Set();
 	}
 
 	//! Stops timer
-	ALWAYS_INLINE static void CounterStop()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		timer->CR1 &= ~TIM_CR1_CEN;
-	}
+	ALWAYS_INLINE static void CounterStop()  { BbCen_::Clear(); }
 
 	//! Reenable the timer without other change
-	ALWAYS_INLINE static void CounterResume()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		timer->CR1 |= TIM_CR1_CEN;
-	}
+	ALWAYS_INLINE static void CounterResume() { BbCen_::Set(); }
 
-	/// Bit-band variant of CounterResume(): single-cycle store, no read-modify-write.
-	/// Use when deterministic timing matters (e.g. phase-locked startup with SPI).
-	/// Available on Cortex-M3/M4 only — the static_assert in BitBand::Ref<> will
-	/// fail at compile time on cores without a peripheral bit-band region.
-	ALWAYS_INLINE static void CounterResumeFast()
-	{
-		BitBand::Ref<TD::kBaseAddr_ + offsetof(TIM_TypeDef, CR1), TIM_CR1_CEN_Pos>::Set();
-	}
+	/// Backwards-compatible alias for CounterResume() — both compile to a single
+	/// bit-band store now that the RMW path has been retired.
+	ALWAYS_INLINE static void CounterResumeFast() { BbCen_::Set(); }
 
 	ALWAYS_INLINE static void SetupRepetition(const uint8_t rep)
 	{
@@ -1090,7 +1075,7 @@ public:
 	ALWAYS_INLINE static void StartRepetition(const uint8_t rep)
 	{
 		SetupRepetition(rep);
-		CounterResume();
+		CounterResumeFast();
 	}
 
 	ALWAYS_INLINE static void SetupRepetition(const TypCnt cnt, const uint8_t rep)
@@ -1104,7 +1089,7 @@ public:
 	ALWAYS_INLINE static void StartRepetition(const TypCnt cnt, const uint8_t rep)
 	{
 		SetupRepetition(cnt, rep);
-		CounterResume();
+		CounterResumeFast();
 	}
 
 	ALWAYS_INLINE static void SetCounter(TypCnt n) { (TD::GetDevice())->CNT = n; }
@@ -1172,7 +1157,7 @@ public:
 	{
 		volatile TIM_TypeDef *timer = TD::GetDevice();
 		timer->EGR = TIM_EGR_UG;	// this clears CNT
-		timer->CR1 |= TIM_CR1_CEN;
+		BbCen_::Set();
 	}
 
 	//! Enable timer in single shot mode, specifying the total number of ticks
@@ -1181,7 +1166,7 @@ public:
 		volatile TIM_TypeDef *timer = TD::GetDevice();
 		timer->ARR = ticks;
 		timer->EGR = TIM_EGR_UG;	// this clears CNT
-		timer->CR1 |= TIM_CR1_CEN;
+		BbCen_::Set();
 	}
 
 	//! In single shot mode timer will turn off automatically
@@ -1215,6 +1200,7 @@ class AnyTimerDelay : public Any<TimeBase, Mode::kSingleShot>
 public:
 	using Base = Any<TimeBase, Mode::kSingleShot>;
 	using TD = TimerDescriptor<Base::kTimerBase_>;
+	using BbCen_ = typename Base::BbCen_;
 	// An rough overhead based on CPU speed for the us tick
 	static constexpr uint32_t kOverhead_ = (70 / (Base::kPrescaler_ + 1));
 
@@ -1238,7 +1224,7 @@ protected:
 		TIM_TypeDef* timer = (TIM_TypeDef*)Base::kTimerBase_;
 		timer->ARR = num;
 		timer->EGR = TIM_EGR_UG;
-		timer->CR1 |= TIM_CR1_CEN;
+		BbCen_::Set();
 		// CEN is cleared automatically in one-pulse mode
 		Base::WaitForAutoStop();
 	}
@@ -1255,6 +1241,16 @@ public:
 	using BASE = AnyTimer_<kTimerNum>;
 	using TD = TimerDescriptor<kTimerNum>;
 	using TypCnt = typename BASE::TypCnt;
+	// Re-export bit-band Refs so member functions can use them without typename.
+	using BbCen_   = typename BASE::BbCen_;
+	using BbCc1Ie_ = typename BASE::BbCc1Ie_;
+	using BbCc2Ie_ = typename BASE::BbCc2Ie_;
+	using BbCc3Ie_ = typename BASE::BbCc3Ie_;
+	using BbCc4Ie_ = typename BASE::BbCc4Ie_;
+	using BbCc1De_ = typename BASE::BbCc1De_;
+	using BbCc2De_ = typename BASE::BbCc2De_;
+	using BbCc3De_ = typename BASE::BbCc3De_;
+	using BbCc4De_ = typename BASE::BbCc4De_;
 	static constexpr Channel kChannelNum_ = kChannelNum;
 	// Data type with DMA information about this timer channel
 	using DmaChInfo_ = DmaChInfo <kTimerNum, kChannelNum>;	
@@ -1276,97 +1272,31 @@ public:
 		}
 	}
 
-	ALWAYS_INLINE static void EnableIrq()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		switch (BASE::kChannelNum_)
-		{
-		case Channel::k1:
-			timer->DIER |= TIM_DIER_CC1IE;
-			break;
-		case Channel::k2:
-			timer->DIER |= TIM_DIER_CC2IE;
-			break;
-		case Channel::k3:
-			timer->DIER |= TIM_DIER_CC3IE;
-			break;
-		case Channel::k4:
-			timer->DIER |= TIM_DIER_CC4IE;
-			break;
-		}
-		// Main Timer Interrupt settings controlled by timer device
-	}
+	// Compile-time pick of the per-channel DIER bit-band Ref. Resolves to a
+	// single 1-cycle store at the call site.
+	using BbCcIe_ =
+		typename std::conditional<kChannelNum_ == Channel::k1, BbCc1Ie_,
+		typename std::conditional<kChannelNum_ == Channel::k2, BbCc2Ie_,
+		typename std::conditional<kChannelNum_ == Channel::k3, BbCc3Ie_,
+		BbCc4Ie_>::type>::type>::type;
+	using BbCcDe_ =
+		typename std::conditional<kChannelNum_ == Channel::k1, BbCc1De_,
+		typename std::conditional<kChannelNum_ == Channel::k2, BbCc2De_,
+		typename std::conditional<kChannelNum_ == Channel::k3, BbCc3De_,
+		BbCc4De_>::type>::type>::type;
 
-	ALWAYS_INLINE static void DisableIrq()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		switch (kChannelNum_)
-		{
-		case Channel::k1:
-			timer->DIER &= ~TIM_DIER_CC1IE;
-			break;
-		case Channel::k2:
-			timer->DIER &= ~TIM_DIER_CC2IE;
-			break;
-		case Channel::k3:
-			timer->DIER &= ~TIM_DIER_CC3IE;
-			break;
-		case Channel::k4:
-			timer->DIER &= ~TIM_DIER_CC4IE;
-			break;
-		}
-		// Main Timer Interrupt settings controlled by timer device
-	}
+	ALWAYS_INLINE static void EnableIrq()  { BbCcIe_::Set(); }
+	ALWAYS_INLINE static void DisableIrq() { BbCcIe_::Clear(); }
 
 	ALWAYS_INLINE static void EnableDma()
 	{
 		if (DmaChInfo_::kChan_ != Dma::Chan::kNone)
-		{
-			volatile TIM_TypeDef* timer = TD::GetDevice();
-			switch (kChannelNum_)
-			{
-			case Channel::k1:
-				timer->DIER |= TIM_DIER_CC1DE;
-				break;
-			case Channel::k2:
-				timer->DIER |= TIM_DIER_CC2DE;
-				break;
-			case Channel::k3:
-				timer->DIER |= TIM_DIER_CC3DE;
-				break;
-			case Channel::k4:
-				timer->DIER |= TIM_DIER_CC4DE;
-				break;
-			}
-			// Main Timer Interrupt settings controlled by timer device
-		}
+			BbCcDe_::Set();
 		else
-		{
-			// MCU does not support this DMA channel
-			McuCore::Abort();
-		}
+			McuCore::Abort();		// MCU does not support this DMA channel
 	}
 
-	ALWAYS_INLINE static void DisableDma()
-	{
-		volatile TIM_TypeDef* timer = TD::GetDevice();
-		switch (kChannelNum_)
-		{
-		case Channel::k1:
-			timer->DIER &= ~TIM_DIER_CC1DE;
-			break;
-		case Channel::k2:
-			timer->DIER &= ~TIM_DIER_CC2DE;
-			break;
-		case Channel::k3:
-			timer->DIER &= ~TIM_DIER_CC3DE;
-			break;
-		case Channel::k4:
-			timer->DIER &= ~TIM_DIER_CC4DE;
-			break;
-		}
-		// Main Timer Interrupt settings controlled by timer device
-	}
+	ALWAYS_INLINE static void DisableDma() { BbCcDe_::Clear(); }
 
 	ALWAYS_INLINE static void SetCompare(uint16_t ccr)
 	{
@@ -1476,6 +1406,8 @@ class AnyInputChannel : public AnyChannel_<kTimerNum, kChannelNum>
 public:
 	using BASE = AnyChannel_<kTimerNum, kChannelNum>;
 	using TypCnt = typename BASE::TypCnt;
+	using BbCcIe_ = typename BASE::BbCcIe_;
+	using BbCcDe_ = typename BASE::BbCcDe_;
 	static constexpr int kNumber_ = (int)kChannelNum;		///< Timer channel number
 	static constexpr InputCapture kInputSrc_ = kInputSrc;	///< Selectable Input Source
 	static constexpr int kShift4_ = 4 * kNumber_;			///< Bit shift for CCER register
@@ -1549,89 +1481,10 @@ public:
 		timer->CCER &= ~(TIM_CCER_CC1E << kShift4_);
 	}
 
-	ALWAYS_INLINE static void EnableIrq()
-	{
-		volatile TIM_TypeDef* timer = BASE::GetDevice();
-		switch (kChannelNum)
-		{
-		case Channel::k1:
-			timer->DIER |= TIM_DIER_CC1IE;
-			break;
-		case Channel::k2:
-			timer->DIER |= TIM_DIER_CC2IE;
-			break;
-		case Channel::k3:
-			timer->DIER |= TIM_DIER_CC3IE;
-			break;
-		case Channel::k4:
-			timer->DIER |= TIM_DIER_CC4IE;
-			break;
-		}
-		// Main Timer Interrupt settings controlled by timer device
-	}
-
-	ALWAYS_INLINE static void DisableIrq()
-	{
-		volatile TIM_TypeDef* timer = BASE::GetDevice();
-		switch (kChannelNum)
-		{
-		case Channel::k1:
-			timer->DIER &= ~TIM_DIER_CC1IE;
-			break;
-		case Channel::k2:
-			timer->DIER &= ~TIM_DIER_CC2IE;
-			break;
-		case Channel::k3:
-			timer->DIER &= ~TIM_DIER_CC3IE;
-			break;
-		case Channel::k4:
-			timer->DIER &= ~TIM_DIER_CC4IE;
-			break;
-		}
-		// Main Timer Interrupt settings controlled by timer device
-	}
-
-	ALWAYS_INLINE static void EnableDma()
-	{
-		volatile TIM_TypeDef* timer = BASE::GetDevice();
-		switch (kChannelNum)
-		{
-		case Channel::k1:
-			timer->DIER |= TIM_DIER_CC1DE;
-			break;
-		case Channel::k2:
-			timer->DIER |= TIM_DIER_CC2DE;
-			break;
-		case Channel::k3:
-			timer->DIER |= TIM_DIER_CC3DE;
-			break;
-		case Channel::k4:
-			timer->DIER |= TIM_DIER_CC4DE;
-			break;
-		}
-		// Main Timer Interrupt settings controlled by timer device
-	}
-
-	ALWAYS_INLINE static void DisableDma()
-	{
-		volatile TIM_TypeDef* timer = BASE::GetDevice();
-		switch (kChannelNum)
-		{
-		case Channel::k1:
-			timer->DIER &= ~TIM_DIER_CC1DE;
-			break;
-		case Channel::k2:
-			timer->DIER &= ~TIM_DIER_CC2DE;
-			break;
-		case Channel::k3:
-			timer->DIER &= ~TIM_DIER_CC3DE;
-			break;
-		case Channel::k4:
-			timer->DIER &= ~TIM_DIER_CC4DE;
-			break;
-		}
-		// Main Timer Interrupt settings controlled by timer device
-	}
+	ALWAYS_INLINE static void EnableIrq()  { BbCcIe_::Set(); }
+	ALWAYS_INLINE static void DisableIrq() { BbCcIe_::Clear(); }
+	ALWAYS_INLINE static void EnableDma()  { BbCcDe_::Set(); }
+	ALWAYS_INLINE static void DisableDma() { BbCcDe_::Clear(); }
 
 	ALWAYS_INLINE static uint16_t GetCapture()
 	{
@@ -1671,6 +1524,7 @@ public:
 	using BASE = AnyChannel_<TimType::kTimerNum_, kChannelNum>;
 	using TD = TimerDescriptor<TimType::kTimerNum_>;
 	using TypCnt = typename BASE::TypCnt;
+	using BbCen_  = typename BASE::BbCen_;
 	static constexpr uint32_t kCcmr_Mask =
 		(BASE::kChannelNum_ == Channel::k1) ? TIM_CCMR1_CC1S_Msk | TIM_CCMR1_OC1FE_Msk | TIM_CCMR1_OC1PE_Msk | TIM_CCMR1_OC1M_Msk | TIM_CCMR1_OC1CE_Msk
 		: (BASE::kChannelNum_ == Channel::k2) ? TIM_CCMR1_CC2S_Msk | TIM_CCMR1_OC2FE_Msk | TIM_CCMR1_OC2PE_Msk | TIM_CCMR1_OC2M_Msk | TIM_CCMR1_OC2CE_Msk
@@ -1856,7 +1710,7 @@ public:
 		BASE::SetCompare(toggle1);
 		timer->EGR = TIM_EGR_UG;	// UG Event
 		// Enable
-		timer->CR1 |= TIM_CR1_CEN;
+		BbCen_::Set();
 		// Now prepare for the next period
 		timer->ARR = period2;
 		BASE::SetCompare(toggle2);
