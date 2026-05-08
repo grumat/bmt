@@ -265,6 +265,23 @@ enum class Output
 };
 ```
 
+> ⚠️ **Not-Not trap on CHN.** The names describe the **register polarity bit
+> the template writes** (CCxP for CH, CCxNP for CHN), *not* the resulting pin
+> level relative to OCREF. On a complementary channel, the dead-time generator
+> already inverts OCREF before the polarity stage, so the "non-inverting"
+> register setting yields an inverted pin. The effective pin behaviour is:
+>
+> | Output template parameter side  | `kEnabled`     | `kInverted`    |
+> |---------------------------------|----------------|----------------|
+> | Main output (CH, `kOut`)        | pin = OCREF    | pin = ¬OCREF   |
+> | Complementary output (CHN, `kOutN`) | pin = ¬OCREF | pin = OCREF |
+>
+> So if the *intent* is "pin tracks OCREF", use `kEnabled` on CH **or**
+> `kInverted` on CHN. If the intent is "pin is the complement of OCREF", use
+> `kInverted` on CH **or** `kEnabled` on CHN. Picking the wrong combination on
+> the CHN side is the easy mistake: it compiles, it looks symmetric, and the
+> waveform comes out inverted.
+
 # Timer Clock Source
 
 In general a timer can be clocked through a set of different sources. 

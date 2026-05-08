@@ -245,6 +245,38 @@ enum class OutMode
 	, kPWM2
 };
 
+/// Per-channel output enable + polarity selector for AnyOutputChannel.
+///
+/// IMPORTANT — these names describe the **CCxP / CCxNP register polarity bit**
+/// that the template writes, NOT the resulting pin level relative to OCREF.
+/// On a complementary-output channel (CHN), the dead-time generator already
+/// inverts OCREF before the polarity stage, so the "non-inverting" register
+/// setting yields an inverted pin. Read carefully:
+///
+/// Main output (CH, kOut parameter on AnyOutputChannel):
+///   kDisabled  → CCxE=0                      (pin Hi-Z, no drive)
+///   kEnabled   → CCxE=1, CCxP=0              (active-high polarity → pin = OCREF)
+///   kInverted  → CCxE=1, CCxP=1              (active-low  polarity → pin = NOT OCREF)
+///
+/// Complementary output (CHN, kOutN parameter on AnyOutputChannel):
+///   kDisabled  → CCxNE=0                     (pin Hi-Z, no drive)
+///   kEnabled   → CCxNE=1, CCxNP=0            (default polarity, but the dead-time
+///                                             generator pre-inverts OCREF on the
+///                                             CHN side → pin = NOT OCREF)
+///   kInverted  → CCxNE=1, CCxNP=1            (active-low cancels the dead-time
+///                                             inversion → pin = OCREF)
+///
+/// Effective pin behaviour summary:
+///
+///     CH  + kEnabled  → pin = OCREF
+///     CH  + kInverted → pin = NOT OCREF
+///     CHN + kEnabled  → pin = NOT OCREF        (← counter-intuitive: kEnabled inverts!)
+///     CHN + kInverted → pin = OCREF            (← counter-intuitive: kInverted does not)
+///
+/// So if the *intent* is "pin should track OCREF directly", use kEnabled on CH or
+/// kInverted on CHN. If the intent is "pin should be the complement of OCREF",
+/// use kInverted on CH or kEnabled on CHN. Picking the wrong combination on the
+/// CHN side is the classic Not-Not trap — easy to write, hard to spot in review.
 enum class Output
 {
 	kDisabled

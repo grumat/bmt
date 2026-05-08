@@ -196,6 +196,16 @@ enum class OutMode
 	, kPWM2
 };
 
+/// Per-channel output enable + polarity selector for AnyOutputChannel.
+/// See the detailed Not-Not warning in f1xx/timer.h's Output enum doc — the
+/// register-bit semantics on L4 are the same as F1, and so is the trap on the
+/// CHN side where "kEnabled" yields an inverted pin and "kInverted" yields a
+/// non-inverted one (the dead-time generator pre-inverts OCREF on CHN).
+///
+///     CH  + kEnabled  → pin = OCREF
+///     CH  + kInverted → pin = NOT OCREF
+///     CHN + kEnabled  → pin = NOT OCREF        (← counter-intuitive)
+///     CHN + kInverted → pin = OCREF            (← counter-intuitive)
 enum class Output
 {
 	kDisabled
