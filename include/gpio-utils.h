@@ -114,30 +114,24 @@ public:
 };
 
 
-// Combine two port configuration for setup
-template <
-	typename P0
-	, typename P1
->
+// Combine two or more port configurations for setup
+template <typename... Ports>
 struct PortMerge
 {
 	// Apply configuration and set default output levels
 	ALWAYS_INLINE constexpr static void Setup()
 	{
-		P0::Setup();
-		P1::Setup();
+		(Ports::Setup(), ...);
 	}
 	// Apply configuration and keep current output levels
 	ALWAYS_INLINE constexpr static void SetupPinMode()
 	{
-		P0::SetupPinMode();
-		P1::SetupPinMode();
+		(Ports::SetupPinMode(), ...);
 	}
 	// Enter tri-state (not recomended: it is recomended to define a set with the desired "inactive" state)
 	ALWAYS_INLINE constexpr static void TriState()
 	{
-		P0::TriState();
-		P1::TriState();
+		(Ports::TriState(), ...);
 	}
 };
 
