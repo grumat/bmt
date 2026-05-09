@@ -1532,13 +1532,6 @@ public:
 };
 
 
-class UnusedChannel
-{
-public:
-	static constexpr int kNumber_ = -1;
-};
-
-
 /// Configures a timer channel as compare mode (output)
 template <
 	typename TimType
