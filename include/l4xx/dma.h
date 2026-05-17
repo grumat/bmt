@@ -174,6 +174,9 @@ public:
 	/// Returns root device structure
 	ALWAYS_INLINE static DMA_Request_TypeDef *GetDeviceSel() { return (DMA_Request_TypeDef *)kChSelBase_; }
 
+	/// DEPRECATED — add this DMA channel to platform PeripheralEnabler,
+	/// then call `Setup()` directly.
+	[[deprecated("Add this DMA channel to platform PeripheralEnabler, then call Setup()")]]
 	/// Enables the DMA controller and performs initialization
 	ALWAYS_INLINE static void Init()
 	{

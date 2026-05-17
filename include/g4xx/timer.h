@@ -754,6 +754,10 @@ public:
 	static constexpr bool kBuffered_ = kBuffered;
 	static constexpr bool kStrictUpdate_ = kStrictUpdate;
 
+	/// DEPRECATED — clock enable + peripheral reset are now done once at boot
+	/// via the platform's `PeripheralEnabler` (see `target.*/platform.h`). Call
+	/// `Setup()` directly. Kept temporarily so legacy callers still compile.
+	[[deprecated("Use platform PeripheralEnabler at boot, then call Setup() directly")]]
 	ALWAYS_INLINE static void Init()
 	{
 		// Enable clock
@@ -1520,6 +1524,9 @@ public:
 		: (BASE::kChannelNum_ == Channel::k4) ? TIM_CCER_CC4E
 		: 0;
 
+	/// DEPRECATED — calls TimType::Init() which enables clocks; use
+	/// `Setup()` directly after the platform's `PeripheralEnabler`.
+	[[deprecated("Use platform PeripheralEnabler at boot, then call Setup() directly")]]
 	ALWAYS_INLINE static void Init()
 	{
 		TimType::Init();
