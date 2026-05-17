@@ -1,10 +1,24 @@
 #pragma once
 
+#include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
+
 
 namespace Bmt
 {
 namespace Gpio
 {
+
+/// Trait carrier for a single GPIO port's clock — list this for every port
+/// the firmware uses (PA, PB, ...). No reset bit (would wipe pad configuration).
+template <Port kPort>
+struct PortClock
+{
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<Clocks::RccReg::kAhb2En,
+			(1u << (uint32_t(kPort) + RCC_AHB2ENR_GPIOAEN_Pos))>
+	>;
+};
+
 
 namespace Private
 {

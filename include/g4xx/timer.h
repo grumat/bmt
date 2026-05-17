@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include "../shared/BitBand.h"		// for CounterResumeFast()
+#include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
 
 namespace Bmt
 {
@@ -215,6 +216,108 @@ enum class Output
 
 
 #include "tim_dma_id.inl"
+
+
+/// Compile-time RCC enable/reset-bit descriptor for a timer unit.
+/// Feed this to `Clocks::Enabler` instead of listing raw CMSIS bits.
+template <Unit kTimerNum>
+struct TimerDescriptor
+{
+	static constexpr bool kIsApb2_ =
+#if defined(TIM1_BASE)
+		kTimerNum == kTim1 ||
+#endif
+#if defined(TIM8_BASE)
+		kTimerNum == kTim8 ||
+#endif
+#if defined(TIM15_BASE)
+		kTimerNum == kTim15 ||
+#endif
+#if defined(TIM16_BASE)
+		kTimerNum == kTim16 ||
+#endif
+#if defined(TIM17_BASE)
+		kTimerNum == kTim17 ||
+#endif
+		false;
+
+	static constexpr uint32_t kEnBit =
+#if defined(TIM1_BASE)
+		(kTimerNum == kTim1)  ? RCC_APB2ENR_TIM1EN :
+#endif
+#if defined(TIM2_BASE)
+		(kTimerNum == kTim2)  ? RCC_APB1ENR1_TIM2EN :
+#endif
+#if defined(TIM3_BASE)
+		(kTimerNum == kTim3)  ? RCC_APB1ENR1_TIM3EN :
+#endif
+#if defined(TIM4_BASE)
+		(kTimerNum == kTim4)  ? RCC_APB1ENR1_TIM4EN :
+#endif
+#if defined(TIM5_BASE)
+		(kTimerNum == kTim5)  ? RCC_APB1ENR1_TIM5EN :
+#endif
+#if defined(TIM6_BASE)
+		(kTimerNum == kTim6)  ? RCC_APB1ENR1_TIM6EN :
+#endif
+#if defined(TIM7_BASE)
+		(kTimerNum == kTim7)  ? RCC_APB1ENR1_TIM7EN :
+#endif
+#if defined(TIM8_BASE)
+		(kTimerNum == kTim8)  ? RCC_APB2ENR_TIM8EN :
+#endif
+#if defined(TIM15_BASE)
+		(kTimerNum == kTim15) ? RCC_APB2ENR_TIM15EN :
+#endif
+#if defined(TIM16_BASE)
+		(kTimerNum == kTim16) ? RCC_APB2ENR_TIM16EN :
+#endif
+#if defined(TIM17_BASE)
+		(kTimerNum == kTim17) ? RCC_APB2ENR_TIM17EN :
+#endif
+		0;
+
+	static constexpr uint32_t kRstBit =
+#if defined(TIM1_BASE)
+		(kTimerNum == kTim1)  ? RCC_APB2RSTR_TIM1RST :
+#endif
+#if defined(TIM2_BASE)
+		(kTimerNum == kTim2)  ? RCC_APB1RSTR1_TIM2RST :
+#endif
+#if defined(TIM3_BASE)
+		(kTimerNum == kTim3)  ? RCC_APB1RSTR1_TIM3RST :
+#endif
+#if defined(TIM4_BASE)
+		(kTimerNum == kTim4)  ? RCC_APB1RSTR1_TIM4RST :
+#endif
+#if defined(TIM5_BASE)
+		(kTimerNum == kTim5)  ? RCC_APB1RSTR1_TIM5RST :
+#endif
+#if defined(TIM6_BASE)
+		(kTimerNum == kTim6)  ? RCC_APB1RSTR1_TIM6RST :
+#endif
+#if defined(TIM7_BASE)
+		(kTimerNum == kTim7)  ? RCC_APB1RSTR1_TIM7RST :
+#endif
+#if defined(TIM8_BASE)
+		(kTimerNum == kTim8)  ? RCC_APB2RSTR_TIM8RST :
+#endif
+#if defined(TIM15_BASE)
+		(kTimerNum == kTim15) ? RCC_APB2RSTR_TIM15RST :
+#endif
+#if defined(TIM16_BASE)
+		(kTimerNum == kTim16) ? RCC_APB2RSTR_TIM16RST :
+#endif
+#if defined(TIM17_BASE)
+		(kTimerNum == kTim17) ? RCC_APB2RSTR_TIM17RST :
+#endif
+		0;
+
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<kIsApb2_ ? Clocks::RccReg::kApb2En  : Clocks::RccReg::kApb1En,  kEnBit>,
+		Clocks::RccBit<kIsApb2_ ? Clocks::RccReg::kApb2Rst : Clocks::RccReg::kApb1Rst, kRstBit>
+	>;
+};
 
 
 template <
@@ -1393,6 +1496,8 @@ class AnyInputChannel : public AnyChannel_<kTimerNum, kChannelNum>
 public:
 	using BASE = AnyChannel_<kTimerNum, kChannelNum>;
 	using TypCnt = typename BASE::TypCnt;
+	using BbCcIe_ = typename BASE::BbCcIe_;
+	using BbCcDe_ = typename BASE::BbCcDe_;
 	static constexpr int kNumber_ = (int)kChannelNum;		///< Timer channel number
 	static constexpr InputCapture kInputSrc_ = kInputSrc;	///< Selectable Input Source
 	static constexpr int kShift4_ = 4 * kNumber_;			///< Bit shift for CCER register

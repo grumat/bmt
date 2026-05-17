@@ -1,11 +1,38 @@
 #pragma once
 
 #include "../shared/BitBand.h"		// for EnableFast()
+#include "../shared/RccEnabler.h"	// required for `Clocks::RccTrait`
 
 namespace Bmt
 {
 namespace Dma
 {
+
+/// Trait carrier for a whole DMA controller — list this in `PeripheralEnabler`
+/// once per controller used (DMA1, DMA2). Cheaper than listing every channel.
+template <Itf kItf>
+struct Controller
+{
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<Clocks::RccReg::kAhb1En,
+#if defined(RCC_AHB1ENR_DMA1EN)
+			(kItf == Itf::k1) ? RCC_AHB1ENR_DMA1EN
+#	if defined(RCC_AHB1ENR_DMA2EN) && defined(DMA2_BASE)
+			: (kItf == Itf::k2) ? RCC_AHB1ENR_DMA2EN
+#	endif
+			: 0
+#elif defined(RCC_AHBENR_DMA1EN)
+			(kItf == Itf::k1) ? RCC_AHBENR_DMA1EN
+#	if defined(RCC_AHBENR_DMA2EN) && defined(DMA2_BASE)
+			: (kItf == Itf::k2) ? RCC_AHBENR_DMA2EN
+#	endif
+			: 0
+#else
+			0
+#endif
+		>
+	>;
+};
 
 /// Template class that describes a DMA configuration
 template <
