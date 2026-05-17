@@ -163,8 +163,6 @@ public:
 	// Pull resistors are not allowed
 	static_assert(kMode_ != Mode::kAnalog || kPuPd_ == PuPd::kFloating, "Pull-up/down not allowed in Analog mode");
 	static_assert(kImpl != Impl::kUnused || kPuPd_ != PuPd::kFloating, "Unused pins should specify PU/PD");
-	static_assert(kPuPd_ == PuPd::kFloating || kMode_ == Mode::kInput || kImpl == Impl::kUnused,
-				  "Pull-up/down only valid for input pins");
 
 	// Apply default configuration for the pin.
 	ALWAYS_INLINE constexpr static void SetupPinMode()

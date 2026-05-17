@@ -1231,7 +1231,7 @@ class AnyTimerDelay : public Any<TimeBase, Mode::kSingleShot>
 {
 public:
 	using Base = Any<TimeBase, Mode::kSingleShot>;
-	using TD = TimerDescriptor<Base::kTimerBase_>;
+	using TD = TimerDescriptor<(Unit)Base::kTimerBase_>;
 	using BbCen_ = typename Base::BbCen_;
 	// An rough overhead based on CPU speed for the us tick
 	static constexpr uint32_t kOverhead_ = (70 / (Base::kPrescaler_ + 1));

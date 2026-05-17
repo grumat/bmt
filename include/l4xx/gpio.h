@@ -1049,6 +1049,7 @@ public:
 		, "PIN15: Inconsistent port number or pin number collision");
 
 	//! Apply state of pin group merging with previous GPI contents
+	constexpr static void Setup() { Enable(); }
 	constexpr static void Enable()
 	{
 		// Base address of the peripheral registers

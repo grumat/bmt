@@ -356,12 +356,12 @@ private:
 	}
 	static uint8_t ReadAddress() NO_INLINE
 	{
-		InPins_::Enable();
+		InPins_::Setup();
 		Mode_::Write(Ctrl::kRdAddress);
 		uint8_t v = ReadAddress4() << 4;
 		v |= (ReadAddress4() & 0x0f);
 		Mode_::Write(Ctrl::kWrInstruction);
-		OutPin_::Enable();
+		OutPin_::Setup();
 		return v;
 	}
 	ALWAYS_INLINE static constexpr void WriteData4(const uint8_t v)
@@ -391,12 +391,12 @@ private:
 	}
 	static uint8_t ReadData() NO_INLINE
 	{
-		InPins_::Enable();
-		Mode_::Write(Ctrl::kRdData);
-		uint8_t v = ReadData4() << 4;
-		v |= (ReadData4() & 0x0f);
+		InPins_::Setup();
+		Mode_::Write(Ctrl::kRdAddress);
+		uint8_t v = ReadAddress4() << 4;
+		v |= (ReadAddress4() & 0x0f);
 		Mode_::Write(Ctrl::kWrInstruction);
-		OutPin_::Enable();
+		OutPin_::Setup();
 		return v;
 	}
 
