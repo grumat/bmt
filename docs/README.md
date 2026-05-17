@@ -2,13 +2,13 @@
 
 ## Overview
 
-Bare Metal Templates (BMT) is a C++17 template library for STM32 microcontroller development that leverages `constexpr` and template metaprogramming to generate optimal bare-metal code at compile time.
+Bare Metal Templates (BMT) is a C++20 template library for STM32 microcontroller development that leverages `constexpr` and template metaprogramming to generate optimal bare-metal code at compile time.
 
 ## Key Features
 
 - **Zero-overhead abstractions**: All configurations resolved at compile time
 - **Hardware-aware templates**: Family-specific optimizations for STM32F1xx, L4xx, G4xx
-- **Modern C++17**: Extensive use of `constexpr`, templates, and type safety
+- **Modern C++20**: Extensive use of `constexpr`, templates, and type safety
 - **Interrupt-safe**: Built-in critical section management
 - **Resource efficient**: Minimal runtime overhead, small code footprint
 
@@ -105,7 +105,7 @@ The BMT library powers the **glossy-msp430** project - an open-source MSP430 JTA
 
 ### Common Issues
 
-1. **Compilation errors**: Ensure C++17 mode is enabled (`-std=c++17`)
+1. **Compilation errors**: Ensure C++20 mode is enabled (`-std=c++20`)
 2. **Linker errors**: Check BSP paths in CMake configuration
 3. **Runtime issues**: Verify clock configuration matches hardware
 
