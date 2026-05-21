@@ -11,14 +11,14 @@ import sys
 import re
 import csv
 
-if 0:
-	FILE = "stm32g474_af.csv"
-	OUTF = "pinremap.g4.h"
-	OUTF2 = "gpio-types.g4.h"
-else:
-	FILE = "stm32l496_af.csv"
-	OUTF = "pinremap.l4.h"
-	OUTF2 = "gpio-types.l4.h"
+# Targets to (re)generate. Each entry drives one pass: (AF csv, pinremap out, gpio-types out).
+# FILE/OUTF/OUTF2 are assigned as module globals by the loop at the bottom; load() and
+# create_*() read them as globals.
+TARGETS = \
+[
+	("stm32g474_af.csv", "pinremap.g4.h", "gpio-types.g4.h"),
+	("stm32l496_af.csv", "pinremap.l4.h", "gpio-types.l4.h"),
+]
 
 
 DATABASE = \
@@ -264,17 +264,45 @@ class AfPinName:
 		return s1 + ";"
 	def get_type_lines(self):
 		lines = []
-		s1 = "/// A default configuration to map {0} on {1}{2} pin".format(self.dev.replace('_', ' ', 1), self.port, self.pin)
-		lines.append(s1)
+		dev_h = self.dev.replace('_', ' ', 1)
 		if self.is_analog():
+			lines.append("/// A default configuration to map {0} on {1}{2} pin".format(dev_h, self.port, self.pin))
 			type_name = "Analog_{}{}".format(self.port, self.pin)
 			s1 = "using {} = AnyAnalog<Port::{}, {}>".format(type_name, self.port, self.pin)
-			s1 = align_to_col(s1, 36)
+			lines.append(align_to_col(s1, 36) + ";")
 		elif 'od' in self.impl:
+			# Open-drain (I2C/I2S) pins stay a single alias, matching f1xx.
+			lines.append("/// A default configuration to map {0} on {1}{2} pin".format(dev_h, self.port, self.pin))
 			type_name = self.get_af_name()
 			s1 = "using {} = AnyAltOutOD<Port::{}, {}, {}>".format(type_name, self.port, self.pin, type_name)
-			s1 = align_to_col(s1, 60)
+			lines.append(align_to_col(s1, 60) + ";")
+		elif re.match(r'^TIM\d+_CH\d+N$', self.dev):
+			# Complementary timer output (CHN). Output-only, so mirror f1xx: a parameterized
+			# base (AnyAltOut) plus a default _OUT alias. No _IN — a CHN cannot be an input.
+			type_name = "{0}_{1}{2}".format(self.dev, self.port, self.pin)
+			af = self.get_af_name()
+			lines.append("/// A generic configuration to map {0} on {1}{2} pin".format(dev_h, self.port, self.pin))
+			lines.append("template<const Mode kMode, const Speed kSpeed, const PuPd kPuPd = PuPd::kFloating, const Level kLevel = Level::kLow>")
+			lines.append("struct {0} : AnyAltOut<Port::{1}, {2}, {3}, kSpeed, kLevel, kPuPd, kMode> {{}};".format(type_name, self.port, self.pin, af))
+			lines.append("/// A default configuration to map {0} on {1}{2} pin (output)".format(dev_h, self.port, self.pin))
+			lines.append(align_to_col("using {0}_OUT = {0}<Mode::kAlternate, Speed::kMedium>".format(type_name), 60) + ";")
+		elif re.match(r'^TIM\d+_CH\d+$', self.dev):
+			# Timer capture/compare channel (CH). Can be output (PWM/compare) or input
+			# (input capture), so mirror f1xx: AnyPin base template + _OUT + _IN aliases.
+			type_name = "{0}_{1}{2}".format(self.dev, self.port, self.pin)
+			af = self.get_af_name()
+			lines.append("/// A generic configuration to map {0} on {1}{2} pin".format(dev_h, self.port, self.pin))
+			lines.append("template<const Mode kMode, const Speed kSpeed, const PuPd kPuPd = PuPd::kFloating, const Level kLevel = Level::kLow>")
+			lines.append("struct {0} : AnyPin<Port::{1}, {2}, kMode, kSpeed, kPuPd, kLevel, {3}> {{}};".format(type_name, self.port, self.pin, af))
+			lines.append("/// A default configuration to map {0} on {1}{2} pin (output)".format(dev_h, self.port, self.pin))
+			lines.append(align_to_col("using {0}_OUT = {0}<Mode::kAlternate, Speed::kMedium>".format(type_name), 60) + ";")
+			lines.append("/// A default configuration to map {0} on {1}{2} pin (input)".format(dev_h, self.port, self.pin))
+			lines.append(align_to_col("using {0}_IN = {0}<Mode::kInput, Speed::kInput>".format(type_name), 60) + ";")
 		else:
+			# All other alternate-function pins (USART/SPI/DAC/timer ETR/BKIN/etc.): one
+			# concrete output alias, exactly as before. These are referenced by their bare
+			# name throughout the platform.h files, so they must NOT become templates.
+			lines.append("/// A default configuration to map {0} on {1}{2} pin".format(dev_h, self.port, self.pin))
 			type_name = "{0}_{1}{2}".format(self.dev, self.port, self.pin)
 			s1 = "using {0} = AnyAltOut<Port::{1}, {2}, {3}".format(type_name, self.port, self.pin, self.get_af_name())
 			s1b = ""
@@ -300,9 +328,7 @@ class AfPinName:
 			if (not s1c) and s1d:
 				s1c = ", Level::kLow"
 			s1 += s1b + s1c + s1d + '>'
-			s1 = align_to_col(s1, 60)
-		s2 = ";"
-		lines.append(s1+s2)
+			lines.append(align_to_col(s1, 60) + ";")
 		return lines
 
 def validate_header(row):
@@ -525,6 +551,9 @@ def create_types(all_pins):
 			lines = afp.get_type_lines()
 			for line in lines:
 				fh.write(line + '\n')
+			# Separate multi-line trios for readability (f1xx style)
+			if len(lines) > 2:
+				fh.write("\n")
 		portm.next_ifdef(None)
 		portm.do_end_block(fh)
 		ifdefm.next_ifdef(None)
@@ -535,9 +564,10 @@ def create_types(all_pins):
 		fh.write("}\t// namespace Bmt\n")
 		fh.write("\n")
 
-all_pins = load()
-all_pins.sort()
-
-create_pinremap(all_pins)
-create_types(all_pins)
+for FILE, OUTF, OUTF2 in TARGETS:
+	all_pins = load()
+	all_pins.sort()
+	create_pinremap(all_pins)
+	create_types(all_pins)
+	print("Generated {} and {} from {}".format(OUTF, OUTF2, FILE))
 
