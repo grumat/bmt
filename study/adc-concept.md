@@ -324,4 +324,167 @@ specialisations and `Unit` enumerators are available.
 | `ADC1->DR` | same register | none |
 | GPIO `ADC12_INx` aliases | same naming in `l4xx/gpio-types.h` | none |
 | `AnyConfig` with `kScan` | no-op on L4, compiles unchanged | optional cleanup |
-| `static_assert(N <= 17)` | `N <= 18` on L4 | auto (per-family header) |
+ | `static_assert(N <= 17)` | `N <= 18` on L4 | auto (per-family header) |
+
+
+---
+
+# G4xx Port — Delta from L4xx
+
+## File
+
+```
+bmt/include/g4xx/adc.h   — parallel to l4xx/adc.h, same template types
+```
+
+## Register layout — near-identical to L4xx
+
+| Offset | Register | Same as L4? |
+|--------|----------|-------------|
+| 0x00 | `ISR` | yes — `ADRDY`@0, `EOC`@2 |
+| 0x04 | `IER` | yes |
+| 0x08 | `CR` | yes — `ADEN`@0, `ADDIS`@1, `ADSTART`@2, `ADVREGEN`@28, `ADCAL`@31. **Adds** `ADCALDIF`@30 |
+| 0x0C | `CFGR` | yes — `DMAEN`@0, `RES[1:0]`@3, `EXTSEL[4:0]`@5, `EXTEN[1:0]`@10, `OVRMOD`@12, `CONT`@13, `AUTDLY`@14, `ALIGN`@15 |
+| 0x10 | `CFGR2` | yes — `ROVSE`@0, `OVSR[2:0]`@2, `OVSS[3:0]`@8 |
+| 0x14 | `SMPR1` | yes — ch 0–9 |
+| 0x18 | `SMPR2` | yes — ch 10–18 |
+| 0x20–0x28 | `TR1`/`TR2`/`TR3` | yes |
+| 0x30–0x3C | `SQR1`/`SQR2`/`SQR3`/`SQR4` | yes — 6-bit stride, L@bits 0-3 |
+| 0x40 | `DR` | yes |
+| 0xB0 | `DIFSEL` | G4 addition |
+| 0xB4 | `CALFACT` | yes (same as L4) |
+| 0xC0 | `GCOMP` | G4 addition (gain compensation) |
+
+**Conclusion:** Every register and bit position that L4 uses for basic single-ended conversion is identical on G4. The `AnySequence`, `AnyConfig`, and `AnySetup` templates can be copied from L4 with only minor edits.
+
+## SQR packing — identical to L4xx
+
+Same 4-register layout, same 6-bit stride, same L field at SQR1 bits 0-3.
+
+The `SqField_` template from `l4xx/adc.h` works unchanged.
+
+## SMPR — same swap as L4xx
+
+`SMPR1` = ch 0–9, `SMPR2` = ch 10–18 (opposite of F1).  Same as L4.
+
+## RCC — shared bit on AHB2 (but different mask name)
+
+| Property | G4xx | L4xx |
+|----------|------|------|
+| Bus | AHB2 | AHB2 |
+| Enable | `RCC_AHB2ENR_ADC12EN` (bit 13) | `RCC_AHB2ENR_ADCEN` (bit 13) |
+| Reset | `RCC_AHB2RSTR_ADC12RST` (bit 13) | `RCC_AHB2RSTR_ADCRST` (bit 13) |
+
+Same bit position (13), same bus register (`AHB2ENR` / `AHB2RSTR`), different
+symbol name.  The `Clocks::RccReg::kAhb2En` enum used in `RccTrait_` is the
+same.
+
+**Action:** Change `kEnBit` / `kRstBit` values in `Peripheral<U>` from
+`RCC_AHB2ENR_ADCEN` → `RCC_AHB2ENR_ADC12EN` and `RCC_AHB2RSTR_ADCRST` →
+`RCC_AHB2RSTR_ADC12RST`.
+
+## Common register block
+
+| Property | G4xx | L4xx |
+|----------|------|------|
+| Name | `ADC12_COMMON_BASE` | `ADC1_COMMON_BASE` |
+| Location | ADC1 + 0x300 | ADC1 + 0x300 |
+| Struct | `ADC_Common_TypeDef` (same) | same |
+
+The L4 `Common()` implementation already uses the correct expression:
+`reinterpret_cast<volatile ADC_Common_TypeDef *>(ADC1_COMMON_BASE + 0x300)`.
+
+Wait — on L4 it's:
+```cpp
+return reinterpret_cast<volatile ADC_Common_TypeDef *>(ADC1_COMMON_BASE);
+```
+
+On G4xx the symbol is `ADC12_COMMON_BASE` but the value is the same offset
+(`AHB2PERIPH_BASE + 0x08000300`).  Since both `ADC1_BASE` and `ADC2_BASE` are
+within the same 0x300-range block, `Common()` must use
+`reinterpret_cast<...>(ADC1_BASE + 0x300)` if `ADC12_COMMON_BASE` is not
+defined.  But on G4 it is defined:
+
+```c
+#define ADC12_COMMON_BASE   (AHB2PERIPH_BASE + 0x08000300UL)
+```
+
+So we can use `ADC12_COMMON_BASE` directly in the G4 header.
+
+**Action:** Replace `ADC1_COMMON_BASE` with `ADC12_COMMON_BASE` in
+`Peripheral<>::Common()` for G4.
+
+## ADC count on G431 — only ADC1 + ADC2
+
+The G431 target has two ADCs (`ADC1_BASE`, `ADC2_BASE`, `ADC12_COMMON_BASE`).
+No `ADC3_BASE` on G431.  The `#ifdef ADC3_BASE` guard handles this correctly.
+
+## IRQ names (same as L4)
+
+| Unit | L4/G4 symbol |
+|------|-------------|
+| k1 | `ADC1_IRQn` |
+| k2 | `ADC1_2_IRQn` (defined as `ADC2_IRQn` on some parts) |
+| k3 | `ADC3_IRQn` |
+
+Existing `Peripheral<U>` code works unchanged.
+
+## Channel count — same as L4 (`kChan <= 18`)
+
+G4 supports up to 19 channels (0–18), identical to L4.  The `static_assert` in
+`Chan` is the same.
+
+## New G4-specific features (not needed for basic single-ended conversion)
+
+### Differential mode (`DIFSEL` + `ADCALDIF`)
+
+G4 adds the `DIFSEL` register at offset 0xB0 and `ADC_CR_ADCALDIF` bit.  For
+differential calibration the `ADCAL` bit is set together with `ADCALDIF`.
+Template support for differential mode is out of scope for the initial port.
+
+**Decision:** Not included in `AnyConfig`.  Users can configure differential
+channels manually via `P::kBase->DIFSEL`.
+
+### Gain compensation (`GCOMP`)
+
+G4 adds the `GCOMP` register at offset 0xC0.  Not needed for basic operation.
+
+**Decision:** Not included in `AnyConfig`.
+
+## Aggregate diff against l4xx/adc.h
+
+| Section | Change required |
+|---------|----------------|
+| `Peripheral<U>` RCC bits | `RCC_AHB2ENR_ADCEN` → `RCC_AHB2ENR_ADC12EN`, `RCC_AHB2RSTR_ADCRST` → `RCC_AHB2RSTR_ADC12RST` |
+| `Peripheral<U>::Common()` | `ADC1_COMMON_BASE` → `ADC12_COMMON_BASE` |
+| `Peripheral<U>::kIrq` for k2 | Keep `ADC1_2_IRQn` (same as L4) |
+| `Chan` static_assert | Same `kChan <= 18` — no change |
+| `SqField_` template | Identical 4-register 6-bit stride — no change |
+| `AnySequence::Init()` | Same 4 SQR + 2 SMPR writes — no change |
+| `AnyConfig` fields | Same CFGR/CFGR2 bit positions — no change |
+| `AnySetup::Init()` | Same ADVREGEN→ADCAL→ADEN sequence — no change |
+| `StartConversion()` | Same `ADC_CR_ADSTART` — no change |
+| `ReadData()` | Same `ADC_ISR_EOC` — no change |
+
+**Estimated port effort:** Change ~8 lines in the `Peripheral<U>` section.
+Everything else is copy-paste from `l4xx/adc.h`.
+
+## G4 variant matrix
+
+| ADCs | Variants | CMSIS symbols |
+|------|----------|---------------|
+| ADC1 only | G411xB, G411xC, G414 | `ADC1_BASE`, `ADC1_IRQn` |
+| ADC1+2 | G431, G441, G471, G473, G474, G483, G484, G491, G4A1, GBK1CB | `ADC2_BASE`, `ADC12_COMMON_BASE`, `ADC1_2_IRQn` |
+
+All G4xx variants use the same `ADC_TypeDef` struct and register layout.
+
+## Porting checklist (L4xx → G4xx)
+
+| Item | Action |
+|------|--------|
+| Copy `l4xx/adc.h` → `g4xx/adc.h` | Same template structure |
+| `kEnBit` / `kRstBit` | `RCC_AHB2ENR_ADCEN` → `RCC_AHB2ENR_ADC12EN` |
+| `Common()` base address | `ADC1_COMMON_BASE` → `ADC12_COMMON_BASE` |
+| Update aggregator `adc.h` | Remove `#include "l4xx/adc.h"` placeholder in `#elif defined(STM32G4)`, add `#include "g4xx/adc.h"` |
+| Docs | Add G4 tutorial notes to `docs/adc.md` |
+| Test | Build for G431 target with `#include "adc.h"` |

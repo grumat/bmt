@@ -66,8 +66,7 @@ enum Smpl : uint8_t
 #if defined(STM32L4)
 #	include "l4xx/adc.h"
 #elif defined(STM32G4)
-	// not yet implemented
-#	include "l4xx/adc.h"	// placeholder — remove when g4xx/adc.h exists
+#	include "g4xx/adc.h"
 #elif defined(STM32F1)
 #	include "f1xx/adc.h"
 #else

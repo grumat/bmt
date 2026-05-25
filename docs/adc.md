@@ -1,12 +1,33 @@
 # <big>The `Bmt::Adc` Name-Space</big>
 
 The `Adc` namespace provides template types for configuring the
-analog-to-digital converter on STM32F1xx.  All register values are computed at
-compile time via fold expressions, reducing runtime overhead to a handful of
-register writes.
+analog-to-digital converter on STM32F1xx, STM32L4xx, and STM32G4xx.  All
+register values are computed at compile time via fold expressions, reducing
+runtime overhead to a handful of register writes.
 
 The library handles ADC1 (all variants), ADC2 (when `ADC2_BASE` is defined),
 and ADC3 (when `ADC3_BASE` is defined) via peripheral-existence dispatch.
+
+Include the family-appropriate header:
+
+```cpp
+#include "adc.h"           // auto-selects f1xx/adc.h / l4xx/adc.h / g4xx/adc.h
+```
+
+### Family differences at a glance
+
+| Feature         | F1xx                          | L4xx / G4xx                          |
+|-----------------|-------------------------------|--------------------------------------|
+| RCC bus         | APB2 (per-ADC bits)           | AHB2 (shared bit)                    |
+| Control regs    | CR1 + CR2                     | CR + CFGR + CFGR2                    |
+| Status reg      | SR                            | ISR                                  |
+| SQR registers   | 3 (4+6+6 ranks)               | 4 (4+5+5+2 ranks)                    |
+| SMPR1 / SMPR2   | ch10-17 / ch0-9               | ch0-9 / ch10-18                      |
+| Resolution      | fixed 12-bit                  | configurable via `Res` enum          |
+| External trig   | single `EXTTRIG` bit          | 2-bit `EXTEN` polarity field         |
+| Oversampling    | —                             | CFGR2 (ROVSE, OVSR, OVSS)           |
+| Startup         | ADON → RSTCAL → CAL           | ADVREGEN → ADCAL → ADEN → poll ADRDY |
+| Conversion start| CR2.SWSTART                   | CR.ADSTART                           |
 
 ---
 
@@ -130,11 +151,11 @@ int main()
 
 Typed ADC peripheral identity.
 
-| Enumerator | Availability                |
-|------------|-----------------------------|
-| `k1`       | All F1xx variants           |
-| `k2`       | Parts defining `ADC2_BASE`  |
-| `k3`       | Parts defining `ADC3_BASE`  |
+| Enumerator | Availability                     |
+|------------|----------------------------------|
+| `k1`       | All variants                     |
+| `k2`       | Parts defining `ADC2_BASE`       |
+| `k3`       | Parts defining `ADC3_BASE`       |
 
 Example:
 ```cpp
@@ -148,20 +169,28 @@ Adc::Unit::k1   // ADC1
 Typed wrapper around a single ADC hardware block.  Each specialization
 exposes:
 
-| Member             | Description                          |
-|--------------------|--------------------------------------|
-| `kEnBit`           | Bit mask in `RCC_APB2ENR`            |
-| `kRstBit`          | Bit mask in `RCC_APB2RSTR`           |
-| `kBase`            | `volatile ADC_TypeDef *` pointer     |
-| `kIrq`             | CMSIS `IRQn_Type` enum value         |
-| `RccTrait_`        | Compatible with `Clocks::Enabler`    |
-| `Common()`         | Returns `ADC_Common_TypeDef *` (k1, k2 only) |
+| Member             | Description                              |
+|--------------------|------------------------------------------|
+| `kEnBit`           | Bit mask in RCC enable register          |
+| `kRstBit`          | Bit mask in RCC reset register           |
+| `kBase`            | `volatile ADC_TypeDef *` pointer         |
+| `kIrq`             | CMSIS `IRQn_Type` enum value             |
+| `RccTrait_`        | Compatible with `Clocks::Enabler`        |
+| `Common()`         | Returns `ADC_Common_TypeDef *` pointer   |
+
+The bus and bit names differ by family but are encapsulated by `Peripheral`:
+
+| Family | Enable bit | Reset bit | Common block |
+|--------|-----------|-----------|-------------|
+| F1xx   | `RCC_APB2ENR_ADC{1,2,3}EN` | `RCC_APB2RSTR_ADC{1,2,3}RST` | `ADC1_BASE` (offset 0x00) |
+| L4xx   | `RCC_AHB2ENR_ADCEN` (shared) | `RCC_AHB2RSTR_ADCRST` (shared) | `ADC1_COMMON_BASE` (offset +0x300) |
+| G4xx   | `RCC_AHB2ENR_ADC12EN` (shared) | `RCC_AHB2RSTR_ADC12RST` (shared) | `ADC12_COMMON_BASE` (offset +0x300) |
 
 Example — explicit clock control:
 ```cpp
 using Adc1 = Adc::Peripheral<Adc::Unit::k1>;
-Clocks::Enabler<Adc1>::Enable();     // set RCC_APB2ENR_ADC1EN
-Clocks::Enabler<Adc1>::Reset();      // pulse RCC_APB2RSTR_ADC1RST
+Clocks::Enabler<Adc1>::Enable();     // set the correct RCC bit
+Clocks::Enabler<Adc1>::Reset();      // pulse the correct RCC reset
 ```
 
 #### IRQ note
@@ -169,13 +198,7 @@ Clocks::Enabler<Adc1>::Reset();      // pulse RCC_APB2RSTR_ADC1RST
 - `Peripheral<Unit::k1>` and `k2` use `ADC1_2_IRQn`.  On single-ADC parts
   (F100, F101, F102) the CMSIS header provides a `#define ADC1_2_IRQn ADC1_IRQn`
   alias, so the name compiles everywhere.
-- `Peripheral<Unit::k3>` uses `ADC3_IRQn` (only defined for high-density F103).
-
-#### Common register note
-
-`Common()` returns a pointer to the shared `ADC_Common_TypeDef` block at the
-ADC1 base address.  This is useful only for dual-ADC synchronous mode
-(controlled via `CR1.DUALMOD`).  Not available for ADC3.
+- `Peripheral<Unit::k3>` uses `ADC3_IRQn` (F103 hi-density, some L4xx parts).
 
 ---
 
@@ -207,7 +230,7 @@ Binds an ADC channel number to a peripheral and sampling time.
 | Template Parameter | Description                     |
 |--------------------|---------------------------------|
 | `U`                | `Unit` (which ADC)              |
-| `kChan`            | Channel number 0–17             |
+| `kChan`            | Channel number (0–17 F1xx, 0–18 L4xx/G4xx) |
 | `kSmpl`            | Sampling time (`Smpl`, default `k28_5`) |
 
 Exposed type and constants:
@@ -266,15 +289,18 @@ values from the channel pack at compile time.
 
 #### Static constants
 
-| Constant      | Register | Description                       |
-|---------------|----------|-----------------------------------|
-| `kSqr1`       | `SQR1`   | SQ[13..16] fields (bits 0–19)    |
-| `kSqr2`       | `SQR2`   | SQ[7..12] fields (bits 0–29)     |
-| `kSqr3`       | `SQR3`   | SQ[1..6] fields (bits 0–29)      |
-| `kLenField`   | `SQR1`   | L[3:0] = length − 1 (bits 20–23) |
-| `kSmpr1`      | `SMPR1`  | SMP[10..17] fields (bits 0–23)   |
-| `kSmpr2`      | `SMPR2`  | SMP[0..9] fields (bits 0–29)     |
-| `kLen`        | —        | Number of channels (`size_t`)     |
+| Constant      | Register | Description                            |
+|---------------|----------|----------------------------------------|
+| `kSqr1`       | `SQR1`   | F1: SQ[13..16] @0; L4/G4: SQ[1..4] @6 |
+| `kSqr2`       | `SQR2`   | SQ[7..12] (F1) / SQ[5..9] (L4/G4)     |
+| `kSqr3`       | `SQR3`   | SQ[1..6] (F1) / SQ[10..14] (L4/G4)    |
+| `kSqr4`       | `SQR4`   | L4/G4 only: SQ[15..16] @0              |
+| `kLenField`   | `SQR1`   | L[3:0] = length − 1 (F1 @20, L4/G4 @0)|
+| `kSmpr1`      | `SMPR1`  | F1: SMP[10..17]; L4/G4: SMP[0..9]     |
+| `kSmpr2`      | `SMPR2`  | F1: SMP[0..9];   L4/G4: SMP[10..18]   |
+| `kLen`        | —        | Number of channels (`size_t`)          |
+
+**`Init()` writes all registers (5 on F1, 6 on L4/G4).**
 
 #### `Init()`
 
@@ -321,20 +347,30 @@ using Seq = Adc::AnySequence<
 CR1 / CR2 bitfield config struct.  All fields are `static constexpr` and
 default to `false` / `0`.
 
-| Field          | Register | Bit(s) | Default | Description                          |
-|----------------|----------|--------|---------|--------------------------------------|
-| `kScan`        | `CR1`    | 8      | `false` | Scan mode (multi-channel sequences)  |
-| `kCont`        | `CR2`    | 1      | `false` | Continuous conversion                |
-| `kDma`         | `CR2`    | 8      | `false` | DMA transfer enable                  |
-| `kAlignLeft`   | `CR2`    | 11     | `false` | Left-aligned data (0 = right)        |
-| `kExtTrig`     | `CR2`    | 20     | `false` | External trigger enable              |
-| `kExtTrigSel`  | `CR2`    | 17–19  | 0       | External trigger source (0–7)        |
-| `kPowerDown`   | —        | —      | `false` | Clear ADON after init                |
+| Field            | F1xx reg  | L4/G4 reg | Default | Description                          |
+|------------------|-----------|-----------|---------|--------------------------------------|
+| `kScan`          | `CR1` 8   | no-op     | `false` | Scan mode (multi-channel sequences)  |
+| `kCont`          | `CR2` 1   | `CFGR` 13 | `false` | Continuous conversion                |
+| `kDma`           | `CR2` 8   | `CFGR` 0  | `false` | DMA transfer enable                  |
+| `kAlignLeft`     | `CR2` 11  | `CFGR` 15 | `false` | Left-aligned data (0 = right)        |
+| `kExtTrig`→`kExtEn` | `CR2` 20 | `CFGR` 11–10 | `kDisabled` | External trigger polarity       |
+| `kExtTrigSel`    | `CR2` 17–19 | `CFGR` 9–5 | 0     | External trigger source              |
+| `kResolution`    | —         | `CFGR` 4–3 | `k12Bit` | Data resolution (L4/G4 only)        |
+| `kAutoDelay`     | —         | `CFGR` 14 | `false` | Low-power auto-delay (L4/G4)        |
+| `kOvrMod`        | —         | `CFGR` 12 | `false` | Overrun mode (L4/G4)                |
+| `kOvs`           | —         | `CFGR2` 0 | `false` | Oversampling enable (L4/G4)         |
+| `kOvsRatio`      | —         | `CFGR2` 4–2 | 0     | Oversampling ratio (L4/G4)          |
+| `kOvsShift`      | —         | `CFGR2` 11–8 | 0    | Oversampling shift (L4/G4)          |
+| `kPowerDown`     | —         | —        | `false` | Power down after init                |
+
+F1 portability note: replace `kExtTrig = true` with `kExtEn = ExtEn::kRising`
+on L4/G4.  The `kScan` field is retained as a no-op on L4/G4 for source
+compatibility.
 
 #### `Init(volatile ADC_TypeDef *adc)`
 
-Writes `CR1` and `CR2`.  Unset bits are zeroed (clearing any pre-existing
-configuration).
+Writes `CR1`+`CR2` (F1) or `CR`+`CFGR`+`CFGR2` (L4/G4).  Unset bits are zeroed
+(clearing any pre-existing configuration).
 
 #### Template convenience overload
 
@@ -385,23 +421,25 @@ One-shot boot initialiser.  Drives the complete ADC start-up sequence.
 
 #### `Init()` sequence
 
-1. **RCC enable + reset** — via `Clocks::Enabler<P>::Init()`
-2. **CR1 / CR2** — via `Config::Init(P::kBase)`
-3. **SQR + SMPR** — via `Sequence::Init()`
-4. **Power up** — set `ADON` bit
-5. **Calibrate** — poll `RSTCAL` then `CAL` (busy-wait per RM0008 sequence)
-6. **Power down** — if `Config::kPowerDown` is true, clear `ADON`
+| Step | F1xx                        | L4xx / G4xx                          |
+|------|-----------------------------|--------------------------------------|
+| 1    | RCC enable + reset          | RCC enable + reset                   |
+| 2    | Write CR1 / CR2             | Write CR / CFGR / CFGR2              |
+| 3    | Write SQR1-3 / SMPR1-2     | Write SQR1-4 / SMPR1-2              |
+| 4    | ADON (power up)             | ADVREGEN (voltage regulator)         |
+| 5    | —                           | spin ~10 µs                          |
+| 6    | RSTCAL → CAL                | ADCAL (single-ended)                 |
+| 7    | —                           | ADEN → wait ADRDY                    |
+| 8    | conditionally clear ADON    | conditionally set ADDIS              |
 
-After `Init()` the ADC is powered up (`ADON` set) and ready to convert.  Start
-a conversion by writing `SWSTART` to `CR2`:
+After `Init()` the ADC is powered up and ready to convert.  Use the portable
+helpers:
 
 ```cpp
-ADC1->CR2 |= ADC_CR2_SWSTART;
-// or if using P:
-// Adc::Peripheral<Adc::Unit::k1>::kBase->CR2 |= ADC_CR2_SWSTART;
+#include "adc.h"
+Adc::StartConversion(ADC1);    // CR2.SWSTART (F1) or CR.ADSTART (L4/G4)
+uint16_t val = Adc::ReadData(ADC1);  // SR.EOC (F1) or ISR.EOC (L4/G4)
 ```
-
-Wait for `ADC_SR_EOC` before reading `DR`.
 
 #### Example — full setup
 
@@ -441,6 +479,8 @@ registers directly via `P::kBase`):
 | Dual ADC sync mode     | `CR1.DUALMOD`, `ADC_Common_TypeDef` |
 | Temperature sensor / VREFINT | `CR2.TSVREFE` (enable, then use ch 16/17) |
 | Interrupt configuration | NVIC priority (user sets via CMSIS) |
+| Differential mode      | `DIFSEL`, `CR.ADCALDIF` (G4 only) |
+| Gain compensation      | `GCOMP` (G4 only)              |
 
 These can all be controlled by writing directly to the `ADC_TypeDef`
 registers through the `kBase` pointer.
