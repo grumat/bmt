@@ -285,8 +285,17 @@ struct AnyConfig
 		if constexpr (kCont)                      cr2 |= ADC_CR2_CONT;
 		if constexpr (kDma)                       cr2 |= ADC_CR2_DMA;
 		if constexpr (kAlignLeft)                 cr2 |= ADC_CR2_ALIGN;
-		if constexpr (kExtTrig)                   cr2 |= ADC_CR2_EXTTRIG;
-		if constexpr (kExtTrigSel != 0)           cr2 |= (uint32_t{kExtTrigSel} << ADC_CR2_EXTSEL_Pos);
+
+		// On F1 a regular-group conversion only triggers when EXTTRIG=1. With a
+		// hardware trigger, EXTSEL selects the source; otherwise select SWSTART
+		// (EXTSEL=0b111) so Adc::StartConversion() (which writes CR2.SWSTART)
+		// actually starts a conversion. Leaving EXTTRIG clear — as the previous
+		// code did by default — made the SWSTART helper a no-op.
+		cr2 |= ADC_CR2_EXTTRIG;
+		if constexpr (kExtTrig)
+			cr2 |= (uint32_t{kExtTrigSel} << ADC_CR2_EXTSEL_Pos);
+		else
+			cr2 |= ADC_CR2_EXTSEL;	// 0b111 = SWSTART regular-group trigger
 
 		adc->CR1 = cr1;
 		adc->CR2 = cr2;

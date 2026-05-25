@@ -132,10 +132,10 @@ int main()
 
     while (true)
     {
-        // Wait for end-of-conversion flag
-        while (!(ADC1->SR & ADC_SR_EOC)) { }
-
-        uint16_t value = ADC1->DR;     // read clears EOC flag
+        // Trigger one conversion (default config selects the SWSTART source),
+        // then wait for the result.
+        Adc::StartConversion(ADC1);
+        uint16_t value = Adc::ReadData(ADC1);   // polls EOC, reads DR
 
         // Simple LED blink rate based on ADC value
         for (volatile uint32_t d = 0; d < value * 100; ++d) { }
@@ -355,8 +355,8 @@ default to `false` / `0`.
 | `kCont`          | `CR2` 1   | `CFGR` 13 | `false` | Continuous conversion                |
 | `kDma`           | `CR2` 8   | `CFGR` 0  | `false` | DMA transfer enable                  |
 | `kAlignLeft`     | `CR2` 11  | `CFGR` 15 | `false` | Left-aligned data (0 = right)        |
-| `kExtTrig`→`kExtEn` | `CR2` 20 | `CFGR` 11–10 | `kDisabled` | External trigger polarity       |
-| `kExtTrigSel`    | `CR2` 17–19 | `CFGR` 9–5 | 0     | External trigger source              |
+| `kExtTrig`→`kExtEn` | `CR2` 20 | `CFGR` 11–10 | `false`/`kDisabled` | F1: `true` = HW trigger; `false` = SWSTART. L4/G4: edge select |
+| `kExtTrigSel`    | `CR2` 17–19 | `CFGR` 9–5 | 0     | External trigger source (when HW trigger enabled) |
 | `kResolution`    | —         | `CFGR` 4–3 | `k12Bit` | Data resolution (L4/G4 only)        |
 | `kAutoDelay`     | —         | `CFGR` 14 | `false` | Low-power auto-delay (L4/G4)        |
 | `kOvrMod`        | —         | `CFGR` 12 | `false` | Overrun mode (L4/G4)                |
@@ -369,6 +369,13 @@ default to `false` / `0`.
 F1 portability note: replace `kExtTrig = true` with `kExtEn = ExtEn::kRising`
 on L4/G4.  The `kScan` field is retained as a no-op on L4/G4 for source
 compatibility.
+
+F1 software trigger: on F1 a regular conversion only starts when `CR2.EXTTRIG`
+is set, so `AnyConfig::Init()` always sets it and — when `kExtTrig` is `false`
+— selects the SWSTART source (`EXTSEL=0b111`) so `Adc::StartConversion()`
+works out of the box.  Set `kExtTrig = true` (with `kExtTrigSel`) only to drive
+conversions from a hardware event (timer, EXTI) instead.  L4/G4 need no such
+trick: with `kExtEn = kDisabled`, `CR.ADSTART` is a pure software start.
 
 #### `CkMode` — ADC kernel-clock source (L4/G4 only)
 
