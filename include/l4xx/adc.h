@@ -38,7 +38,15 @@ struct Peripheral<Unit::k1>
 	static constexpr uint32_t kEnBit  = RCC_AHB2ENR_ADCEN;
 	static constexpr uint32_t kRstBit = RCC_AHB2RSTR_ADCRST;
 
-	static constexpr auto *kBase = ADC1;
+	// Address stored as an integer: the ADCx macros expand to a reinterpret_cast
+	// which is not a constant expression, so it cannot initialise a constexpr
+	// pointer. Cast at point of use via GetDevice() (folds to a constant, no
+	// dynamic init). Same convention as Timer's kBaseAddr_.
+	static constexpr uintptr_t kBase_ = ADC1_BASE;
+	ALWAYS_INLINE static volatile ADC_TypeDef *GetDevice()
+	{
+		return reinterpret_cast<volatile ADC_TypeDef *>(kBase_);
+	}
 	static constexpr IRQn_Type kIrq = ADC1_IRQn;
 
 	using RccTrait_ = Clocks::RccTrait<
@@ -60,7 +68,11 @@ struct Peripheral<Unit::k2>
 	static constexpr uint32_t kEnBit  = RCC_AHB2ENR_ADCEN;
 	static constexpr uint32_t kRstBit = RCC_AHB2RSTR_ADCRST;
 
-	static constexpr auto *kBase = ADC2;
+	static constexpr uintptr_t kBase_ = ADC2_BASE;
+	ALWAYS_INLINE static volatile ADC_TypeDef *GetDevice()
+	{
+		return reinterpret_cast<volatile ADC_TypeDef *>(kBase_);
+	}
 	static constexpr IRQn_Type kIrq = ADC1_2_IRQn;
 
 	using RccTrait_ = Clocks::RccTrait<
@@ -81,7 +93,11 @@ struct Peripheral<Unit::k3>
 	static constexpr uint32_t kEnBit  = RCC_AHB2ENR_ADCEN;
 	static constexpr uint32_t kRstBit = RCC_AHB2RSTR_ADCRST;
 
-	static constexpr auto *kBase = ADC3;
+	static constexpr uintptr_t kBase_ = ADC3_BASE;
+	ALWAYS_INLINE static volatile ADC_TypeDef *GetDevice()
+	{
+		return reinterpret_cast<volatile ADC_TypeDef *>(kBase_);
+	}
 	static constexpr IRQn_Type kIrq = ADC3_IRQn;
 
 	using RccTrait_ = Clocks::RccTrait<
@@ -296,7 +312,7 @@ struct AnySequence
 
 	ALWAYS_INLINE static void Init()
 	{
-		volatile auto *adc = P::kBase;
+		volatile auto *adc = P::GetDevice();
 
 		adc->SQR1  = kSqr1 | kLenField;	// SQ[1..4] + L
 		adc->SQR2  = kSqr2;				// SQ[5..9]
@@ -376,7 +392,7 @@ struct AnyConfig
 	template <typename P>
 	ALWAYS_INLINE static void Init()
 	{
-		Init(P::kBase);
+		Init(P::GetDevice());
 	}
 };
 
@@ -413,7 +429,7 @@ struct AnySetup
 		// 4. Write SQR + SMPR.
 		Seq::Init();
 
-		volatile auto *adc = P::kBase;
+		volatile auto *adc = P::GetDevice();
 
 		// 5. Enable the voltage regulator (must settle before calibration).
 		adc->CR |= ADC_CR_ADVREGEN;

@@ -174,7 +174,8 @@ exposes:
 |--------------------|------------------------------------------|
 | `kEnBit`           | Bit mask in RCC enable register          |
 | `kRstBit`          | Bit mask in RCC reset register           |
-| `kBase`            | `volatile ADC_TypeDef *` pointer         |
+| `kBase_`           | Peripheral base address (`uintptr_t`)    |
+| `GetDevice()`      | Returns `volatile ADC_TypeDef *` (cast of `kBase_`) |
 | `kIrq`             | CMSIS `IRQn_Type` enum value             |
 | `RccTrait_`        | Compatible with `Clocks::Enabler`        |
 | `Common()`         | Returns `ADC_Common_TypeDef *` pointer   |
@@ -401,7 +402,7 @@ Writes `CR1`+`CR2` (F1) or `CR`+`CFGR`+`CFGR2` (L4/G4).  Unset bits are zeroed
 
 ```cpp
 template <typename P>
-static void Init();     // calls Init(P::kBase)
+static void Init();     // calls Init(P::GetDevice())
 ```
 
 #### Examples
@@ -496,7 +497,7 @@ void ReadPotentiometer()
 ## Out of Scope
 
 The following features are not wrapped by templates (users can access the
-registers directly via `P::kBase`):
+registers directly via `P::GetDevice()`):
 
 | Feature                | Registers                       |
 |------------------------|---------------------------------|
@@ -509,4 +510,4 @@ registers directly via `P::kBase`):
 | Gain compensation      | `GCOMP` (G4 only)              |
 
 These can all be controlled by writing directly to the `ADC_TypeDef`
-registers through the `kBase` pointer.
+registers through the `GetDevice()` pointer.

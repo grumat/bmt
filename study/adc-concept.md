@@ -33,7 +33,9 @@ Typed ADC identity. `k1` unconditional, `k2` / `k3` guarded by `#ifdef ADC2_BASE
 
 Specialized per unit. Each exposes:
 - `kEnBit`, `kRstBit` — RCC enable/reset masks
-- `kBase` — `ADC_TypeDef*` (CMSIS `ADC1`/`ADC2`/`ADC3` pointer)
+- `kBase_` — peripheral base address (`uintptr_t`); `GetDevice()` casts it to
+  `volatile ADC_TypeDef*` at point of use (a constexpr pointer can't be
+  initialised from the `ADC1`/`ADC2`/`ADC3` macros — they are reinterpret_casts)
 - `kIrq` — `ADC1_2_IRQn` for k1/k2 (works on all variants via `#define` alias),
   `ADC3_IRQn` for k3
 - `using RccTrait_ = Clocks::RccTrait<Clocks::RccBit<RccReg::kApb2En, kEnBit>,
@@ -110,11 +112,11 @@ by register — all ADC bits land in `RCC_APB2ENR` (same bus as GPIO on F1xx).
 ## Limitations (explicitly out of scope)
 
 - Injected group (`JSQR`, `JDR1..4`, injected trigger) — no template support;
-  users can write the registers directly via `P::kBase->JSQR`.
+  users can write the registers directly via `P::GetDevice()->JSQR`.
 - Dual ADC synchronous mode (`ADC_CR1_DUALMOD`, `ADC_Common_TypeDef`).
 - Analog watchdog (`AWDCH`, `AWDIE`).
 - Temperature sensor / Vrefint (`TSVREFE`) — not gated in the channel template;
-  users enable the bit via manual `P::kBase->CR2` write.
+  users enable the bit via manual `P::GetDevice()->CR2` write.
 - Calibration is done once in `AnySetup::Init()`; no recalibration API.
 
 
@@ -451,7 +453,7 @@ differential calibration the `ADCAL` bit is set together with `ADCALDIF`.
 Template support for differential mode is out of scope for the initial port.
 
 **Decision:** Not included in `AnyConfig`.  Users can configure differential
-channels manually via `P::kBase->DIFSEL`.
+channels manually via `P::GetDevice()->DIFSEL`.
 
 ### Gain compensation (`GCOMP`)
 
