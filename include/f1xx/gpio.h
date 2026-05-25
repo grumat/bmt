@@ -309,6 +309,33 @@ public:
 };
 
 
+// Compile-time pack validation for AnyPinGroup
+template <Port kPort_, typename... Pins_>
+struct ValidatePinGroup
+{
+	static constexpr bool CheckPort() noexcept
+	{
+		return ((Pins_::kPort_ == Port::kUnusedPort || Pins_::kPort_ == kPort_) && ...);
+	}
+
+	static constexpr bool CheckUnique() noexcept
+	{
+		constexpr uint8_t pins[] = { Pins_::kPin_... };
+		constexpr Port ports[] = { Pins_::kPort_... };
+		for (size_t i = 0; i < sizeof...(Pins_); ++i)
+		{
+			if (ports[i] == Port::kUnusedPort) continue;
+			for (size_t j = i + 1; j < sizeof...(Pins_); ++j)
+			{
+				if (ports[j] != Port::kUnusedPort && pins[i] == pins[j])
+					return false;
+			}
+		}
+		return true;
+	}
+};
+
+
 }	// namespace Private
 
 
@@ -612,33 +639,24 @@ class AnyAltOutOD : public AnyAltOut <
 };
 
 
-// A template class for a group of related pins to be operated all at once
+/// A template class for a group of related pins to be operated all at once
 /*!
-Pretty same as AnyPortSetup<> template, although not all pins have to be 
-defined. The only requirement is that pin numbers have to be unique. 
-Although recommended pins must not be ordered.
+Variadic — accepts any number of pin types in any order. Pins must belong to the
+same GPIO port and have unique pin numbers. Unlike AnyPortSetup<>, the template
+argument position does not need to match the pin number.
+
+Example:
+\code{.cpp}
+using MyGroup = AnyPinGroup<Port::PA, USART1_TX_PA9, USART1_RX_PA10>;
+\endcode
 */
-template <
-	const Port kPort					// The GPIO port number
-	, typename Pin0 = Unchanged<0>		// Definition for any pin, any order
-	, typename Pin1 = Unchanged<1>		// Definition for any pin, any order
-	, typename Pin2 = Unchanged<2>		// Definition for any pin, any order
-	, typename Pin3 = Unchanged<3>		// Definition for any pin, any order
-	, typename Pin4 = Unchanged<4>		// Definition for any pin, any order
-	, typename Pin5 = Unchanged<5>		// Definition for any pin, any order
-	, typename Pin6 = Unchanged<6>		// Definition for any pin, any order
-	, typename Pin7 = Unchanged<7>		// Definition for any pin, any order
-	, typename Pin8 = Unchanged<8>		// Definition for any pin, any order
-	, typename Pin9 = Unchanged<9>		// Definition for any pin, any order
-	, typename Pin10 = Unchanged<10>	// Definition for any pin, any order
-	, typename Pin11 = Unchanged<11>	// Definition for any pin, any order
-	, typename Pin12 = Unchanged<12>	// Definition for any pin, any order
-	, typename Pin13 = Unchanged<13>	// Definition for any pin, any order
-	, typename Pin14 = Unchanged<14>	// Definition for any pin, any order
-	, typename Pin15 = Unchanged<15>	// Definition for any pin, any order
-	>
+template <Port kPort, typename... Pins>
 class AnyPinGroup
 {
+	using Validate_ = Private::ValidatePinGroup<kPort, Pins...>;
+	static_assert(Validate_::CheckPort(), "All active pins must belong to the same port as the group");
+	static_assert(Validate_::CheckUnique(), "Duplicate pin numbers are not allowed in a group");
+
 public:
 	// The GPIO port peripheral
 	static constexpr Port kPort_ = kPort;
@@ -652,311 +670,25 @@ public:
 		// GPIO port reset bits exist in APB2RSTR but pulsing them is rarely
 		// what you want at boot (resets all pad config). Omitted intentionally.
 	>;
-	// Combined constant value for CRL hardware register
-	static constexpr uint32_t kCRL_ =
-		Pin0::kCRL_ | Pin1::kCRL_
-		| Pin2::kCRL_ | Pin3::kCRL_
-		| Pin4::kCRL_ | Pin5::kCRL_
-		| Pin6::kCRL_ | Pin7::kCRL_
-		| Pin8::kCRL_ | Pin9::kCRL_
-		| Pin10::kCRL_ | Pin11::kCRL_
-		| Pin12::kCRL_ | Pin13::kCRL_
-		| Pin14::kCRL_ | Pin15::kCRL_
-		;
-	// Combined constant mask value for CRL hardware register
-	static constexpr uint32_t kCRL_Mask_ =
-		Pin0::kCRL_Mask_ & Pin1::kCRL_Mask_
-		& Pin2::kCRL_Mask_ & Pin3::kCRL_Mask_
-		& Pin4::kCRL_Mask_ & Pin5::kCRL_Mask_
-		& Pin6::kCRL_Mask_ & Pin7::kCRL_Mask_
-		& Pin8::kCRL_Mask_ & Pin9::kCRL_Mask_
-		& Pin10::kCRL_Mask_ & Pin11::kCRL_Mask_
-		& Pin12::kCRL_Mask_ & Pin13::kCRL_Mask_
-		& Pin14::kCRL_Mask_ & Pin15::kCRL_Mask_
-		;
-	// Combined constant value for CRH hardware register (negative logic)
-	static constexpr uint32_t kCRH_ =
-		Pin0::kCRH_ | Pin1::kCRH_
-		| Pin2::kCRH_ | Pin3::kCRH_
-		| Pin4::kCRH_ | Pin5::kCRH_
-		| Pin6::kCRH_ | Pin7::kCRH_
-		| Pin8::kCRH_ | Pin9::kCRH_
-		| Pin10::kCRH_ | Pin11::kCRH_
-		| Pin12::kCRH_ | Pin13::kCRH_
-		| Pin14::kCRH_ | Pin15::kCRH_
-		;
-	// Combined constant mask value for CRH hardware register
-	static constexpr uint32_t kCRH_Mask_ =
-		Pin0::kCRH_Mask_ & Pin1::kCRH_Mask_
-		& Pin2::kCRH_Mask_ & Pin3::kCRH_Mask_
-		& Pin4::kCRH_Mask_ & Pin5::kCRH_Mask_
-		& Pin6::kCRH_Mask_ & Pin7::kCRH_Mask_
-		& Pin8::kCRH_Mask_ & Pin9::kCRH_Mask_
-		& Pin10::kCRH_Mask_ & Pin11::kCRH_Mask_
-		& Pin12::kCRH_Mask_ & Pin13::kCRH_Mask_
-		& Pin14::kCRH_Mask_ & Pin15::kCRH_Mask_
-		;
-	// Constant for the initial bit level
-	static constexpr uint16_t kODR_ =
-		Pin0::kODR_ | Pin1::kODR_
-		| Pin2::kODR_ | Pin3::kODR_
-		| Pin4::kODR_ | Pin5::kODR_
-		| Pin6::kODR_ | Pin7::kODR_
-		| Pin8::kODR_ | Pin9::kODR_
-		| Pin10::kODR_ | Pin11::kODR_
-		| Pin12::kODR_ | Pin13::kODR_
-		| Pin14::kODR_ | Pin15::kODR_
-		;
-	// Combined constant mask value for ODR hardware register
-	static constexpr uint16_t kODR_Mask_ =
-		Pin0::kODR_Mask_ & Pin1::kODR_Mask_
-		& Pin2::kODR_Mask_ & Pin3::kODR_Mask_
-		& Pin4::kODR_Mask_ & Pin5::kODR_Mask_
-		& Pin6::kODR_Mask_ & Pin7::kODR_Mask_
-		& Pin8::kODR_Mask_ & Pin9::kODR_Mask_
-		& Pin10::kODR_Mask_ & Pin11::kODR_Mask_
-		& Pin12::kODR_Mask_ & Pin13::kODR_Mask_
-		& Pin14::kODR_Mask_ & Pin15::kODR_Mask_
-		;
-	// Combined Alternate Function configuration constant
-	static constexpr uint32_t kAfConf_ =
-		Pin0::kAfConf_ | Pin1::kAfConf_
-		| Pin2::kAfConf_ | Pin3::kAfConf_
-		| Pin4::kAfConf_ | Pin5::kAfConf_
-		| Pin6::kAfConf_ | Pin7::kAfConf_
-		| Pin8::kAfConf_ | Pin9::kAfConf_
-		| Pin10::kAfConf_ | Pin11::kAfConf_
-		| Pin12::kAfConf_ | Pin13::kAfConf_
-		| Pin14::kAfConf_ | Pin15::kAfConf_
-		;
-	// Combined Alternate Function configuration mask constant (inverted)
-	static constexpr uint32_t kAfMask_ =
-		Pin0::kAfMask_ & Pin1::kAfMask_
-		& Pin2::kAfMask_ & Pin3::kAfMask_
-		& Pin4::kAfMask_ & Pin5::kAfMask_
-		& Pin6::kAfMask_ & Pin7::kAfMask_
-		& Pin8::kAfMask_ & Pin9::kAfMask_
-		& Pin10::kAfMask_ & Pin11::kAfMask_
-		& Pin12::kAfMask_ & Pin13::kAfMask_
-		& Pin14::kAfMask_ & Pin15::kAfMask_
-		;
+	// Combined constant value for CRL hardware register (fold)
+	static constexpr uint32_t kCRL_ = (0 | ... | Pins::kCRL_);
+	// Combined constant mask value for CRL hardware register (fold)
+	static constexpr uint32_t kCRL_Mask_ = (~0UL & ... & Pins::kCRL_Mask_);
+	// Combined constant value for CRH hardware register (fold)
+	static constexpr uint32_t kCRH_ = (0 | ... | Pins::kCRH_);
+	// Combined constant mask value for CRH hardware register (fold)
+	static constexpr uint32_t kCRH_Mask_ = (~0UL & ... & Pins::kCRH_Mask_);
+	// Constant for the initial bit level (fold)
+	static constexpr uint16_t kODR_ = (0 | ... | Pins::kODR_);
+	// Combined constant mask value for ODR hardware register (fold)
+	static constexpr uint16_t kODR_Mask_ = (~0U & ... & Pins::kODR_Mask_);
+	// Combined Alternate Function configuration constant (fold)
+	static constexpr uint32_t kAfConf_ = (0 | ... | Pins::kAfConf_);
+	// Combined Alternate Function configuration mask constant — inverted (fold)
+	static constexpr uint32_t kAfMask_ = (~0UL & ... & Pins::kAfMask_);
 
 	// Access to the hardware IO data structure
 	constexpr static volatile GPIO_TypeDef& Io() { return *(volatile GPIO_TypeDef*)kPortBase_; }
-
-	// Validates the PIN0
-	static_assert(Pin0::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin0::kPort_ == kPort_
-			&& (Pin0::kPin_ != Pin1::kPin_ || Pin1::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin2::kPin_ || Pin2::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin3::kPin_ || Pin3::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin4::kPin_ || Pin4::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin5::kPin_ || Pin5::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin6::kPin_ || Pin6::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin7::kPin_ || Pin7::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin0::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN0: Inconsistent port number or pin number collision");
-	// Validates the PIN1
-	static_assert(Pin1::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin1::kPort_ == kPort_
-			&& (Pin1::kPin_ != Pin2::kPin_ || Pin2::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin3::kPin_ || Pin3::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin4::kPin_ || Pin4::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin5::kPin_ || Pin5::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin6::kPin_ || Pin6::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin7::kPin_ || Pin7::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin1::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN1: Inconsistent port number or pin number collision");
-	// Validates the PIN2
-	static_assert(Pin2::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin2::kPort_ == kPort_
-			&& (Pin2::kPin_ != Pin3::kPin_ || Pin3::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin4::kPin_ || Pin4::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin5::kPin_ || Pin5::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin6::kPin_ || Pin6::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin7::kPin_ || Pin7::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin2::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN2: Inconsistent port number or pin number collision");
-	// Validates the PIN3
-	static_assert(Pin3::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin3::kPort_ == kPort_
-			&& (Pin3::kPin_ != Pin4::kPin_ || Pin4::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin5::kPin_ || Pin5::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin6::kPin_ || Pin6::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin7::kPin_ || Pin7::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin3::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN3: Inconsistent port number or pin number collision");
-	// Validates the PIN4
-	static_assert(Pin4::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin4::kPort_ == kPort_
-			&& (Pin4::kPin_ != Pin5::kPin_ || Pin5::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin6::kPin_ || Pin6::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin7::kPin_ || Pin7::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin4::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN4: Inconsistent port number or pin number collision");
-	// Validates the PIN5
-	static_assert(Pin5::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin5::kPort_ == kPort_
-			&& (Pin5::kPin_ != Pin6::kPin_ || Pin6::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin7::kPin_ || Pin7::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin5::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN5: Inconsistent port number or pin number collision");
-	// Validates the PIN6
-	static_assert(Pin6::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin6::kPort_ == kPort_
-			&& (Pin6::kPin_ != Pin7::kPin_ || Pin7::kPort_ == Port::kUnusedPort)
-			&& (Pin6::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
-			&& (Pin6::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin6::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin6::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin6::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin6::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin6::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin6::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN6: Inconsistent port number or pin number collision");
-	// Validates the PIN7
-	static_assert(Pin7::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin7::kPort_ == kPort_
-			&& (Pin7::kPin_ != Pin8::kPin_ || Pin8::kPort_ == Port::kUnusedPort)
-			&& (Pin7::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin7::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin7::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin7::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin7::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin7::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin7::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN7: Inconsistent port number or pin number collision");
-	// Validates the PIN8
-	static_assert(Pin8::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin8::kPort_ == kPort_
-			&& (Pin8::kPin_ != Pin9::kPin_ || Pin9::kPort_ == Port::kUnusedPort)
-			&& (Pin8::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin8::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin8::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin8::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin8::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin8::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN8: Inconsistent port number or pin number collision");
-	// Validates the PIN9
-	static_assert(Pin9::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin9::kPort_ == kPort_
-			&& (Pin9::kPin_ != Pin10::kPin_ || Pin10::kPort_ == Port::kUnusedPort)
-			&& (Pin9::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin9::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin9::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin9::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin9::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN9: Inconsistent port number or pin number collision");
-	// Validates the PIN10
-	static_assert(Pin10::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin10::kPort_ == kPort_
-			&& (Pin10::kPin_ != Pin11::kPin_ || Pin11::kPort_ == Port::kUnusedPort)
-			&& (Pin10::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin10::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin10::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin10::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN10: Inconsistent port number or pin number collision");
-	// Validates the PIN11
-	static_assert(Pin11::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin11::kPort_ == kPort_
-			&& (Pin11::kPin_ != Pin12::kPin_ || Pin12::kPort_ == Port::kUnusedPort)
-			&& (Pin11::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin11::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin11::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN11: Inconsistent port number or pin number collision");
-	// Validates the PIN12
-	static_assert(Pin12::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin12::kPort_ == kPort_
-			&& (Pin12::kPin_ != Pin13::kPin_ || Pin13::kPort_ == Port::kUnusedPort)
-			&& (Pin12::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin12::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN12: Inconsistent port number or pin number collision");
-	// Validates the PIN13
-	static_assert(Pin13::kPort_ == Port::kUnusedPort 
-		|| (
-			Pin13::kPort_ == kPort_
-			&& (Pin13::kPin_ != Pin14::kPin_ || Pin14::kPort_ == Port::kUnusedPort)
-			&& (Pin13::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN13: Inconsistent port number or pin number collision");
-	// Validates the PIN14
-	static_assert(Pin14::kPort_ == Port::kUnusedPort
-		|| (
-			Pin14::kPort_ == kPort_
-			&& (Pin14::kPin_ != Pin15::kPin_ || Pin15::kPort_ == Port::kUnusedPort)
-		)
-		, "PIN14: Inconsistent port number or pin number collision");
-	// Validates the PIN15
-	static_assert(Pin15::kPort_ == Port::kUnusedPort || Pin15::kPort_ == kPort_
-		, "PIN15: Inconsistent port number or pin number collision");
 
 	//! Initialize group of pins
 	ALWAYS_INLINE constexpr static void Setup()
@@ -976,7 +708,7 @@ public:
 		if (kCRH_Mask_ == ~0UL)
 			{}	// No CRH changes
 		else if (kCRH_Mask_ == 0UL)
-			port.CRH = kCRH_;	// Overwrite entire CRL
+			port.CRH = kCRH_;	// Overwrite entire CRH
 		else
 			port.CRH = (port.CRH & kCRH_Mask_) | kCRH_; // Selective update
 		// ODR Setup
@@ -1004,7 +736,7 @@ public:
 		if (kCRH_Mask_ == ~0UL)
 			{}	// No CRH changes
 		else if (kCRH_Mask_ == 0UL)
-			port.CRH = kCRH_;	// Overwrite entire CRL
+			port.CRH = kCRH_;	// Overwrite entire CRH
 		else
 			port.CRH = (port.CRH & kCRH_Mask_) | kCRH_; // Selective update
 	}
