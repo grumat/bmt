@@ -21,24 +21,6 @@ namespace Adc
 {
 
 // ---------------------------------------------------------------------------
-// Unit — typed ADC peripheral identity
-// ---------------------------------------------------------------------------
-
-enum class Unit : uint8_t
-{
-	k1,
-
-#ifdef ADC2_BASE
-	k2,
-#endif
-
-#ifdef ADC3_BASE
-	k3,
-#endif
-};
-
-
-// ---------------------------------------------------------------------------
 // Peripheral<U> — typed wrapper around a single ADC block
 // ---------------------------------------------------------------------------
 
@@ -107,34 +89,6 @@ struct Peripheral<Unit::k3>
 	// ADC3 has no common register block on F1xx.
 };
 #endif
-
-
-// ---------------------------------------------------------------------------
-// Sampling time literals (3-bit SMP field encoding)
-//
-//   k1_5   = 0    1.5   ADC clock cycles
-//   k7_5   = 1    7.5   cycles
-//   k13_5  = 2   13.5   cycles
-//   k28_5  = 3   28.5   cycles  (default)
-//   k41_5  = 4   41.5   cycles
-//   k55_5  = 5   55.5   cycles
-//   k71_5  = 6   71.5   cycles
-//   k239_5 = 7  239.5   cycles
-//
-// Total conversion time = 12.5 cycles + sampling time.
-// ---------------------------------------------------------------------------
-
-enum Smpl : uint8_t
-{
-	k1_5   = 0,
-	k7_5   = 1,
-	k13_5  = 2,
-	k28_5  = 3,
-	k41_5  = 4,
-	k55_5  = 5,
-	k71_5  = 6,
-	k239_5 = 7,
-};
 
 
 // ---------------------------------------------------------------------------
@@ -366,6 +320,24 @@ struct AnySetup
 			adc->CR2 &= ~ADC_CR2_ADON;
 	}
 };
+
+
+// ---------------------------------------------------------------------------
+// Convenience helpers — portable start/read for a single conversion
+// ---------------------------------------------------------------------------
+
+/// Start a single conversion (software trigger).
+ALWAYS_INLINE void StartConversion(volatile ADC_TypeDef *adc)
+{
+	adc->CR2 |= ADC_CR2_SWSTART;
+}
+
+/// Wait for EOC and return the conversion result.
+ALWAYS_INLINE uint16_t ReadData(volatile ADC_TypeDef *adc)
+{
+	while (!(adc->SR & ADC_SR_EOC)) { }
+	return uint16_t(adc->DR);
+}
 
 
 } // namespace Adc
