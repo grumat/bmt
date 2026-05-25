@@ -26,7 +26,8 @@ Include the family-appropriate header:
 | Resolution      | fixed 12-bit                  | configurable via `Res` enum          |
 | External trig   | single `EXTTRIG` bit          | 2-bit `EXTEN` polarity field         |
 | Oversampling    | —                             | CFGR2 (ROVSE, OVSR, OVSS)           |
-| Startup         | ADON → RSTCAL → CAL           | ADVREGEN → ADCAL → ADEN → poll ADRDY |
+| Kernel clock    | APB2 + ADCPRE (clock tree)    | CCR.CKMODE, set by `AnySetup` (`kCkMode`) |
+| Startup         | ADON → RSTCAL → CAL           | CKMODE → ADVREGEN → ADCAL → ADEN → poll ADRDY |
 | Conversion start| CR2.SWSTART                   | CR.ADSTART                           |
 
 ---
@@ -361,11 +362,35 @@ default to `false` / `0`.
 | `kOvs`           | —         | `CFGR2` 0 | `false` | Oversampling enable (L4/G4)         |
 | `kOvsRatio`      | —         | `CFGR2` 4–2 | 0     | Oversampling ratio (L4/G4)          |
 | `kOvsShift`      | —         | `CFGR2` 11–8 | 0    | Oversampling shift (L4/G4)          |
+| `kCkMode`        | —         | `CCR` 17–16 | `kHclkDiv4` | Kernel-clock source (L4/G4, see `CkMode`) |
 | `kPowerDown`     | —         | —        | `false` | Power down after init                |
 
 F1 portability note: replace `kExtTrig = true` with `kExtEn = ExtEn::kRising`
 on L4/G4.  The `kScan` field is retained as a no-op on L4/G4 for source
 compatibility.
+
+#### `CkMode` — ADC kernel-clock source (L4/G4 only)
+
+On L4/G4 the ADC *conversion* clock is separate from the RCC bus-enable bit
+that `Clocks::Enabler` toggles (that bit only gates the register interface).
+After reset the async mux (`CCIPR.ADC{12}SEL`) selects no clock, so without
+this setting `AnySetup::Init()` would block forever in the calibration / ADRDY
+polls.  `AnySetup` writes `CCR.CKMODE` from `AnyConfig::kCkMode`:
+
+```cpp
+enum class CkMode : uint8_t
+{
+    kAsync    = 0,   // defer to RCC clock tree (CCIPR.ADC{12}SEL must be set up)
+    kHclkDiv1 = 1,   // synchronous HCLK / 1
+    kHclkDiv2 = 2,   // synchronous HCLK / 2
+    kHclkDiv4 = 3,   // synchronous HCLK / 4  (default — self-contained)
+};
+```
+
+The default `kHclkDiv4` makes the template self-sufficient.  Choose `kAsync`
+only if you route an asynchronous ADC clock in the clock tree; `AnySetup` then
+leaves `CKMODE` untouched.  (F1 has no `CKMODE`; its ADC clock comes from APB2
+via `Clocks::AdcPrscl`.)
 
 #### `Init(volatile ADC_TypeDef *adc)`
 
@@ -424,13 +449,14 @@ One-shot boot initialiser.  Drives the complete ADC start-up sequence.
 | Step | F1xx                        | L4xx / G4xx                          |
 |------|-----------------------------|--------------------------------------|
 | 1    | RCC enable + reset          | RCC enable + reset                   |
-| 2    | Write CR1 / CR2             | Write CR / CFGR / CFGR2              |
-| 3    | Write SQR1-3 / SMPR1-2     | Write SQR1-4 / SMPR1-2              |
-| 4    | ADON (power up)             | ADVREGEN (voltage regulator)         |
-| 5    | —                           | spin ~10 µs                          |
-| 6    | RSTCAL → CAL                | ADCAL (single-ended)                 |
-| 7    | —                           | ADEN → wait ADRDY                    |
-| 8    | conditionally clear ADON    | conditionally set ADDIS              |
+| 2    | —                           | Select kernel clock (CCR.CKMODE)     |
+| 3    | Write CR1 / CR2             | Write CR / CFGR / CFGR2              |
+| 4    | Write SQR1-3 / SMPR1-2     | Write SQR1-4 / SMPR1-2              |
+| 5    | ADON (power up)             | ADVREGEN (voltage regulator)         |
+| 6    | —                           | spin ~10 µs                          |
+| 7    | RSTCAL → CAL                | ADCAL (single-ended)                 |
+| 8    | —                           | ADEN → wait ADRDY                    |
+| 9    | conditionally clear ADON    | conditionally set ADDIS              |
 
 After `Init()` the ADC is powered up and ready to convert.  Use the portable
 helpers:

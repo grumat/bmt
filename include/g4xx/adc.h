@@ -197,6 +197,23 @@ enum class ExtEn : uint8_t
 	kBoth     = 3,
 };
 
+/// ADC kernel-clock source (ADCx_COMMON->CCR.CKMODE[1:0]).
+///
+/// This is the *conversion* clock and is distinct from the RCC bus-enable bit
+/// that RccEnabler toggles (AHB2ENR.ADC12EN only gates the register interface).
+/// After reset CKMODE = kAsync and the RCC mux (CCIPR.ADC12SEL) selects no
+/// clock, so the analog domain is unclocked until one of these is configured.
+///   kAsync     — use the RCC-muxed async kernel clock; CCIPR.ADC12SEL must then
+///                be set up in the clock tree (CKMODE left untouched by AnySetup).
+///   kHclkDivN  — synchronous: derive the ADC clock from HCLK / N (self-contained).
+enum class CkMode : uint8_t
+{
+	kAsync    = 0,
+	kHclkDiv1 = 1,
+	kHclkDiv2 = 2,
+	kHclkDiv4 = 3,
+};
+
 
 // ---------------------------------------------------------------------------
 // AnySequence<Chs...> — variadic regular sequence (max 16 ranks)
@@ -310,6 +327,11 @@ struct AnyConfig
 	static constexpr bool   kAutoDelay   = false;	// CFGR.AUTDLY
 	static constexpr bool   kOvrMod      = false;	// CFGR.OVRMOD
 
+	// Kernel-clock source written to CCR by AnySetup (see CkMode).  Default is
+	// synchronous HCLK/4 so the template is self-sufficient; set to kAsync to
+	// defer to the RCC clock tree (CCIPR.ADC12SEL).
+	static constexpr CkMode kCkMode      = CkMode::kHclkDiv4;
+
 	// ── Oversampling (CFGR2) ────────────────────────────────────────────
 	static constexpr bool    kOvs        = false;	// ROVSE
 	static constexpr uint8_t kOvsRatio   = 0;		// OVSR[2:0]: 0=2x..7=256x
@@ -370,30 +392,42 @@ struct AnySetup
 
 	ALWAYS_INLINE static void Init()
 	{
-		// 1. Enable + reset ADC clock (shared AHB2 bit).
+		// 1. Enable + reset ADC clock (shared AHB2 bit). This only gates the
+		// register interface — not the analog conversion clock.
 		Clocks::Enabler<P>::Init();
 
-		// 2. Write CR / CFGR / CFGR2.
+		// 2. Select the ADC kernel clock (CCR.CKMODE). Without this the
+		// calibration / ADRDY polls below would spin forever, since after reset
+		// the async mux (CCIPR.ADC12SEL) selects no clock. kAsync leaves CKMODE
+		// untouched and trusts the clock tree to have set up ADC12SEL.
+		if constexpr (Cfg::kCkMode != CkMode::kAsync)
+		{
+			volatile auto *cmn = P::Common();
+			cmn->CCR = (cmn->CCR & ~ADC_CCR_CKMODE_Msk)
+				| (static_cast<uint32_t>(Cfg::kCkMode) << ADC_CCR_CKMODE_Pos);
+		}
+
+		// 3. Write CR / CFGR / CFGR2.
 		Cfg::template Init<P>();
 
-		// 3. Write SQR + SMPR.
+		// 4. Write SQR + SMPR.
 		Seq::Init();
 
 		volatile auto *adc = P::kBase;
 
-		// 4. Enable the voltage regulator (must settle before calibration).
+		// 5. Enable the voltage regulator (must settle before calibration).
 		adc->CR |= ADC_CR_ADVREGEN;
 		for (volatile uint32_t d = 0; d < 100; ++d) { }
 
-		// 5. Calibrate (single-ended).
+		// 6. Calibrate (single-ended).
 		adc->CR |= ADC_CR_ADCAL;
 		while (adc->CR & ADC_CR_ADCAL) { }
 
-		// 6. Enable ADC; wait for ADRDY.
+		// 7. Enable ADC; wait for ADRDY.
 		adc->CR |= ADC_CR_ADEN;
 		while (!(adc->ISR & ADC_ISR_ADRDY)) { }
 
-		// 7. Optionally power down.
+		// 8. Optionally power down.
 		if constexpr (Cfg::kPowerDown)
 			adc->CR |= ADC_CR_ADDIS;
 	}

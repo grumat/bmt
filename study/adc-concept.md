@@ -262,17 +262,25 @@ L4 has no effect.
 Step  F1xx                              L4xx
 ────  ────────────────────────────────  ───────────────────────────────
 1     RCC enable + reset                RCC enable + reset (same)
-2     Write CR1 / CR2                   Write CR / CFGR / CFGR2
-3     Write SQR1-3 / SMPR1-2            Write SQR1-4 / SMPR1-2
-4     ADON (power up)                   ADVREGEN (voltage regulator)
-5     —                                 spin ~10 μs (tADCVREG settle)
-6     RSTCAL (poll clear)               —
-7     CAL (poll clear)                  ADCAL (poll clear)
-8     —                                 ADEN (poll ADRDY flag)
-9     conditionally clear ADON          conditionally set ADDIS
+2     —                                 Select kernel clock (CCR.CKMODE)
+3     Write CR1 / CR2                   Write CR / CFGR / CFGR2
+4     Write SQR1-3 / SMPR1-2            Write SQR1-4 / SMPR1-2
+5     ADON (power up)                   ADVREGEN (voltage regulator)
+6     —                                 spin ~10 μs (tADCVREG settle)
+7     RSTCAL (poll clear)               —
+8     CAL (poll clear)                  ADCAL (poll clear)
+9     —                                 ADEN (poll ADRDY flag)
+10    conditionally clear ADON          conditionally set ADDIS
 ```
 
 Key differences:
+- **Kernel clock** — the RCC bus-enable bit only gates the register interface.
+  The ADC *conversion* clock comes from `CCR.CKMODE` (synchronous HCLK/N) or
+  the RCC async mux (`CCIPR.ADCSEL`), which selects nothing after reset.
+  `AnySetup` writes `CCR.CKMODE` from `AnyConfig::kCkMode` (a `CkMode` enum,
+  default synchronous HCLK/4) so calibration / ADRDY don't block forever.
+  Set `kCkMode = CkMode::kAsync` to defer to the clock tree.  F1 has no CKMODE
+  (its ADC clock is APB2-derived via `AdcPrscl`).
 - **No RSTCAL** on L4 — calibration is started directly with `ADC_CR_ADCAL`.
 - **ADVREGEN** must be set and the regulator allowed to settle (~10 μs) before
   calibration or enabling the ADC.
@@ -461,8 +469,8 @@ G4 adds the `GCOMP` register at offset 0xC0.  Not needed for basic operation.
 | `Chan` static_assert | Same `kChan <= 18` — no change |
 | `SqField_` template | Identical 4-register 6-bit stride — no change |
 | `AnySequence::Init()` | Same 4 SQR + 2 SMPR writes — no change |
-| `AnyConfig` fields | Same CFGR/CFGR2 bit positions — no change |
-| `AnySetup::Init()` | Same ADVREGEN→ADCAL→ADEN sequence — no change |
+| `AnyConfig` fields | Same CFGR/CFGR2 bit positions; `kCkMode`/`CCR.CKMODE` identical — no change |
+| `AnySetup::Init()` | Same CKMODE→ADVREGEN→ADCAL→ADEN sequence — no change |
 | `StartConversion()` | Same `ADC_CR_ADSTART` — no change |
 | `ReadData()` | Same `ADC_ISR_EOC` — no change |
 
