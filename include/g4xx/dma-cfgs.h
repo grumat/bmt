@@ -466,8 +466,17 @@ using IdSpi4Tx = AnyID<Itf::k1, Chan::k2, PerifSel::kSpi4Tx>;
 using IdTim1Ch1 = AnyID<Itf::k1, Chan::k2, PerifSel::kTim1Ch1>;
 /// A template class to map TIM1 CH2 to DMA1 channel 3
 using IdTim1Ch2 = AnyID<Itf::k1, Chan::k3, PerifSel::kTim1Ch2>;
-/// A template class to map TIM1 CH3 to DMA1 channel 7
-using IdTim1Ch3 = AnyID<Itf::k1, Chan::k7, PerifSel::kTim1Ch3>;
+/// MANUAL OVERRIDE (not from make_dma_g4.py): the generator's least-loaded
+/// balancer placed TIM1_CH3 on DMA1 channel 7, but access-line G4 parts
+/// (e.g. STM32G431) only have DMA channels 1-6 — channel 7's *_BASE macro is
+/// undefined there, so AnyChannel::kChBase_ collapses to 0 and Setup() fails the
+/// "Invalid DMA instance selected" static_assert (DtrigJtag uses this channel).
+/// DMAMUX lets any request route to any channel, so channel choice is free; ch5
+/// is valid on all G4 and distinct from SPI1_RX (ch2) / SPI1_TX (ch3) that
+/// DtrigJtag drives concurrently. NOTE: rerunning make_dma_g4.py reverts this —
+/// the permanent fix is to cap the generator's channel pool at 6 for family-wide
+/// (access-line) validity, which repacks the whole table and needs revalidation.
+using IdTim1Ch3 = AnyID<Itf::k1, Chan::k5, PerifSel::kTim1Ch3>;
 /// A template class to map TIM1 CH4 to DMA1 channel 4
 using IdTim1Ch4 = AnyID<Itf::k1, Chan::k4, PerifSel::kTim1Ch4>;
 /// A template class to map TIM1 COM to DMA1 channel 4

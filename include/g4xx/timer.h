@@ -428,6 +428,15 @@ public:
 		return (volatile TIM_TypeDef *)kTimerBase_;
 	}
 
+	// f1xx-API compatibility shims for shared drivers (e.g. Firmware.shared/util/
+	// DtrigJtag.h) written against the f1xx timer template:
+	//   - f1xx reaches the peripheral via a nested TimerDescriptor `TD`
+	//     (`CycleTimer::TD::GetDevice()`); here GetDevice() lives on the timer
+	//     class itself, so alias TD to this class so the same expression resolves.
+	//   - f1xx exposes SetCounter(); mirror it as a plain CNT write.
+	using TD = AnyTimer_;
+	ALWAYS_INLINE static void SetCounter(TypCnt n) { GetDevice()->CNT = n; }
+
 	ALWAYS_INLINE static void EnableTriggerDma()
 	{
 		if (DmaInfo_::Trigger.kChan_ != Dma::Chan::kNone)

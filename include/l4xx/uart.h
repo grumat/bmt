@@ -33,6 +33,35 @@ enum class StopBits
 };
 
 
+/// Trait carrier for one USART peripheral — list this in `PeripheralEnabler`
+/// (spares you the UsartTemplate<...> template-argument cascade), mirroring the
+/// f1xx/g4xx UsartHardware<>. On L4, USART1 lives on APB2 while USART2/USART3 are
+/// on APB1 (ENR1/RSTR1). The EN and RST bit positions coincide, so one mask serves
+/// both registers. (USART4/5 are not covered here — extend if a target needs them.)
+///
+/// NOTE: the rest of this file is still inside `#if 0` (the L4 UART driver is an
+/// unported F1 copy-paste stub — e.g. it uses the F1 `RCC_APB1ENR_USARTxEN` names,
+/// which are wrong for L4). This descriptor uses the correct L4 `..._APB1ENR1_...`
+/// names so it is right once the L4 UART is actually brought up. No active target
+/// compiles L4 today, so this is unverified by build.
+template <Usart kUsart>
+struct UsartHardware
+{
+private:
+	static constexpr bool kIsApb2_ = (kUsart == Usart::k1);
+	static constexpr uint32_t kBit_ =
+		(kUsart == Usart::k1) ? RCC_APB2ENR_USART1EN
+		: (kUsart == Usart::k2) ? RCC_APB1ENR1_USART2EN
+		: (kUsart == Usart::k3) ? RCC_APB1ENR1_USART3EN
+		: 0;
+public:
+	using RccTrait_ = Clocks::RccTrait<
+		Clocks::RccBit<kIsApb2_ ? Clocks::RccReg::kApb2En  : Clocks::RccReg::kApb1En,  kBit_>,
+		Clocks::RccBit<kIsApb2_ ? Clocks::RccReg::kApb2Rst : Clocks::RccReg::kApb1Rst, kBit_>
+	>;
+};
+
+
 /// Defines static settings to setup an UART peripheral
 template<
 	const Usart uart_n				///< UART number
