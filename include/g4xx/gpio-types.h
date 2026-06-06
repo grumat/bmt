@@ -679,19 +679,19 @@ using IR_OUT_PB9 = AnyAltOut<Port::PB, 9, AfIR_OUT_PB9>		;
 //////////////////////////////////////////////////////////////////////
 #if defined(I2C1_BASE)
 /// A default configuration to map I2C1 SCL on PA13 pin
-using AfI2C1_SCL_PA13 = AnyAltOutOD<Port::PA, 13, AfI2C1_SCL_PA13>	;
+using I2C1_SCL_PA13 = AnyAltOutOD<Port::PA, 13, AfI2C1_SCL_PA13>	;
 /// A default configuration to map I2C1 SCL on PA15 pin
-using AfI2C1_SCL_PA15 = AnyAltOutOD<Port::PA, 15, AfI2C1_SCL_PA15>	;
+using I2C1_SCL_PA15 = AnyAltOutOD<Port::PA, 15, AfI2C1_SCL_PA15>	;
 /// A default configuration to map I2C1 SCL on PB8 pin
-using AfI2C1_SCL_PB8 = AnyAltOutOD<Port::PB, 8, AfI2C1_SCL_PB8>	;
+using I2C1_SCL_PB8 = AnyAltOutOD<Port::PB, 8, AfI2C1_SCL_PB8>	;
 /// A default configuration to map I2C1 SDA on PA14 pin
-using AfI2C1_SDA_PA14 = AnyAltOutOD<Port::PA, 14, AfI2C1_SDA_PA14>	;
+using I2C1_SDA_PA14 = AnyAltOutOD<Port::PA, 14, AfI2C1_SDA_PA14>	;
 /// A default configuration to map I2C1 SDA on PB7 pin
-using AfI2C1_SDA_PB7 = AnyAltOutOD<Port::PB, 7, AfI2C1_SDA_PB7>	;
+using I2C1_SDA_PB7 = AnyAltOutOD<Port::PB, 7, AfI2C1_SDA_PB7>	;
 /// A default configuration to map I2C1 SDA on PB9 pin
-using AfI2C1_SDA_PB9 = AnyAltOutOD<Port::PB, 9, AfI2C1_SDA_PB9>	;
+using I2C1_SDA_PB9 = AnyAltOutOD<Port::PB, 9, AfI2C1_SDA_PB9>	;
 /// A default configuration to map I2C1 SMBA on PB5 pin
-using AfI2C1_SMBA_PB5 = AnyAltOutOD<Port::PB, 5, AfI2C1_SMBA_PB5>	;
+using I2C1_SMBA_PB5 = AnyAltOutOD<Port::PB, 5, AfI2C1_SMBA_PB5>	;
 #endif	// defined(I2C1_BASE)
 
 //////////////////////////////////////////////////////////////////////
@@ -699,22 +699,22 @@ using AfI2C1_SMBA_PB5 = AnyAltOutOD<Port::PB, 5, AfI2C1_SMBA_PB5>	;
 //////////////////////////////////////////////////////////////////////
 #if defined(I2C2_BASE)
 /// A default configuration to map I2C2 SCL on PA9 pin
-using AfI2C2_SCL_PA9 = AnyAltOutOD<Port::PA, 9, AfI2C2_SCL_PA9>	;
+using I2C2_SCL_PA9 = AnyAltOutOD<Port::PA, 9, AfI2C2_SCL_PA9>	;
 /// A default configuration to map I2C2 SCL on PC4 pin
-using AfI2C2_SCL_PC4 = AnyAltOutOD<Port::PC, 4, AfI2C2_SCL_PC4>	;
+using I2C2_SCL_PC4 = AnyAltOutOD<Port::PC, 4, AfI2C2_SCL_PC4>	;
 /// A default configuration to map I2C2 SDA on PA8 pin
-using AfI2C2_SDA_PA8 = AnyAltOutOD<Port::PA, 8, AfI2C2_SDA_PA8>	;
+using I2C2_SDA_PA8 = AnyAltOutOD<Port::PA, 8, AfI2C2_SDA_PA8>	;
 /// A default configuration to map I2C2 SMBA on PA10 pin
-using AfI2C2_SMBA_PA10 = AnyAltOutOD<Port::PA, 10, AfI2C2_SMBA_PA10>	;
+using I2C2_SMBA_PA10 = AnyAltOutOD<Port::PA, 10, AfI2C2_SMBA_PA10>	;
 /// A default configuration to map I2C2 SMBA on PB12 pin
-using AfI2C2_SMBA_PB12 = AnyAltOutOD<Port::PB, 12, AfI2C2_SMBA_PB12>	;
+using I2C2_SMBA_PB12 = AnyAltOutOD<Port::PB, 12, AfI2C2_SMBA_PB12>	;
 #if defined(GPIOF_BASE)
 /// A default configuration to map I2C2 SCL on PF6 pin
-using AfI2C2_SCL_PF6 = AnyAltOutOD<Port::PF, 6, AfI2C2_SCL_PF6>	;
+using I2C2_SCL_PF6 = AnyAltOutOD<Port::PF, 6, AfI2C2_SCL_PF6>	;
 /// A default configuration to map I2C2 SDA on PF0 pin
-using AfI2C2_SDA_PF0 = AnyAltOutOD<Port::PF, 0, AfI2C2_SDA_PF0>	;
+using I2C2_SDA_PF0 = AnyAltOutOD<Port::PF, 0, AfI2C2_SDA_PF0>	;
 /// A default configuration to map I2C2 SMBA on PF2 pin
-using AfI2C2_SMBA_PF2 = AnyAltOutOD<Port::PF, 2, AfI2C2_SMBA_PF2>	;
+using I2C2_SMBA_PF2 = AnyAltOutOD<Port::PF, 2, AfI2C2_SMBA_PF2>	;
 #endif	// defined(GPIOF_BASE)
 #endif	// defined(I2C2_BASE)
 
@@ -723,32 +723,32 @@ using AfI2C2_SMBA_PF2 = AnyAltOutOD<Port::PF, 2, AfI2C2_SMBA_PF2>	;
 //////////////////////////////////////////////////////////////////////
 #if defined(I2C3_BASE)
 /// A default configuration to map I2C3 SCL on PA8 pin
-using AfI2C3_SCL_PA8 = AnyAltOutOD<Port::PA, 8, AfI2C3_SCL_PA8>	;
+using I2C3_SCL_PA8 = AnyAltOutOD<Port::PA, 8, AfI2C3_SCL_PA8>	;
 /// A default configuration to map I2C3 SCL on PC8 pin
-using AfI2C3_SCL_PC8 = AnyAltOutOD<Port::PC, 8, AfI2C3_SCL_PC8>	;
+using I2C3_SCL_PC8 = AnyAltOutOD<Port::PC, 8, AfI2C3_SCL_PC8>	;
 /// A default configuration to map I2C3 SDA on PB5 pin
-using AfI2C3_SDA_PB5 = AnyAltOutOD<Port::PB, 5, AfI2C3_SDA_PB5>	;
+using I2C3_SDA_PB5 = AnyAltOutOD<Port::PB, 5, AfI2C3_SDA_PB5>	;
 /// A default configuration to map I2C3 SDA on PC9 pin
-using AfI2C3_SDA_PC9 = AnyAltOutOD<Port::PC, 9, AfI2C3_SDA_PC9>	;
+using I2C3_SDA_PC9 = AnyAltOutOD<Port::PC, 9, AfI2C3_SDA_PC9>	;
 /// A default configuration to map I2C3 SDA on PC11 pin
-using AfI2C3_SDA_PC11 = AnyAltOutOD<Port::PC, 11, AfI2C3_SDA_PC11>	;
+using I2C3_SDA_PC11 = AnyAltOutOD<Port::PC, 11, AfI2C3_SDA_PC11>	;
 /// A default configuration to map I2C3 SMBA on PA9 pin
-using AfI2C3_SMBA_PA9 = AnyAltOutOD<Port::PA, 9, AfI2C3_SMBA_PA9>	;
+using I2C3_SMBA_PA9 = AnyAltOutOD<Port::PA, 9, AfI2C3_SMBA_PA9>	;
 /// A default configuration to map I2C3 SMBA on PB2 pin
-using AfI2C3_SMBA_PB2 = AnyAltOutOD<Port::PB, 2, AfI2C3_SMBA_PB2>	;
+using I2C3_SMBA_PB2 = AnyAltOutOD<Port::PB, 2, AfI2C3_SMBA_PB2>	;
 #if defined(GPIOF_BASE)
 /// A default configuration to map I2C3 SCL on PF3 pin
-using AfI2C3_SCL_PF3 = AnyAltOutOD<Port::PF, 3, AfI2C3_SCL_PF3>	;
+using I2C3_SCL_PF3 = AnyAltOutOD<Port::PF, 3, AfI2C3_SCL_PF3>	;
 /// A default configuration to map I2C3 SDA on PF4 pin
-using AfI2C3_SDA_PF4 = AnyAltOutOD<Port::PF, 4, AfI2C3_SDA_PF4>	;
+using I2C3_SDA_PF4 = AnyAltOutOD<Port::PF, 4, AfI2C3_SDA_PF4>	;
 #endif	// defined(GPIOF_BASE)
 #if defined(GPIOG_BASE)
 /// A default configuration to map I2C3 SCL on PG7 pin
-using AfI2C3_SCL_PG7 = AnyAltOutOD<Port::PG, 7, AfI2C3_SCL_PG7>	;
+using I2C3_SCL_PG7 = AnyAltOutOD<Port::PG, 7, AfI2C3_SCL_PG7>	;
 /// A default configuration to map I2C3 SDA on PG8 pin
-using AfI2C3_SDA_PG8 = AnyAltOutOD<Port::PG, 8, AfI2C3_SDA_PG8>	;
+using I2C3_SDA_PG8 = AnyAltOutOD<Port::PG, 8, AfI2C3_SDA_PG8>	;
 /// A default configuration to map I2C3 SMBA on PG6 pin
-using AfI2C3_SMBA_PG6 = AnyAltOutOD<Port::PG, 6, AfI2C3_SMBA_PG6>	;
+using I2C3_SMBA_PG6 = AnyAltOutOD<Port::PG, 6, AfI2C3_SMBA_PG6>	;
 #endif	// defined(GPIOG_BASE)
 #endif	// defined(I2C3_BASE)
 
@@ -757,32 +757,32 @@ using AfI2C3_SMBA_PG6 = AnyAltOutOD<Port::PG, 6, AfI2C3_SMBA_PG6>	;
 //////////////////////////////////////////////////////////////////////
 #if defined(I2C4_BASE)
 /// A default configuration to map I2C4 SCL on PA13 pin
-using AfI2C4_SCL_PA13 = AnyAltOutOD<Port::PA, 13, AfI2C4_SCL_PA13>	;
+using I2C4_SCL_PA13 = AnyAltOutOD<Port::PA, 13, AfI2C4_SCL_PA13>	;
 /// A default configuration to map I2C4 SCL on PC6 pin
-using AfI2C4_SCL_PC6 = AnyAltOutOD<Port::PC, 6, AfI2C4_SCL_PC6>	;
+using I2C4_SCL_PC6 = AnyAltOutOD<Port::PC, 6, AfI2C4_SCL_PC6>	;
 /// A default configuration to map I2C4 SDA on PB7 pin
-using AfI2C4_SDA_PB7 = AnyAltOutOD<Port::PB, 7, AfI2C4_SDA_PB7>	;
+using I2C4_SDA_PB7 = AnyAltOutOD<Port::PB, 7, AfI2C4_SDA_PB7>	;
 /// A default configuration to map I2C4 SDA on PC7 pin
-using AfI2C4_SDA_PC7 = AnyAltOutOD<Port::PC, 7, AfI2C4_SDA_PC7>	;
+using I2C4_SDA_PC7 = AnyAltOutOD<Port::PC, 7, AfI2C4_SDA_PC7>	;
 /// A default configuration to map I2C4 SMBA on PA14 pin
-using AfI2C4_SMBA_PA14 = AnyAltOutOD<Port::PA, 14, AfI2C4_SMBA_PA14>	;
+using I2C4_SMBA_PA14 = AnyAltOutOD<Port::PA, 14, AfI2C4_SMBA_PA14>	;
 #if defined(GPIOD_BASE)
 /// A default configuration to map I2C4 SMBA on PD11 pin
-using AfI2C4_SMBA_PD11 = AnyAltOutOD<Port::PD, 11, AfI2C4_SMBA_PD11>	;
+using I2C4_SMBA_PD11 = AnyAltOutOD<Port::PD, 11, AfI2C4_SMBA_PD11>	;
 #endif	// defined(GPIOD_BASE)
 #if defined(GPIOF_BASE)
 /// A default configuration to map I2C4 SCL on PF14 pin
-using AfI2C4_SCL_PF14 = AnyAltOutOD<Port::PF, 14, AfI2C4_SCL_PF14>	;
+using I2C4_SCL_PF14 = AnyAltOutOD<Port::PF, 14, AfI2C4_SCL_PF14>	;
 /// A default configuration to map I2C4 SDA on PF15 pin
-using AfI2C4_SDA_PF15 = AnyAltOutOD<Port::PF, 15, AfI2C4_SDA_PF15>	;
+using I2C4_SDA_PF15 = AnyAltOutOD<Port::PF, 15, AfI2C4_SDA_PF15>	;
 /// A default configuration to map I2C4 SMBA on PF13 pin
-using AfI2C4_SMBA_PF13 = AnyAltOutOD<Port::PF, 13, AfI2C4_SMBA_PF13>	;
+using I2C4_SMBA_PF13 = AnyAltOutOD<Port::PF, 13, AfI2C4_SMBA_PF13>	;
 #endif	// defined(GPIOF_BASE)
 #if defined(GPIOG_BASE)
 /// A default configuration to map I2C4 SCL on PG3 pin
-using AfI2C4_SCL_PG3 = AnyAltOutOD<Port::PG, 3, AfI2C4_SCL_PG3>	;
+using I2C4_SCL_PG3 = AnyAltOutOD<Port::PG, 3, AfI2C4_SCL_PG3>	;
 /// A default configuration to map I2C4 SDA on PG4 pin
-using AfI2C4_SDA_PG4 = AnyAltOutOD<Port::PG, 4, AfI2C4_SDA_PG4>	;
+using I2C4_SDA_PG4 = AnyAltOutOD<Port::PG, 4, AfI2C4_SDA_PG4>	;
 #endif	// defined(GPIOG_BASE)
 #endif	// defined(I2C4_BASE)
 
@@ -791,22 +791,22 @@ using AfI2C4_SDA_PG4 = AnyAltOutOD<Port::PG, 4, AfI2C4_SDA_PG4>	;
 //////////////////////////////////////////////////////////////////////
 #if defined(I2S2_BASE)
 /// A default configuration to map I2S2 CK on PB13 pin
-using AfI2S2_CK_PB13 = AnyAltOutOD<Port::PB, 13, AfI2S2_CK_PB13>	;
+using I2S2_CK_PB13 = AnyAltOutOD<Port::PB, 13, AfI2S2_CK_PB13>	;
 /// A default configuration to map I2S2 MCK on PA8 pin
-using AfI2S2_MCK_PA8 = AnyAltOutOD<Port::PA, 8, AfI2S2_MCK_PA8>	;
+using I2S2_MCK_PA8 = AnyAltOutOD<Port::PA, 8, AfI2S2_MCK_PA8>	;
 /// A default configuration to map I2S2 MCK on PC6 pin
-using AfI2S2_MCK_PC6 = AnyAltOutOD<Port::PC, 6, AfI2S2_MCK_PC6>	;
+using I2S2_MCK_PC6 = AnyAltOutOD<Port::PC, 6, AfI2S2_MCK_PC6>	;
 /// A default configuration to map I2S2 SD on PA11 pin
-using AfI2S2_SD_PA11 = AnyAltOutOD<Port::PA, 11, AfI2S2_SD_PA11>	;
+using I2S2_SD_PA11 = AnyAltOutOD<Port::PA, 11, AfI2S2_SD_PA11>	;
 /// A default configuration to map I2S2 SD on PB15 pin
-using AfI2S2_SD_PB15 = AnyAltOutOD<Port::PB, 15, AfI2S2_SD_PB15>	;
+using I2S2_SD_PB15 = AnyAltOutOD<Port::PB, 15, AfI2S2_SD_PB15>	;
 /// A default configuration to map I2S2 WS on PB12 pin
-using AfI2S2_WS_PB12 = AnyAltOutOD<Port::PB, 12, AfI2S2_WS_PB12>	;
+using I2S2_WS_PB12 = AnyAltOutOD<Port::PB, 12, AfI2S2_WS_PB12>	;
 #if defined(GPIOF_BASE)
 /// A default configuration to map I2S2 CK on PF1 pin
-using AfI2S2_CK_PF1 = AnyAltOutOD<Port::PF, 1, AfI2S2_CK_PF1>	;
+using I2S2_CK_PF1 = AnyAltOutOD<Port::PF, 1, AfI2S2_CK_PF1>	;
 /// A default configuration to map I2S2 WS on PF0 pin
-using AfI2S2_WS_PF0 = AnyAltOutOD<Port::PF, 0, AfI2S2_WS_PF0>	;
+using I2S2_WS_PF0 = AnyAltOutOD<Port::PF, 0, AfI2S2_WS_PF0>	;
 #endif	// defined(GPIOF_BASE)
 #endif	// defined(I2S2_BASE)
 
@@ -815,21 +815,21 @@ using AfI2S2_WS_PF0 = AnyAltOutOD<Port::PF, 0, AfI2S2_WS_PF0>	;
 //////////////////////////////////////////////////////////////////////
 #if defined(I2S3_BASE)
 /// A default configuration to map I2S3 CK on PB3 pin
-using AfI2S3_CK_PB3 = AnyAltOutOD<Port::PB, 3, AfI2S3_CK_PB3>	;
+using I2S3_CK_PB3 = AnyAltOutOD<Port::PB, 3, AfI2S3_CK_PB3>	;
 /// A default configuration to map I2S3 CK on PC10 pin
-using AfI2S3_CK_PC10 = AnyAltOutOD<Port::PC, 10, AfI2S3_CK_PC10>	;
+using I2S3_CK_PC10 = AnyAltOutOD<Port::PC, 10, AfI2S3_CK_PC10>	;
 /// A default configuration to map I2S3 MCK on PA9 pin
-using AfI2S3_MCK_PA9 = AnyAltOutOD<Port::PA, 9, AfI2S3_MCK_PA9>	;
+using I2S3_MCK_PA9 = AnyAltOutOD<Port::PA, 9, AfI2S3_MCK_PA9>	;
 /// A default configuration to map I2S3 MCK on PC7 pin
-using AfI2S3_MCK_PC7 = AnyAltOutOD<Port::PC, 7, AfI2S3_MCK_PC7>	;
+using I2S3_MCK_PC7 = AnyAltOutOD<Port::PC, 7, AfI2S3_MCK_PC7>	;
 /// A default configuration to map I2S3 SD on PB5 pin
-using AfI2S3_SD_PB5 = AnyAltOutOD<Port::PB, 5, AfI2S3_SD_PB5>	;
+using I2S3_SD_PB5 = AnyAltOutOD<Port::PB, 5, AfI2S3_SD_PB5>	;
 /// A default configuration to map I2S3 SD on PC12 pin
-using AfI2S3_SD_PC12 = AnyAltOutOD<Port::PC, 12, AfI2S3_SD_PC12>	;
+using I2S3_SD_PC12 = AnyAltOutOD<Port::PC, 12, AfI2S3_SD_PC12>	;
 /// A default configuration to map I2S3 WS on PA4 pin
-using AfI2S3_WS_PA4 = AnyAltOutOD<Port::PA, 4, AfI2S3_WS_PA4>	;
+using I2S3_WS_PA4 = AnyAltOutOD<Port::PA, 4, AfI2S3_WS_PA4>	;
 /// A default configuration to map I2S3 WS on PA15 pin
-using AfI2S3_WS_PA15 = AnyAltOutOD<Port::PA, 15, AfI2S3_WS_PA15>	;
+using I2S3_WS_PA15 = AnyAltOutOD<Port::PA, 15, AfI2S3_WS_PA15>	;
 #endif	// defined(I2S3_BASE)
 
 //////////////////////////////////////////////////////////////////////
@@ -871,19 +871,19 @@ using LPTIM1_OUT_PC1 = AnyAltOut<Port::PC, 1, AfLPTIM1_OUT_PC1>	;
 //////////////////////////////////////////////////////////////////////
 #if defined(LPUART1_BASE)
 /// A default configuration to map LPUART1 CTS on PA6 pin
-using AfLPUART1_CTS_PA6 = AnyAltOutOD<Port::PA, 6, AfLPUART1_CTS_PA6>	;
+using LPUART1_CTS_PA6 = AnyAltOutOD<Port::PA, 6, AfLPUART1_CTS_PA6>	;
 /// A default configuration to map LPUART1 CTS on PB13 pin
-using AfLPUART1_CTS_PB13 = AnyAltOutOD<Port::PB, 13, AfLPUART1_CTS_PB13>	;
+using LPUART1_CTS_PB13 = AnyAltOutOD<Port::PB, 13, AfLPUART1_CTS_PB13>	;
 /// A default configuration to map LPUART1 RTS_DE on PB1 pin
 using LPUART1_RTS_DE_PB1 = AnyAltOut<Port::PB, 1, AfLPUART1_RTS_DE_PB1>	;
 /// A default configuration to map LPUART1 RTS_DE on PB12 pin
 using LPUART1_RTS_DE_PB12 = AnyAltOut<Port::PB, 12, AfLPUART1_RTS_DE_PB12>	;
 /// A default configuration to map LPUART1 RX on PA3 pin
-using AfLPUART1_RX_PA3 = AnyAltOutOD<Port::PA, 3, AfLPUART1_RX_PA3>	;
+using LPUART1_RX_PA3 = AnyAltOutOD<Port::PA, 3, AfLPUART1_RX_PA3>	;
 /// A default configuration to map LPUART1 RX on PB10 pin
-using AfLPUART1_RX_PB10 = AnyAltOutOD<Port::PB, 10, AfLPUART1_RX_PB10>	;
+using LPUART1_RX_PB10 = AnyAltOutOD<Port::PB, 10, AfLPUART1_RX_PB10>	;
 /// A default configuration to map LPUART1 RX on PC0 pin
-using AfLPUART1_RX_PC0 = AnyAltOutOD<Port::PC, 0, AfLPUART1_RX_PC0>	;
+using LPUART1_RX_PC0 = AnyAltOutOD<Port::PC, 0, AfLPUART1_RX_PC0>	;
 /// A default configuration to map LPUART1 TX on PA2 pin
 using LPUART1_TX_PA2 = AnyAltOut<Port::PA, 2, AfLPUART1_TX_PA2>	;
 /// A default configuration to map LPUART1 TX on PB11 pin
@@ -892,11 +892,11 @@ using LPUART1_TX_PB11 = AnyAltOut<Port::PB, 11, AfLPUART1_TX_PB11>	;
 using LPUART1_TX_PC1 = AnyAltOut<Port::PC, 1, AfLPUART1_TX_PC1>	;
 #if defined(GPIOG_BASE)
 /// A default configuration to map LPUART1 CTS on PG5 pin
-using AfLPUART1_CTS_PG5 = AnyAltOutOD<Port::PG, 5, AfLPUART1_CTS_PG5>	;
+using LPUART1_CTS_PG5 = AnyAltOutOD<Port::PG, 5, AfLPUART1_CTS_PG5>	;
 /// A default configuration to map LPUART1 RTS_DE on PG6 pin
 using LPUART1_RTS_DE_PG6 = AnyAltOut<Port::PG, 6, AfLPUART1_RTS_DE_PG6>	;
 /// A default configuration to map LPUART1 RX on PG8 pin
-using AfLPUART1_RX_PG8 = AnyAltOutOD<Port::PG, 8, AfLPUART1_RX_PG8>	;
+using LPUART1_RX_PG8 = AnyAltOutOD<Port::PG, 8, AfLPUART1_RX_PG8>	;
 /// A default configuration to map LPUART1 TX on PG7 pin
 using LPUART1_TX_PG7 = AnyAltOut<Port::PG, 7, AfLPUART1_TX_PG7>	;
 #endif	// defined(GPIOG_BASE)
@@ -2619,15 +2619,15 @@ using TIM20_ETR_PG5 = AnyAltOut<Port::PG, 5, AfTIM20_ETR_PG5>	;
 /// A default configuration to map USART1 CK on PA8 pin
 using USART1_CK_PA8 = AnyAltOut<Port::PA, 8, AfUSART1_CK_PA8>	;
 /// A default configuration to map USART1 CTS on PA11 pin
-using AfUSART1_CTS_PA11 = AnyAltOutOD<Port::PA, 11, AfUSART1_CTS_PA11>	;
+using USART1_CTS_PA11 = AnyAltOutOD<Port::PA, 11, AfUSART1_CTS_PA11>	;
 /// A default configuration to map USART1 RTS_DE on PA12 pin
 using USART1_RTS_DE_PA12 = AnyAltOut<Port::PA, 12, AfUSART1_RTS_DE_PA12>	;
 /// A default configuration to map USART1 RX on PA10 pin
-using AfUSART1_RX_PA10 = AnyAltOutOD<Port::PA, 10, AfUSART1_RX_PA10>	;
+using USART1_RX_PA10 = AnyAltOutOD<Port::PA, 10, AfUSART1_RX_PA10>	;
 /// A default configuration to map USART1 RX on PB7 pin
-using AfUSART1_RX_PB7 = AnyAltOutOD<Port::PB, 7, AfUSART1_RX_PB7>	;
+using USART1_RX_PB7 = AnyAltOutOD<Port::PB, 7, AfUSART1_RX_PB7>	;
 /// A default configuration to map USART1 RX on PC5 pin
-using AfUSART1_RX_PC5 = AnyAltOutOD<Port::PC, 5, AfUSART1_RX_PC5>	;
+using USART1_RX_PC5 = AnyAltOutOD<Port::PC, 5, AfUSART1_RX_PC5>	;
 /// A default configuration to map USART1 TX on PA9 pin
 using USART1_TX_PA9 = AnyAltOut<Port::PA, 9, AfUSART1_TX_PA9>	;
 /// A default configuration to map USART1 TX on PB6 pin
@@ -2636,7 +2636,7 @@ using USART1_TX_PB6 = AnyAltOut<Port::PB, 6, AfUSART1_TX_PB6>	;
 using USART1_TX_PC4 = AnyAltOut<Port::PC, 4, AfUSART1_TX_PC4>	;
 #if defined(GPIOE_BASE)
 /// A default configuration to map USART1 RX on PE1 pin
-using AfUSART1_RX_PE1 = AnyAltOutOD<Port::PE, 1, AfUSART1_RX_PE1>	;
+using USART1_RX_PE1 = AnyAltOutOD<Port::PE, 1, AfUSART1_RX_PE1>	;
 /// A default configuration to map USART1 TX on PE0 pin
 using USART1_TX_PE0 = AnyAltOut<Port::PE, 0, AfUSART1_TX_PE0>	;
 #endif	// defined(GPIOE_BASE)
@@ -2655,15 +2655,15 @@ using USART2_CK_PA4 = AnyAltOut<Port::PA, 4, AfUSART2_CK_PA4>	;
 /// A default configuration to map USART2 CK on PB5 pin
 using USART2_CK_PB5 = AnyAltOut<Port::PB, 5, AfUSART2_CK_PB5>	;
 /// A default configuration to map USART2 CTS on PA0 pin
-using AfUSART2_CTS_PA0 = AnyAltOutOD<Port::PA, 0, AfUSART2_CTS_PA0>	;
+using USART2_CTS_PA0 = AnyAltOutOD<Port::PA, 0, AfUSART2_CTS_PA0>	;
 /// A default configuration to map USART2 RTS_DE on PA1 pin
 using USART2_RTS_DE_PA1 = AnyAltOut<Port::PA, 1, AfUSART2_RTS_DE_PA1>	;
 /// A default configuration to map USART2 RX on PA3 pin
-using AfUSART2_RX_PA3 = AnyAltOutOD<Port::PA, 3, AfUSART2_RX_PA3>	;
+using USART2_RX_PA3 = AnyAltOutOD<Port::PA, 3, AfUSART2_RX_PA3>	;
 /// A default configuration to map USART2 RX on PA15 pin
-using AfUSART2_RX_PA15 = AnyAltOutOD<Port::PA, 15, AfUSART2_RX_PA15>	;
+using USART2_RX_PA15 = AnyAltOutOD<Port::PA, 15, AfUSART2_RX_PA15>	;
 /// A default configuration to map USART2 RX on PB4 pin
-using AfUSART2_RX_PB4 = AnyAltOutOD<Port::PB, 4, AfUSART2_RX_PB4>	;
+using USART2_RX_PB4 = AnyAltOutOD<Port::PB, 4, AfUSART2_RX_PB4>	;
 /// A default configuration to map USART2 TX on PA2 pin
 using USART2_TX_PA2 = AnyAltOut<Port::PA, 2, AfUSART2_TX_PA2>	;
 /// A default configuration to map USART2 TX on PA14 pin
@@ -2674,11 +2674,11 @@ using USART2_TX_PB3 = AnyAltOut<Port::PB, 3, AfUSART2_TX_PB3>	;
 /// A default configuration to map USART2 CK on PD7 pin
 using USART2_CK_PD7 = AnyAltOut<Port::PD, 7, AfUSART2_CK_PD7>	;
 /// A default configuration to map USART2 CTS on PD3 pin
-using AfUSART2_CTS_PD3 = AnyAltOutOD<Port::PD, 3, AfUSART2_CTS_PD3>	;
+using USART2_CTS_PD3 = AnyAltOutOD<Port::PD, 3, AfUSART2_CTS_PD3>	;
 /// A default configuration to map USART2 RTS_DE on PD4 pin
 using USART2_RTS_DE_PD4 = AnyAltOut<Port::PD, 4, AfUSART2_RTS_DE_PD4>	;
 /// A default configuration to map USART2 RX on PD6 pin
-using AfUSART2_RX_PD6 = AnyAltOutOD<Port::PD, 6, AfUSART2_RX_PD6>	;
+using USART2_RX_PD6 = AnyAltOutOD<Port::PD, 6, AfUSART2_RX_PD6>	;
 /// A default configuration to map USART2 TX on PD5 pin
 using USART2_TX_PD5 = AnyAltOut<Port::PD, 5, AfUSART2_TX_PD5>	;
 #endif	// defined(GPIOD_BASE)
@@ -2693,17 +2693,17 @@ using USART3_CK_PB12 = AnyAltOut<Port::PB, 12, AfUSART3_CK_PB12>	;
 /// A default configuration to map USART3 CK on PC12 pin
 using USART3_CK_PC12 = AnyAltOut<Port::PC, 12, AfUSART3_CK_PC12>	;
 /// A default configuration to map USART3 CTS on PA13 pin
-using AfUSART3_CTS_PA13 = AnyAltOutOD<Port::PA, 13, AfUSART3_CTS_PA13>	;
+using USART3_CTS_PA13 = AnyAltOutOD<Port::PA, 13, AfUSART3_CTS_PA13>	;
 /// A default configuration to map USART3 CTS on PB13 pin
-using AfUSART3_CTS_PB13 = AnyAltOutOD<Port::PB, 13, AfUSART3_CTS_PB13>	;
+using USART3_CTS_PB13 = AnyAltOutOD<Port::PB, 13, AfUSART3_CTS_PB13>	;
 /// A default configuration to map USART3 RTS_DE on PB14 pin
 using USART3_RTS_DE_PB14 = AnyAltOut<Port::PB, 14, AfUSART3_RTS_DE_PB14>	;
 /// A default configuration to map USART3 RX on PB8 pin
-using AfUSART3_RX_PB8 = AnyAltOutOD<Port::PB, 8, AfUSART3_RX_PB8>	;
+using USART3_RX_PB8 = AnyAltOutOD<Port::PB, 8, AfUSART3_RX_PB8>	;
 /// A default configuration to map USART3 RX on PB11 pin
-using AfUSART3_RX_PB11 = AnyAltOutOD<Port::PB, 11, AfUSART3_RX_PB11>	;
+using USART3_RX_PB11 = AnyAltOutOD<Port::PB, 11, AfUSART3_RX_PB11>	;
 /// A default configuration to map USART3 RX on PC11 pin
-using AfUSART3_RX_PC11 = AnyAltOutOD<Port::PC, 11, AfUSART3_RX_PC11>	;
+using USART3_RX_PC11 = AnyAltOutOD<Port::PC, 11, AfUSART3_RX_PC11>	;
 /// A default configuration to map USART3 TX on PB9 pin
 using USART3_TX_PB9 = AnyAltOut<Port::PB, 9, AfUSART3_TX_PB9>	;
 /// A default configuration to map USART3 TX on PB10 pin
@@ -2714,17 +2714,17 @@ using USART3_TX_PC10 = AnyAltOut<Port::PC, 10, AfUSART3_TX_PC10>	;
 /// A default configuration to map USART3 CK on PD10 pin
 using USART3_CK_PD10 = AnyAltOut<Port::PD, 10, AfUSART3_CK_PD10>	;
 /// A default configuration to map USART3 CTS on PD11 pin
-using AfUSART3_CTS_PD11 = AnyAltOutOD<Port::PD, 11, AfUSART3_CTS_PD11>	;
+using USART3_CTS_PD11 = AnyAltOutOD<Port::PD, 11, AfUSART3_CTS_PD11>	;
 /// A default configuration to map USART3 RTS_DE on PD12 pin
 using USART3_RTS_DE_PD12 = AnyAltOut<Port::PD, 12, AfUSART3_RTS_DE_PD12>	;
 /// A default configuration to map USART3 RX on PD9 pin
-using AfUSART3_RX_PD9 = AnyAltOutOD<Port::PD, 9, AfUSART3_RX_PD9>	;
+using USART3_RX_PD9 = AnyAltOutOD<Port::PD, 9, AfUSART3_RX_PD9>	;
 /// A default configuration to map USART3 TX on PD8 pin
 using USART3_TX_PD8 = AnyAltOut<Port::PD, 8, AfUSART3_TX_PD8>	;
 #endif	// defined(GPIOD_BASE)
 #if defined(GPIOE_BASE)
 /// A default configuration to map USART3 RX on PE15 pin
-using AfUSART3_RX_PE15 = AnyAltOutOD<Port::PE, 15, AfUSART3_RX_PE15>	;
+using USART3_RX_PE15 = AnyAltOutOD<Port::PE, 15, AfUSART3_RX_PE15>	;
 #endif	// defined(GPIOE_BASE)
 #if defined(GPIOF_BASE)
 /// A default configuration to map USART3 RTS on PF6 pin
@@ -2737,11 +2737,11 @@ using USART3_RTS_PF6 = AnyAltOut<Port::PF, 6, AfUSART3_RTS_PF6>	;
 //////////////////////////////////////////////////////////////////////
 #if defined(UART4_BASE)
 /// A default configuration to map UART4 CTS on PB7 pin
-using AfUART4_CTS_PB7 = AnyAltOutOD<Port::PB, 7, AfUART4_CTS_PB7>	;
+using UART4_CTS_PB7 = AnyAltOutOD<Port::PB, 7, AfUART4_CTS_PB7>	;
 /// A default configuration to map UART4 RTS_DE on PA15 pin
 using UART4_RTS_DE_PA15 = AnyAltOut<Port::PA, 15, AfUART4_RTS_DE_PA15>	;
 /// A default configuration to map UART4 RX on PC11 pin
-using AfUART4_RX_PC11 = AnyAltOutOD<Port::PC, 11, AfUART4_RX_PC11>	;
+using UART4_RX_PC11 = AnyAltOutOD<Port::PC, 11, AfUART4_RX_PC11>	;
 /// A default configuration to map UART4 TX on PC10 pin
 using UART4_TX_PC10 = AnyAltOut<Port::PC, 10, AfUART4_TX_PC10>	;
 #endif	// defined(UART4_BASE)
@@ -2751,14 +2751,14 @@ using UART4_TX_PC10 = AnyAltOut<Port::PC, 10, AfUART4_TX_PC10>	;
 //////////////////////////////////////////////////////////////////////
 #if defined(UART5_BASE)
 /// A default configuration to map UART5 CTS on PB5 pin
-using AfUART5_CTS_PB5 = AnyAltOutOD<Port::PB, 5, AfUART5_CTS_PB5>	;
+using UART5_CTS_PB5 = AnyAltOutOD<Port::PB, 5, AfUART5_CTS_PB5>	;
 /// A default configuration to map UART5 RTS_DE on PB4 pin
 using UART5_RTS_DE_PB4 = AnyAltOut<Port::PB, 4, AfUART5_RTS_DE_PB4>	;
 /// A default configuration to map UART5 TX on PC12 pin
 using UART5_TX_PC12 = AnyAltOut<Port::PC, 12, AfUART5_TX_PC12>	;
 #if defined(GPIOD_BASE)
 /// A default configuration to map UART5 RX on PD2 pin
-using AfUART5_RX_PD2 = AnyAltOutOD<Port::PD, 2, AfUART5_RX_PD2>	;
+using UART5_RX_PD2 = AnyAltOutOD<Port::PD, 2, AfUART5_RX_PD2>	;
 #endif	// defined(GPIOD_BASE)
 #endif	// defined(UART5_BASE)
 

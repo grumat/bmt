@@ -272,9 +272,13 @@ class AfPinName:
 			lines.append(align_to_col(s1, 36) + ";")
 		elif 'od' in self.impl:
 			# Open-drain (I2C/I2S) pins stay a single alias, matching f1xx.
+			# The alias is named {dev}_{port}{pin} (e.g. I2C1_SCL_PA13); the AF template
+			# argument is the Af-prefixed AnyAFR alias from pinremap.h (AfI2C1_SCL_PA13).
+			# These MUST differ — naming the alias Af... too collides with that AnyAFR
+			# declaration ("conflicting declaration"), which is what broke the l4/g4 build.
 			lines.append("/// A default configuration to map {0} on {1}{2} pin".format(dev_h, self.port, self.pin))
-			type_name = self.get_af_name()
-			s1 = "using {} = AnyAltOutOD<Port::{}, {}, {}>".format(type_name, self.port, self.pin, type_name)
+			type_name = "{0}_{1}{2}".format(self.dev, self.port, self.pin)
+			s1 = "using {} = AnyAltOutOD<Port::{}, {}, {}>".format(type_name, self.port, self.pin, self.get_af_name())
 			lines.append(align_to_col(s1, 60) + ";")
 		elif re.match(r'^TIM\d+_CH\d+N$', self.dev):
 			# Complementary timer output (CHN). Output-only, so mirror f1xx: a parameterized
