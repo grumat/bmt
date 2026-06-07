@@ -8,6 +8,7 @@
 #include "trace.h"
 #include "spi.h"
 #include "dma.h"
+#include "adc.h"
 
 /// Isolate official classes from Example 2
 #include "critical_section.h"
