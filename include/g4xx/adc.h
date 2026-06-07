@@ -47,7 +47,9 @@ struct Peripheral<Unit::k1>
 	{
 		return reinterpret_cast<volatile ADC_TypeDef *>(kBase_);
 	}
-	static constexpr IRQn_Type kIrq = ADC1_IRQn;
+	// On STM32G4 ADC1 and ADC2 share a single NVIC line (ADC1_2_IRQn); there is
+	// no separate ADC1_IRQn. Same as Peripheral<Unit::k2> below.
+	static constexpr IRQn_Type kIrq = ADC1_2_IRQn;
 
 	using RccTrait_ = Clocks::RccTrait<
 		Clocks::RccBit<Clocks::RccReg::kAhb2En, kEnBit>,
@@ -433,7 +435,10 @@ struct AnySetup
 
 		// 5. Enable the voltage regulator (must settle before calibration).
 		adc->CR |= ADC_CR_ADVREGEN;
-		for (volatile uint32_t d = 0; d < 100; ++d) { }
+		// tADCVREG_STUP settle. Crude spin; non-volatile counter with a __NOP()
+		// barrier so the loop is neither optimized away nor a (C++20-deprecated)
+		// volatile increment.
+		for (uint32_t d = 0; d < 100; ++d) { __NOP(); }
 
 		// 6. Calibrate (single-ended).
 		adc->CR |= ADC_CR_ADCAL;
